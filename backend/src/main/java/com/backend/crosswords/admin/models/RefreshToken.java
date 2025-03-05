@@ -1,0 +1,101 @@
+package com.backend.crosswords.admin.models;
+
+import jakarta.persistence.*;
+
+import java.time.Instant;
+
+@Entity
+@Table(name = "_refresh")
+public class RefreshToken {
+    @Id
+    @Column(name = "id")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "token")
+    private String token;
+
+    @Column(name = "ip")
+    private String ip;
+
+    @Column(name = "user_agent")
+    private String userAgent;
+
+    @Column(name = "expiry_date")
+    private Instant expiryDate;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    public RefreshToken(String token, String ip, String userAgent, User user, Instant expiryDate) {
+        this.token = token;
+        this.ip = ip;
+        this.userAgent = userAgent;
+        this.user = user;
+        this.expiryDate = expiryDate;
+    }
+
+    public RefreshToken() {
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
+    }
+
+    public String getIp() {
+        return ip;
+    }
+
+    public void setIp(String ip) {
+        this.ip = ip;
+    }
+
+    public String getUserAgent() {
+        return userAgent;
+    }
+
+    public void setUserAgent(String userAgent) {
+        this.userAgent = userAgent;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public Instant getExpiryDate() {
+        return expiryDate;
+    }
+
+    public void setExpiryDate(Instant expiryDate) {
+        this.expiryDate = expiryDate;
+    }
+
+    @Override
+    public String toString() {
+        return "RefreshToken{" +
+                "id=" + id +
+                ", token='" + token + '\'' +
+                ", ip='" + ip + '\'' +
+                ", userAgent='" + userAgent + '\'' +
+                ", expiryDate=" + expiryDate +
+                ", user=" + user +
+                '}';
+    }
+}
