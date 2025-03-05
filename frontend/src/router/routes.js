@@ -1,0 +1,96 @@
+const routes = [
+  {
+    path: '/',
+    component: () => import('../layouts/MainLayout.vue'),
+    children: [
+      {
+        path: 'login',
+        name: 'login',
+        component: () => import('../pages/LoginPage.vue')
+      },
+      {
+        path: '',
+        name: 'home',
+        component: () => import('../pages/IndexPage.vue'),
+      },
+      {
+        path: 'documents',
+        name: 'documents',
+        component: () => import('../pages/SearchPage.vue'),
+      },
+      {
+        path: 'documents/:id',
+        name: 'document-view',
+        component: () => import('../pages/DocumentPage.vue'),
+      },
+      {
+        path: 'documents/:id/edit',
+        name: 'document-edit',
+        component: () => import('../pages/DocumentEditPage.vue'),
+      },
+      {
+        path: 'subscriptions/create',
+        name: 'subscriptions-create',
+        component: () => import('../pages/SubscriptionCreate.vue'),
+      },
+      {
+        path: 'subscriptions/:id/edit',
+        name: 'subscription-edit',
+        component: () => import('../pages/SubscriptionEdit.vue'),
+      },
+      {
+        path: 'digests',
+        name: 'digests',
+        component: () => import('../pages/DigestExpolorePage.vue'),
+      },
+      {
+        path: 'digests/:id',
+        name: 'digest-view',
+        component: () => import('../pages/DigestPage.vue'),
+      },
+      {
+        path: 'stats',
+        name: 'stats',
+        component: () => import('../pages/IndexPage.vue'),
+      },
+      {
+        path: 'profile',
+        name: 'profile',
+        component: () => import('../pages/IndexPage.vue'),
+      },
+    ],
+  },
+
+  // Маршрут с боковым меню для страниц privacy и data
+  {
+    path: '/privacy',
+    component: () => import('../layouts/SidebarLayout.vue'),
+    children: [
+      {
+        path: '',
+        name: 'privacy',
+        component: () => import('../pages/PrivacyPage.vue')
+      }
+    ]
+  },
+  {
+    path: '/data',
+    component: () => import('../layouts/SidebarLayout.vue'),
+    children: [
+      {
+        path: '',
+        name: 'data',
+        component: () => import('../pages/DataPage.vue')
+      }
+    ]
+  },
+
+  // Маршрут страницы 404 — для всех несуществующих ссылок
+  {
+    path: '/:catchAll(.*)*',
+    name: '404',
+    component: () => import('../pages/ErrorNotFound.vue'),
+  },
+]
+
+export default routes

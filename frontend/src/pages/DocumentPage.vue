@@ -1,0 +1,278 @@
+<template>
+  <div v-if="!isLoading" class="page-body q-pa-md">
+    <BackButton to="/documents" />
+    <q-page>
+      <q-card :class="['q-px-md q-py-sm', { 'no-shadow': $q.dark.isActive }]">
+        <div class="row items-center justify-between">
+          <div class="text-caption text-left">
+            {{ documentData?.date }} | {{ documentData?.source }}
+          </div>
+
+          <!-- В избранное + сердечко (клик по любому элементу) -->
+          <div class="row items-center cursor-pointer text-caption" @click="toggleFavorite">
+            <q-icon
+              name="favorite"
+              size="sm"
+              :color="documentData?.favorite ? 'red' : 'grey-7'"
+              :style="{ opacity: documentData?.favorite ? 1 : 0.6 }"
+            >
+              <q-tooltip class="bg-secondary"> Добавить в избранное </q-tooltip>
+            </q-icon>
+          </div>
+        </div>
+        <div class="text-h5 q-my-sm">
+          {{ documentData?.title }}
+        </div>
+
+        <div class="q-my-sm">
+          <DocumentTags :tags="documentData?.tags" />
+        </div>
+
+        <div class="q-my-sm">
+          <div class="q-mb-xs">
+            Оцените подобранные теги:
+            <q-rating
+              v-model="userRating"
+              max="5"
+              color="primary"
+              icon="star"
+              size="sm"
+              no-reset
+              @update:model-value="onRatingChange"
+            />
+          </div>
+        </div>
+
+        <!-- Аккордеон с кратким содержанием -->
+        <q-expansion-item expand-separator>
+          <template v-slot:header>
+            <q-item-section avatar>
+              <q-avatar icon="receipt" color="primary" text-color="secondary" />
+            </q-item-section>
+            <q-item-section class="text-h6"> Краткое содержание </q-item-section>
+            <q-item-section side>
+              <div class="row items-center">
+                <q-icon name="access_time" size="xs" class="q-mr-xs" />
+                <span>{{ readingTime }}</span>
+              </div>
+            </q-item-section>
+          </template>
+
+          <div class="q-pa-sm">
+            {{ documentData?.summary }}
+          </div>
+        </q-expansion-item>
+
+        <div class="q-my-md">
+          {{ documentData?.text }}
+        </div>
+        <div v-if="documentData?.URL" class="q-mt-sm text-body2">
+          Оригинал:
+          <a
+            :href="documentData?.URL"
+            target="_blank"
+            rel="noopener noreferrer"
+            :class="$q.dark.isActive ? 'text-primary' : 'text-secondary'"
+          >
+            {{ documentData?.URL }}
+          </a>
+        </div>
+      </q-card>
+
+      <div class="row items-start wrap justify-between q-gutter-sm q-mt-md">
+        <q-btn
+          v-if="documentData?.URL"
+          label="Читать оригинал"
+          color="primary"
+          size="md"
+          no-caps
+          :href="documentData?.URL"
+          target="_blank"
+          rel="noopener noreferrer"
+          text-color="secondary"
+          class="col-auto"
+        />
+
+        <div class="row items-start wrap col-auto">
+          <q-btn
+            label="Редактировать"
+            color="primary"
+            size="md"
+            class="q-mr-md"
+            no-caps
+            icon-right="edit"
+            text-color="secondary"
+            @click="showEditDialog = true"
+          />
+          <q-btn
+            label="Удалить"
+            color="secondary"
+            size="md"
+            no-caps
+            icon-right="delete"
+            @click="showDeleteDialog = true"
+          />
+        </div>
+      </div>
+      <CommentsSection :articleId="documentData?.id" />
+
+      <ConfirmDialog
+        v-model="showEditDialog"
+        title="Внимание!"
+        message="Редактирование документа уберет аннотации всех пользователей! Редактирование текста документа крайне нежелательно и должно применяться только в экстренных случаях. Документы, подвергшиеся редактированию, будут помечены соответствующим образом."
+        confirmLabel="Редактировать"
+        checkboxLabel="Я понимаю, что я делаю"
+        @confirm="goToEditPage"
+        @cancel="onEditCancel"
+      />
+
+      <ConfirmDialog
+        v-model="showDeleteDialog"
+        title="Внимание!"
+        message="Удаление документа необратимо."
+        confirmLabel="Удалить"
+        checkboxLabel="Я понимаю, что я делаю"
+        @confirm="onDeleteConfirm"
+        @cancel="onDeleteCancel"
+      />
+    </q-page>
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import DocumentTags from '../components/DocumentTags.vue'
+import ConfirmDialog from '../components/ConfirmDialog.vue'
+import BackButton from 'src/components/BackButton.vue'
+import CommentsSection from 'src/components/CommentsSection.vue'
+
+const route = useRoute()
+const router = useRouter()
+
+const documentData = ref(null)
+const userRating = ref(0)
+
+// Флаги для открытия/закрытия диалогов
+const showEditDialog = ref(false)
+const showDeleteDialog = ref(false)
+const isLoading = ref(true)
+
+const readingTime = computed(() => {
+  const summary = documentData.value?.summary || ''
+  const wordsCount = summary.split(/\s+/).filter(Boolean).length
+  const minutes = wordsCount / 120
+  return minutes < 1 ? '<1 мин' : Math.ceil(minutes) + ' мин'
+})
+
+onMounted(async () => {
+  const id = route.params.id
+  try {
+    // Заменить URL на реальный эндпоинт
+    // const response = await fetch(`http://localhost:3000/documents/${id}`)
+    const response = await fetch(`https://478dbea22d894b9a8f6623f77a2ed9ee.api.mockbin.io/`)
+    console.log(id)
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        router.replace('/404')
+      } else {
+        console.error('Ошибка HTTP:', response.status)
+      }
+      return
+    }
+
+    documentData.value = await response.json()
+  } catch (error) {
+    console.error('Ошибка при загрузке документа:', error)
+  } finally {
+    isLoading.value = false
+  }
+})
+
+async function onRatingChange(newRating) {
+  try {
+    const id = route.params.id
+    const postResponse = await fetch(`http://localhost:3000/documents/${id}/rating`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ rating: newRating }),
+    })
+    if (!postResponse.ok) {
+      console.error('Ошибка при отправке рейтинга:', postResponse.status)
+    } else {
+      documentData.value.rating_classification = newRating
+    }
+  } catch (err) {
+    console.error('Ошибка при отправке рейтинга:', err)
+  }
+}
+
+async function toggleFavorite() {
+  const newValue = !documentData.value?.favorite
+  documentData.value.favorite = newValue
+
+  try {
+    const response = await fetch(
+      `https://4ec3051a148c46c8a8aa6dcfef35cdf8.api.mockbin.io/`,
+      // `http://localhost:3000/documents/${route.params.id}/favorite`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ favorite: newValue }),
+      },
+    )
+
+    if (!response.ok) {
+      documentData.value.favorite = !newValue
+      console.error('Не удалось обновить favorite:', response.status)
+    }
+  } catch (error) {
+    documentData.value.favorite = !newValue
+    console.error('Ошибка при отправке favorite:', error)
+  }
+}
+
+function goToEditPage() {
+  // Переходим на /documents/:id/edit
+  const currentId = route.params.id
+  router.push(`/documents/${currentId}/edit`)
+}
+function onEditCancel() {
+  console.log('Редактирование отменено')
+}
+
+async function onDeleteConfirm() {
+  const currentId = route.params.id
+  try {
+    const response = await fetch(`http://localhost:3000/documents/${currentId}`, {
+      method: 'DELETE',
+    })
+    if (!response.ok) {
+      console.error('Ошибка при удалении документа:', response.status)
+    } else {
+      console.log('Документ удалён')
+      router.push('/documents')
+    }
+  } catch (error) {
+    console.error('Ошибка при удалении:', error)
+  }
+}
+function onDeleteCancel() {
+  console.log('Удаление отменено')
+}
+</script>
+
+<style scoped lang="scss">
+.q-expansion-item {
+  background-color: #f7f7f7 !important;
+
+  .q-dark & {
+    background-color: #2b2b2b !important;
+  }
+}
+</style>
