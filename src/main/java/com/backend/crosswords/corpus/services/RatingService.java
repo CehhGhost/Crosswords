@@ -1,0 +1,66 @@
+package com.backend.crosswords.corpus.services;
+
+import com.backend.crosswords.admin.models.User;
+import com.backend.crosswords.admin.services.UserService;
+import com.backend.crosswords.corpus.models.DocMeta;
+import com.backend.crosswords.corpus.models.Rating;
+import com.backend.crosswords.corpus.models.RatingId;
+import com.backend.crosswords.corpus.repositories.jpa.RatingRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Iterator;
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class RatingService {
+    private final RatingRepository ratingRepository;
+    private final UserService userService;
+
+    public RatingService(RatingRepository ratingRepository, UserService userService) {
+        this.ratingRepository = ratingRepository;
+        this.userService = userService;
+    }
+
+    public Optional<Rating> findById(RatingId ratingId) {
+        return ratingRepository.findById(ratingId);
+    }
+
+    public void createRating(DocMeta doc, User user, Integer summaryRating, Integer classificationRating) {
+        RatingId ratingId = new RatingId(doc.getId(), user.getId());
+        Rating rating;
+        var check = ratingRepository.findById(ratingId);
+        if (check.isPresent()) {
+            rating = check.get();
+        } else {
+            rating = new Rating();
+            rating.setId(ratingId);
+            rating.setDoc(doc);
+            rating.setUser(user);
+        }
+        rating.setSummaryRating(summaryRating);
+        rating.setClassificationRating(classificationRating);
+        ratingRepository.save(rating);
+    }
+    @Transactional
+    public void dropRatings(List<Rating> ratings, Boolean dropRatingSummary, Boolean dropRatingClassification) {
+        var iterator = ratings.iterator();
+        while (iterator.hasNext()) {
+            Rating rating = iterator.next();
+            if (dropRatingSummary && dropRatingClassification) {
+                iterator.remove();
+                userService.removeRating(rating);
+                ratingRepository.delete(rating);
+            } else {
+                if (dropRatingSummary) {
+                    rating.setSummaryRating(null);
+                }
+                if (dropRatingClassification) {
+                    rating.setClassificationRating(null);
+                }
+                ratingRepository.save(rating);
+            }
+        }
+    }
+}
