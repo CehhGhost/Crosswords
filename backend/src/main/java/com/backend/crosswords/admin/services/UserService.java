@@ -104,4 +104,9 @@ public class UserService {
             userRepository.save(user);
         }
     }
+
+    public Boolean checkDocInFavourites(User user, DocMeta docMeta) {
+        user = userRepository.findById(user.getId()).orElseThrow();
+        return user.getFavouriteDocs() != null && user.getFavouriteDocs().contains(docMeta);
+    }
 }

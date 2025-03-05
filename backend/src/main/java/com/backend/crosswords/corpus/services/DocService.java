@@ -47,6 +47,34 @@ public class DocService {
         this.userService = userService;
     }
 
+    private DocDTO transformDocIntoDocDTO(DocMeta docMeta) {
+        var doc = modelMapper.map(docMeta, DocDTO.class);
+        var docES = docSearchRepository.findById(doc.getId()).orElseThrow();
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+            var user = crosswordUserDetails.getUser();
+            doc.setFavourite(userService.checkDocInFavourites(user, docMeta));
+            var rating = ratingService.getRatingsForDocumentByUser(docMeta, user);
+            doc.setRatingSummary(rating.get(0));
+            doc.setRatingClassification(rating.get(1));
+            doc.setAuthed(true);
+        } catch (ClassCastException e) {
+            doc.setFavourite(null);
+            doc.setRatingClassification(null);
+            doc.setRatingSummary(null);
+            doc.setAuthed(false);
+        }
+        doc.setTagNames(new ArrayList<>());
+        for (var tag : docMeta.getTags()) {
+            doc.getTagNames().add(tag.getName());
+        }
+        doc.setText(docES.getText());
+        doc.setTitle(docES.getTitle());
+        doc.setRusSource(docMeta.getSource().getRussianName());
+        return doc;
+    }
+
     @Transactional
     public void createDoc(CreateDocDTO createDocDTO) {
         var docMeta = modelMapper.map(createDocDTO, DocMeta.class);
@@ -62,31 +90,17 @@ public class DocService {
         docSearchRepository.save(docES);
     }
 
-    // TODO favourite, rusSource, tags, ratingSummary, ratingClassification, authed
     public List<DocDTO> getAllDocs() {
         List<DocDTO> result = new ArrayList<>();
         for (var docMeta : docMetaRepository.findAll()) {
-            var doc = modelMapper.map(docMeta, DocDTO.class);
-            var docES = docSearchRepository.findById(doc.getId()).orElseThrow(); // если здесь ошибка, то ошибка на сервере, а именно в ES
-            doc.setText(docES.getText());
-            doc.setTitle(docES.getTitle());
-            result.add(doc);
+            result.add(this.transformDocIntoDocDTO(docMeta));
         }
         return result;
     }
 
-    // TODO favourite, tags, ratingSummary, ratingClassification, authed
     public DocDTO getDocById(Long id) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
-        User user = crosswordUserDetails.getUser();
         var docMeta = docMetaRepository.findById(id).orElseThrow();
-        var doc = modelMapper.map(docMeta, DocDTO.class);
-        var docES = docSearchRepository.findById(doc.getId()).orElseThrow();
-        doc.setText(docES.getText());
-        doc.setTitle(docES.getTitle());
-        doc.setRusSource(docMeta.getSource().getRussianName());
-        return doc;
+        return this.transformDocIntoDocDTO(docMeta);
     }
 
     public List<DocDTO> searchDocs(SearchDocDTO searchDocDTO) {
@@ -94,7 +108,7 @@ public class DocService {
         QueryBuilder queryBuilder = null;
         switch(searchDocDTO.getType()) {
             case "id":
-                result.add(getDocById(searchDocDTO.getId()));
+                result.add(this.getDocById(searchDocDTO.getId()));
                 return result;
             case "syntax":
                 queryBuilder = QueryBuilders.boolQuery()
@@ -127,10 +141,8 @@ public class DocService {
         {
             var docES = hit.getContent();
             var docMeta = docMetaRepository.findById(docES.getId()).orElseThrow();
-            var doc = modelMapper.map(docMeta, DocDTO.class);
-            doc.setText(docES.getText());
-            doc.setTitle(docES.getTitle());
-            result.add(doc);
+
+            result.add(this.transformDocIntoDocDTO(docMeta));
             System.out.println(hit);
         });
         return result;

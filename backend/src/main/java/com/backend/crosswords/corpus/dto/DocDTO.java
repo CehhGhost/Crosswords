@@ -14,7 +14,7 @@ public class DocDTO {
     private String summary;
     private String text;
     @JsonProperty("tags")
-    private List<TagDTO> tagDTOs;
+    private List<String> tagNames;
     @JsonFormat(pattern = "dd/MM/yyyy")
     private Timestamp date;
     @JsonFormat(pattern = "dd/MM/yyyy")
@@ -107,12 +107,12 @@ public class DocDTO {
         this.rusSource = rusSource;
     }
 
-    public List<TagDTO> getTagDTOs() {
-        return tagDTOs;
+    public List<String> getTagNames() {
+        return tagNames;
     }
 
-    public void setTagDTOs(List<TagDTO> tagDTOs) {
-        this.tagDTOs = tagDTOs;
+    public void setTagNames(List<String> tagNames) {
+        this.tagNames = tagNames;
     }
 
     public Timestamp getLastEdit() {
@@ -163,7 +163,7 @@ public class DocDTO {
                 ", rusSource='" + rusSource + '\'' +
                 ", summary='" + summary + '\'' +
                 ", text='" + text + '\'' +
-                ", tagDTOs=" + tagDTOs +
+                ", tagDTOs=" + tagNames +
                 ", date=" + date +
                 ", lastEdit=" + lastEdit +
                 ", ratingSummary=" + ratingSummary +
