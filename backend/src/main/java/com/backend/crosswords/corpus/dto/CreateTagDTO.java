@@ -1,6 +1,10 @@
 package com.backend.crosswords.corpus.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "DTO for creating a tag")
 public class CreateTagDTO {
+    @Schema(example = "Финансы")
     private String name;
 
     public CreateTagDTO(String name) {

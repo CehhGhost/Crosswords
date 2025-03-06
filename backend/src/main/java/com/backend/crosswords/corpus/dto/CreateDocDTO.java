@@ -2,22 +2,57 @@ package com.backend.crosswords.corpus.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.sql.Timestamp;
 import java.util.List;
 
+@Schema(description = "DTO for creating a document")
 public class CreateDocDTO {
+    @Schema(
+            example = "Международная федерация спортивного кино и телевидения (FICTS) назвала «Матч ТВ» лучшим спортивным телеканалом года."
+    )
     private String summary;
+
+    @Schema(
+            description = "The date of creation in format dd/MM/yyyy",
+            example = "25/03/2025"
+    )
     @JsonFormat(pattern = "dd/MM/yyyy")
     private Timestamp date;
+
+    @Schema(
+            description = "URL of the source",
+            example = "https://www.interfax.ru/business/1001194"
+    )
     @JsonProperty("URL")
     private String url;
+
+    @Schema(
+            example = "RU"
+    )
     private String language;
+
+    @Schema(
+            example = "Интерфакс"
+    )
     @JsonProperty("source")
     private String rusSource;
+
+    @Schema(
+            example = "Международная федерация спорта признала прошедший матч по футболу величайшим матчем за всю историю."
+    )
     private String text;
+
+    @Schema(
+            example = "«Матч ТВ» стал лучшим спортивным телеканалом года по версии FICTS"
+    )
     private String title;
 
+    @Schema(
+            description = "Tags that corresponds with document",
+            example = "[\"Спорт\", \"СБП\", \"IT\"]"
+    )
     @JsonProperty("tags")
     private List<TagDTO> tagDTOs;
 

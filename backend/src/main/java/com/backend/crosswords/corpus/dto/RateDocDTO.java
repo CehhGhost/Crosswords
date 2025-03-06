@@ -1,10 +1,20 @@
 package com.backend.crosswords.corpus.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
+@Schema(description = "DTO for rating document")
 public class RateDocDTO {
+    @Schema(
+            example = "3",
+            description = "Can be null or a number between 1 and 5"
+    )
     @JsonProperty("summary_rating")
     private Integer summaryRating;
+    @Schema(
+            example = "5",
+            description = "Can be null or a number between 1 and 5"
+    )
     @JsonProperty("classification_rating")
     private Integer classificationRating;
 

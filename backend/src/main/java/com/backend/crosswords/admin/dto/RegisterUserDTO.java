@@ -1,11 +1,34 @@
 package com.backend.crosswords.admin.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 
+@Schema(description = "DTO for registering a user")
 public class RegisterUserDTO {
+    @Schema(
+            example = "Гека"
+    )
     private String name;
+
+    @Schema(
+            example = "Гека"
+    )
     private String surname;
+
+    @Schema(
+            description = "User's login, can be used to login",
+            example = "Geka"
+    )
     private String username;
+
+    @Schema(
+            example = "12345"
+    )
     private String password;
+
+    @Schema(
+            description = "User's email, can be used to login",
+            example = "geka2003@mail.ru"
+    )
     private String email;
 
     public RegisterUserDTO(String name, String surname, String username, String password, String email) {

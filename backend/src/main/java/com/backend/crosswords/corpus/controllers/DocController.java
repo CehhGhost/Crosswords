@@ -1,10 +1,13 @@
 package com.backend.crosswords.corpus.controllers;
 
-import com.backend.crosswords.corpus.dto.CreateDocDTO;
-import com.backend.crosswords.corpus.dto.EditDocDTO;
-import com.backend.crosswords.corpus.dto.RateDocDTO;
-import com.backend.crosswords.corpus.dto.SearchDocDTO;
+import com.backend.crosswords.corpus.dto.*;
 import com.backend.crosswords.corpus.services.DocService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,12 +23,15 @@ import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/documents")
+@Tag(name = "Doc controller", description = "Controller for all operations with documents")
 public class DocController {
     private final DocService docService;
 
     public DocController(DocService docService) {
         this.docService = docService;
     }
+
+    @Operation(summary = "Create a document", description = "This is a simple creating document endpoint")
 
     @PostMapping("/create")
     public ResponseEntity<HttpStatus> createDoc(@RequestBody CreateDocDTO createDocDTO) {
@@ -42,6 +48,11 @@ public class DocController {
         }
     }
 
+    @Operation(summary = "Get doc by id", description = "This endpoint gets you a document by its specified id")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Searched document", content = @Content(schema = @Schema(implementation = DocDTO.class))),
+            @ApiResponse(responseCode = "404", description = "There is no document with such id!")
+    })
     @GetMapping("/{id}")
     public ResponseEntity<?> getDocById(@PathVariable Long id) {
         try {
