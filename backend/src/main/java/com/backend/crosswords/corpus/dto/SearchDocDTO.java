@@ -1,15 +1,32 @@
 package com.backend.crosswords.corpus.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.sql.Timestamp;
 import java.util.List;
 
 public class SearchDocDTO {
     private Long id;
+    @JsonProperty("search_body")
     private String searchTerm;
-    private String type;
+    @JsonProperty("search_mode")
+    private String searchMode;
+    @JsonFormat(pattern = "dd/MM/yyyy")
+    @JsonProperty("date_from")
     private Timestamp dateFrom;
+    @JsonFormat(pattern = "dd/MM/yyyy")
+    @JsonProperty("date_to")
     private Timestamp dateTo;
+    @JsonProperty("page_number")
+    private Integer pageNumber; // бывший last_sentence_pos
+    @JsonProperty("matches_per_page")
+    private Integer matchesPerPage;
+    @JsonProperty("approval_percentage")
+    private Float approvalPercentage;
     private List<String> language;
+    private List<String> sources;
+    private List<String> tags;
 
     public Long getId() {
         return id;
@@ -27,12 +44,12 @@ public class SearchDocDTO {
         this.searchTerm = searchTerm;
     }
 
-    public String getType() {
-        return type;
+    public String getSearchMode() {
+        return searchMode;
     }
 
-    public void setType(String type) {
-        this.type = type;
+    public void setSearchMode(String searchMode) {
+        this.searchMode = searchMode;
     }
 
     public Timestamp getDateFrom() {
@@ -57,5 +74,62 @@ public class SearchDocDTO {
 
     public void setLanguage(List<String> language) {
         this.language = language;
+    }
+
+    public Integer getPageNumber() {
+        return pageNumber;
+    }
+
+    public void setPageNumber(Integer pageNumber) {
+        this.pageNumber = pageNumber;
+    }
+
+    public Integer getMatchesPerPage() {
+        return matchesPerPage;
+    }
+
+    public void setMatchesPerPage(Integer matchesPerPage) {
+        this.matchesPerPage = matchesPerPage;
+    }
+
+    public List<String> getSources() {
+        return sources;
+    }
+
+    public void setSources(List<String> sources) {
+        this.sources = sources;
+    }
+
+    public List<String> getTags() {
+        return tags;
+    }
+
+    public void setTags(List<String> tags) {
+        this.tags = tags;
+    }
+
+    public Float getApprovalPercentage() {
+        return approvalPercentage;
+    }
+
+    public void setApprovalPercentage(Float approvalPercentage) {
+        this.approvalPercentage = approvalPercentage;
+    }
+
+    @Override
+    public String toString() {
+        return "SearchDocDTO{" +
+                "id=" + id +
+                ", searchTerm='" + searchTerm + '\'' +
+                ", searchMode='" + searchMode + '\'' +
+                ", dateFrom=" + dateFrom +
+                ", dateTo=" + dateTo +
+                ", pageNumber=" + pageNumber +
+                ", matchesPerPage=" + matchesPerPage +
+                ", approvalPercentage=" + approvalPercentage +
+                ", language=" + language +
+                ", sources=" + sources +
+                ", tags=" + tags +
+                '}';
     }
 }
