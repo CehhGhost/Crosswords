@@ -11,6 +11,13 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.NoSuchElementException;
 
+// TODO создать роли и набор разрешений
+// TODO сделать ручку для проверки набора разрешений
+// TODO сделать ручку для проверки владения подпиской
+// TODO сделать модель папок документов (при регистрации пользователя тут же создается папка избранное)
+// TODO сделать ручку для получения всех папок пользователя, включая отображение присутствия выбранного документа в папках
+// TODO ручка для удаления документа из папки
+
 @RestController
 @RequestMapping("/documents")
 public class DocController {

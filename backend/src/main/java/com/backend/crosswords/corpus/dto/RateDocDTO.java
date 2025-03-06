@@ -1,7 +1,11 @@
 package com.backend.crosswords.corpus.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class RateDocDTO {
+    @JsonProperty("summary_rating")
     private Integer summaryRating;
+    @JsonProperty("classification_rating")
     private Integer classificationRating;
 
     public RateDocDTO(Integer summaryRating, Integer classificationRating) {

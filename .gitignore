@@ -4,6 +4,10 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 backend/src/main/resources/application.properties
+.dockerignore
+docker-compose.yml
+Dockerfile
+backend/src/main/resources/META-INF/**
 
 ### STS ###
 .apt_generated

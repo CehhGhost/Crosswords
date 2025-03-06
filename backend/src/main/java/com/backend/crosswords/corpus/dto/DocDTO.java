@@ -28,6 +28,7 @@ public class DocDTO {
     @JsonProperty("is_authed")
     private Boolean authed;
     private String language;
+    @JsonProperty("URL")
     private String url;
 
     public DocDTO(Long id, String summary, Timestamp date, String url, String language, String text, String title) {

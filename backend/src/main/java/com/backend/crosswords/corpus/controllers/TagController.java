@@ -1,6 +1,5 @@
 package com.backend.crosswords.corpus.controllers;
 
-import com.backend.crosswords.corpus.dto.CreateDocDTO;
 import com.backend.crosswords.corpus.dto.CreateTagDTO;
 import com.backend.crosswords.corpus.services.TagService;
 import org.springframework.http.HttpStatus;

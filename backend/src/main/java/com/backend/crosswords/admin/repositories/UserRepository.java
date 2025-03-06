@@ -4,7 +4,6 @@ import com.backend.crosswords.admin.models.User;
 import com.backend.crosswords.corpus.models.DocMeta;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 

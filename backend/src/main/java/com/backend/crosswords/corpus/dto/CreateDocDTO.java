@@ -10,6 +10,7 @@ public class CreateDocDTO {
     private String summary;
     @JsonFormat(pattern = "dd/MM/yyyy")
     private Timestamp date;
+    @JsonProperty("URL")
     private String url;
     private String language;
     @JsonProperty("source")
