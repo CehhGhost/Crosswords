@@ -1,6 +1,7 @@
 <template>
   <q-page class="page-body q-pa-xs">
     <div class="q-gutter-lg">
+      <q-btn label="к другим настройкам" @click="toggleDrawer" class="q-mb-md" outline />
       <h4 class="caption">Настройки аккаунта</h4>
 
       <div>
@@ -64,10 +65,11 @@
 <script>
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
-
+import useDrawer from 'src/composables/useDrawer'
 export default {
   name: 'AccountSettingsPage',
   setup() {
+    const { toggleDrawer } = useDrawer()
     const email = ref('')
     const oldPassword = ref('')
     const newPassword = ref('')
@@ -123,6 +125,7 @@ export default {
       foreignSendToMail,
       updateEmail,
       updatePassword,
+      toggleDrawer
     }
   },
 }

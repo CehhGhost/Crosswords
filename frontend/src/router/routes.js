@@ -94,3 +94,19 @@ const routes = [
 ]
 
 export default routes
+
+
+/*
+{
+  path: 'documents/:id/edit',
+  name: 'document-edit',
+  component: () => import('../pages/DocumentEditPage.vue'),
+  meta: { requiresAuth: true, moderatorOnly: true }
+},
+{
+  path: 'subscriptions/:id/edit',
+  name: 'subscription-edit',
+  component: () => import('../pages/SubscriptionEdit.vue'),
+  meta: { requiresAuth: true, subscriptionOwner: true }
+},
+*/

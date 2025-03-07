@@ -1,7 +1,7 @@
 <template>
   <div class="page-body">
     <q-page v-if="!isLoading" class="q-pa-md">
-      <BackButton to="/digests"/>
+      <BackButton to="/digests" />
       <q-card :class="['q-px-md q-py-sm', { 'no-shadow': $q.dark.isActive }]">
         <div class="row items-center justify-between">
           <div class="text-caption row items-center text-left">
@@ -10,90 +10,44 @@
             <q-icon :name="fasCrown" class="q-ml-sm q-mr-xs" />
             {{ DigestData?.owner }}
             <q-icon name="star" color="primary" class="q-ml-sm q-mr-xs" />
-            {{ DigestData.average_rating != -1 ? DigestData.average_rating : "Нет оценок" }}
+            {{ DigestData.average_rating != -1 ? DigestData.average_rating : 'Нет оценок' }}
           </div>
         </div>
-        <div class="text-h4 q-my-sm">
-          {{ DigestData?.title }}
-          <q-btn
-            v-if="!subscribed"
-            label="Подписаться"
-            no-caps
-            icon-right="notifications"
-            color="primary"
-            text-color="secondary"
-            class="q-ml-sm q-mt-sm"
-            @click="onSubscribeClick"
+        <div class="row items-center q-my-sm">
+          <div class="text-h4 q-mr-xs">
+            {{ DigestData?.title }}
+          </div>
+          <subscription-button
+            :digest="DigestData"
+            :ownerChangeBackendUrl="ownerChangeBackendUrl"
+            :subscriptionUpdateBackendUrl="subscriptionUpdateBackendUrl"
           />
-
-          <q-btn-dropdown
-            v-else
-            outline
-            @show="onDropdownShow"
-            no-caps
-            :color="$q.dark.isActive ? 'primary' : 'secondary'"
-            class="q-ml-sm q-mt-sm"
-            label="Управлять подпиской"
-            dropdown-icon="settings"
-            v-model="dropdown"
-          >
-            <q-list>
-              <q-item clickable @click="toggleCheckbox('sendToMail')">
-                <q-item-section>
-                  <q-checkbox
-                    v-model="sendToMail"
-                    class="custom-checkbox"
-                    label="На почту"
-                    @update:model-value="updateSubscription"
-                    @click.stop
-                  />
-                </q-item-section>
-                <q-item-section avatar>
-                  <q-icon name="email" :color="$q.dark.isActive ? 'primary' : 'secondary'" />
-                </q-item-section>
-              </q-item>
-
-              <q-item clickable @click="toggleCheckbox('mobileNotifications')">
-                <q-item-section>
-                  <q-checkbox
-                    v-model="mobileNotifications"
-                    keep-color
-                    label="Мобильные уведомления"
-                    @update:model-value="updateSubscription"
-                    @click.stop
-                  />
-                </q-item-section>
-                <q-item-section avatar>
-                  <q-icon name="phone_iphone" :color="$q.dark.isActive ? 'primary' : 'secondary'" />
-                </q-item-section>
-              </q-item>
-              <q-separator />
-              <q-item clickable @click="onUnsubscribeClick">
-                <q-item-section> Отписаться </q-item-section>
-              </q-item>
-            </q-list>
-          </q-btn-dropdown>
         </div>
 
         <div>
-          <text-body1 :class="['text-italic',
+          <text-body1
+            :class="[
+              'text-italic',
               { 'text-yellow': $q.dark.isActive, 'text-accent': !$q.dark.isActive },
             ]"
-            >"{{ DigestData?.description }}"</text-body1
           >
+            "{{ DigestData?.description }}"
+          </text-body1>
         </div>
 
         <div class="q-my-sm">
-          <div class="q-mb-xs">Оцените качество этого дайджетса: 
+          <div class="q-mb-xs">
+            Оцените качество этого дайджетса:
             <q-rating
-            v-model="userRating"
-            max="5"
-            color="primary"
-            icon="star"
-            size="sm"
-            no-reset
-            @update:model-value="onRatingChange"
-          /></div>
+              v-model="userRating"
+              max="5"
+              color="primary"
+              icon="star"
+              size="sm"
+              no-reset
+              @update:model-value="onRatingChange"
+            />
+          </div>
         </div>
 
         <div class="q-my-md">
@@ -109,7 +63,15 @@
           class="q-mt-xs"
         >
           <div v-for="(url, index) in DigestData.urls" :key="index">
-            <a :href="url" target="_blank" :class="['q-mb-xs', { 'text-primary': $q.dark.isActive, 'text-accent': !$q.dark.isActive }]">{{ url }} </a>
+            <a
+              :href="url"
+              target="_blank"
+              :class="[
+                'q-mb-xs',
+                { 'text-primary': $q.dark.isActive, 'text-accent': !$q.dark.isActive },
+              ]"
+              >{{ url }}</a
+            >
           </div>
         </q-expansion-item>
       </q-card>
@@ -174,32 +136,30 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-
 import { useRoute, useRouter } from 'vue-router'
 import DocumentTags from '../components/DocumentTags.vue'
 import ConfirmDialog from '../components/ConfirmDialog.vue'
-import { fasCrown } from '@quasar/extras/fontawesome-v6'
+import SubscriptionButton from '../components/SubscriptionButton.vue'
 import BackButton from 'src/components/BackButton.vue'
+import { fasCrown } from '@quasar/extras/fontawesome-v6'
 
 const route = useRoute()
 const router = useRouter()
 
 const DigestData = ref(null)
 const userRating = ref(0)
-const subscribed = ref(false)
-const sendToMail = ref(false)
-const mobileNotifications = ref(false)
-const dropdown = ref(false)
+const isLoading = ref(true)
 const showEditDialog = ref(false)
 const showDeleteDialog = ref(false)
 const showAdmin = ref(false)
-const backup = ref({})
-const isLoading = ref(true)
+
+// URL для изменения настроек подписки, который передаётся в SubscriptionButton
+const ownerChangeBackendUrl = 'TODO connect backend endpoint ownerChangeBackendUrl'
+const subscriptionUpdateBackendUrl = 'TODO connect backend endpoint subscriptionUpdateBackendUrl'
 
 onMounted(async () => {
-  // const id = route.params.id
   try {
-    const response = await fetch(`https://bcad5d0cfef44db6bb7d2d37aa447e3f.api.mockbin.io/`)
+    const response = await fetch(`https://d529a459cb7c410f943795a36f35f5ab.api.mockbin.io/`)
     if (!response.ok) {
       if (response.status === 404) {
         router.replace('/404')
@@ -208,17 +168,16 @@ onMounted(async () => {
       }
       return
     }
-
     DigestData.value = await response.json()
+    // Инициализация дополнительных данных, если необходимо
     if (DigestData.value && DigestData.value.subscribe_options) {
-      subscribed.value = DigestData.value.subscribe_options.subscribed
-      sendToMail.value = DigestData.value.subscribe_options.send_to_mail
-      mobileNotifications.value = DigestData.value.subscribe_options.mobile_notifications
+      // Локальные данные подписки больше не используются в этой странице
+      // SubscriptionButton самостоятельно берет данные из DigestData.subscribe_options
     }
   } catch (error) {
     console.error('Ошибка при загрузке документа:', error)
   } finally {
-    isLoading.value = false 
+    isLoading.value = false
   }
 })
 
@@ -227,9 +186,7 @@ async function onRatingChange(newRating) {
     const id = route.params.id
     const postResponse = await fetch(`http://localhost:3000/digests/${id}/rating`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ rating: newRating }),
     })
     if (!postResponse.ok) {
@@ -246,69 +203,9 @@ function goToEditPage() {
   const currentId = route.params.id
   router.push(`/documents/${currentId}/edit`)
 }
+
 function onEditCancel() {
   console.log('Редактирование отменено')
-}
-
-function onDropdownShow() {
-  backup.value = {
-    sendToMail: sendToMail.value,
-    mobileNotifications: mobileNotifications.value,
-  }
-}
-
-function toggleCheckbox(type) {
-  if (type === 'sendToMail') {
-    sendToMail.value = !sendToMail.value
-  } else if (type === 'mobileNotifications') {
-    mobileNotifications.value = !mobileNotifications.value
-  }
-  updateSubscription()
-}
-
-async function onSubscribeClick() {
-  subscribed.value = true
-  sendToMail.value = true
-  mobileNotifications.value = true
-  await sendSubscriptionUpdate()
-}
-
-async function onUnsubscribeClick() {
-  subscribed.value = false
-  sendToMail.value = false
-  mobileNotifications.value = false
-  dropdown.value = false
-  await sendSubscriptionUpdate()
-}
-
-async function updateSubscription() {
-  await sendSubscriptionUpdate()
-}
-
-async function sendSubscriptionUpdate() {
-  const payload = {
-    subscribed: subscribed.value,
-    send_to_mail: sendToMail.value,
-    mobile_notifications: mobileNotifications.value,
-  }
-
-  try {
-    const response = await fetch(
-      'https://4ec3051a148c46c8a8aa6dcfef35cdf8.api.mockbin.io/',
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      }
-    )
-    console.log(JSON.stringify(payload))
-
-    if (!response.ok) {
-      console.error('Ошибка при изменении настроек подписки')
-    }
-  } catch (error) {
-    console.error('Ошибка запроса:', error)
-  }
 }
 
 function downloadPdf() {

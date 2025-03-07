@@ -6,6 +6,7 @@
           <div>
             <span><b>Источник:</b> {{ doc.source }}</span>
             <span class="q-ml-sm"><b>Дата:</b> {{ doc.date }}</span>
+            <FolderBookmark :documentId="doc.id" />
           </div>
         </div>
         <div class="text-h6 q-mt-sm">{{ doc.title }}</div>
@@ -27,6 +28,7 @@
   
   <script>
   import DocumentTags from "../components/DocumentTags.vue";
+  import FolderBookmark from "./FolderBookmark.vue";
   export default {
     name: "DocumentCard",
     props: {
@@ -37,6 +39,7 @@
     },
     components: {
       DocumentTags,
+      FolderBookmark
   },
     methods: {
       viewDocument() {

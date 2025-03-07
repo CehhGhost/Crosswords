@@ -2,7 +2,7 @@
   <div class="search-section q-pa-md no-shadow" bg-color="primary" >
     <div class="row items-center">
       <q-select
-        v-model="searchMode"
+        v-model="search_mode"
         :options="searchModes"
         option-value="value"
         option-label="label"
@@ -16,7 +16,7 @@
         :color="$q.dark.isActive ? 'primary' : 'accent'"
       />
       <q-input
-        v-model="searchBody"
+        v-model="search_body"
         filled
         label="Строка поиска"
         class="col"
@@ -39,14 +39,14 @@
       />
     </div>
 
-    <div v-if="searchMode === 'exact'" class="q-my-sm">
-      <q-checkbox v-model="searchInText" label="Искать в тексте (иначе только по названию)" />
+    <div v-if="search_mode === 'exact'" class="q-my-sm">
+      <q-checkbox v-model="search_in_text" label="Искать в тексте (иначе только по названию)" />
     </div>
 
     <div v-if="showSources || showTags" class="row q-col-gutter-md">
       <div v-if="showSources" class="col">
         <filter-selector
-          v-model="selectedSources"
+          v-model="selected_sources"
           :options="availableSources"
           label="Источники"
           dense
@@ -57,7 +57,7 @@
       </div>
       <div v-if="showTags" class="col">
         <filter-selector
-          v-model="selectedTags"
+          v-model="selected_tags"
           :options="availableTags"
           label="Тэги"
           dense
@@ -70,7 +70,7 @@
 
     <div v-if="showDateRange" class="row q-col-gutter-md items-center">
       <q-input
-        v-model="dateFrom"
+        v-model="date_from"
         filled
         dense
         label="Дата (с)"
@@ -82,7 +82,7 @@
           <q-icon name="event" class="cursor-pointer">
             <q-popup-proxy cover transition-show="scale" transition-hide="scale">
               <q-date
-                v-model="dateFrom"
+                v-model="date_from"
                 title="Искать с"
                 subtitle="Выбор даты"
                 color="secondary"
@@ -98,7 +98,7 @@
       </q-input>
 
       <q-input
-        v-model="dateTo"
+        v-model="date_to"
         filled
         dense
         label="Дата (по)"
@@ -110,7 +110,7 @@
           <q-icon name="event" class="cursor-pointer">
             <q-popup-proxy cover transition-show="scale" transition-hide="scale">
               <q-date
-                v-model="dateTo"
+                v-model="date_to"
                 title="Искать по"
                 subtitle="Выбор даты"
                 color="secondary"
@@ -126,7 +126,7 @@
       </q-input>
     </div>
 
-    <div v-if="searchMode === 'semantic' || searchMode === 'exact'" class="q-mt-sm">
+    <div v-if="search_mode === 'semantic' || search_mode === 'exact'" class="q-mt-sm">
       <q-btn label="Сбросить фильтры" color="secondary" no-caps @click="resetFilters" />
     </div>
   </div>
@@ -147,43 +147,43 @@ export default {
         { label: 'По номеру', value: 'id' },
         { label: 'Точный', value: 'exact' },
       ],
-      searchMode: 'semantic',
-      searchBody: '',
-      searchInText: false,
-      selectedSources: [],
-      selectedTags: [],
-      dateFrom: null,
-      dateTo: null,
+      search_mode: 'semantic',
+      search_body: '',
+      search_in_text: false,
+      selected_sources: [],
+      selected_tags: [],
+      date_from: null,
+      date_to: null,
       availableSources,
       availableTags,
     }
   },
   computed: {
     showSources() {
-      return this.searchMode === 'semantic' || this.searchMode === 'exact'
+      return this.search_mode === 'semantic' || this.search_mode === 'exact'
     },
     showTags() {
-      return this.searchMode === 'semantic' || this.searchMode === 'exact'
+      return this.search_mode === 'semantic' || this.search_mode === 'exact'
     },
     showDateRange() {
-      return this.searchMode === 'semantic' || this.searchMode === 'exact'
+      return this.search_mode === 'semantic' || this.search_mode === 'exact'
     },
   },
   methods: {
     clearSelection(field) {
       if (field === 'sources') {
-        this.selectedSources = []
+        this.selected_sources = []
       } else if (field === 'tags') {
-        this.selectedTags = []
+        this.selected_tags = []
       }
     },
     resetFilters() {
-      this.selectedSources = []
-      this.selectedTags = []
-      this.dateFrom = null
-      this.dateTo = null
-      this.searchInText = false
-      this.searchBody = ''
+      this.selected_sources = []
+      this.selected_tags = []
+      this.date_from = null
+      this.date_to = null
+      this.search_in_text = false
+      this.search_body = ''
     },
     formatToISO(str) {
       if (!str) return null
@@ -196,24 +196,25 @@ export default {
       return isoDateOnly
     },
     emitSearch() {
-      const payload = {
-        searchMode: this.searchMode,
-        searchBody: this.searchBody,
-      }
+  const payload = {
+    search_mode: this.search_mode,
+    search_body: this.search_body,
+  }
 
-      if (this.searchMode === 'semantic' || this.searchMode === 'exact') {
-        payload.sources = this.selectedSources
-        payload.tags = this.selectedTags
-        payload.dateFrom = this.formatToISO(this.dateFrom)
-        payload.dateTo = this.formatToISO(this.dateTo)
-      }
+  if (this.search_mode === 'semantic' || this.search_mode === 'exact') {
+    payload.sources = this.selected_sources.map(source => source.value)
+    payload.tags = this.selected_tags.map(tag => tag.value)
+    payload.date_from = this.formatToISO(this.date_from)
+    payload.date_to = this.formatToISO(this.date_to)
+  }
 
-      if (this.searchMode === 'exact') {
-        payload.searchInText = this.searchInText
-      }
+  if (this.search_mode === 'exact') {
+    payload.search_in_text = this.search_in_text
+  }
 
-      this.$emit('search', payload)
-    },
+  this.$emit('search', payload)
+},
+
   },
 }
 </script>

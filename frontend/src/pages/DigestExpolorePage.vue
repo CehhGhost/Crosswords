@@ -72,7 +72,7 @@
 
       <div class="row items-center q-mb-sm">
         <q-input
-          v-model="searchBody"
+          v-model="search_body"
           filled
           label="Название дайджеста"
           class="col"
@@ -100,7 +100,7 @@
         <!-- дата (с) -->
         <div class="col-6">
           <q-input
-            v-model="dateFrom"
+            v-model="date_from"
             filled
             dense
             label="Дата (с)"
@@ -111,7 +111,7 @@
               <q-icon name="event" class="cursor-pointer">
                 <q-popup-proxy cover transition-show="scale" transition-hide="scale">
                   <q-date
-                    v-model="dateFrom"
+                    v-model="date_from"
                     title="Искать с"
                     subtitle="Выбор даты"
                     color="secondary"
@@ -130,7 +130,7 @@
         <!-- дата (по) -->
         <div class="col-6">
           <q-input
-            v-model="dateTo"
+            v-model="date_to"
             filled
             dense
             label="Дата (по)"
@@ -141,7 +141,7 @@
               <q-icon name="event" class="cursor-pointer">
                 <q-popup-proxy cover transition-show="scale" transition-hide="scale">
                   <q-date
-                    v-model="dateTo"
+                    v-model="date_to"
                     title="Искать по"
                     subtitle="Выбор даты"
                     color="secondary"
@@ -163,7 +163,7 @@
         <!-- теги -->
         <div class="col-6">
           <filter-selector
-            v-model="selectedTags"
+            v-model="selected_tags"
             :options="availableTags"
             label="Тэги"
             dense
@@ -176,7 +176,7 @@
         <!-- источники -->
         <div class="col-6">
           <filter-selector
-            v-model="selectedSources"
+            v-model="selected_sources"
             :options="availableSources"
             label="Источники"
             dense
@@ -232,11 +232,11 @@ export default {
   },
   data() {
     return {
-      searchBody: '',
-      dateFrom: '',
-      dateTo: '',
-      selectedTags: [],
-      selectedSources: [],
+      search_body: '',
+      date_from: '',
+      date_to: '',
+      selected_tags: [],
+      selected_sources: [],
       subscribeOnly: false, 
       digests: [],
       featuredDigests: [],
@@ -318,27 +318,27 @@ export default {
       try {
         const params = new URLSearchParams()
 
-        if (this.searchBody) {
-          params.append('searchBody', this.searchBody)
+        if (this.search_body) {
+          params.append('search_body', this.search_body)
         }
 
         // Даты
-        if (this.dateFrom) {
-          params.append('dateFrom', this.formatToISO(this.dateFrom))
+        if (this.date_from) {
+          params.append('date_from', this.formatToISO(this.date_from))
         }
-        if (this.dateTo) {
-          params.append('dateTo', this.formatToISO(this.dateTo))
+        if (this.date_to) {
+          params.append('date_to', this.formatToISO(this.date_to))
         }
 
         // Теги
-        if (this.selectedTags && this.selectedTags.length) {
-          this.selectedTags.forEach((tag) => {
+        if (this.selected_tags && this.selected_tags.length) {
+          this.selected_tags.forEach((tag) => {
             params.append('tags', tag)
           })
         }
 
-        if (this.selectedSources && this.selectedSources.length) {
-          this.selectedSources.forEach((source) => {
+        if (this.selected_sources && this.selected_sources.length) {
+          this.selected_sources.forEach((source) => {
             params.append('sources', source)
           })
         }
@@ -398,12 +398,12 @@ export default {
       }
     },
     resetFilters() {
-      this.selectedSources = []
-      this.selectedTags = []
-      this.dateFrom = null
-      this.dateTo = null
-      this.searchInText = false
-      this.searchBody = ''
+      this.selected_sources = []
+      this.selected_tags = []
+      this.date_from = null
+      this.date_to = null
+      this.search_in_text = false
+      this.search_body = ''
     },
   },
   mounted() {

@@ -37,7 +37,7 @@
   </template>
   
   <script>
-  import SubscriptionCard from "./SubscriptonCard.vue"; // Импортируем новый компонент
+  import SubscriptionCard from "./SubscriptionCard.vue"; // Импортируем новый компонент
   
   export default {
     name: "MySubscriptions",
