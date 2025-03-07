@@ -51,4 +51,4 @@ jobs:
           push: true  # Публиковать образ после сборки
           tags: |
             cehhghost/crosswords_backend:latest
-            cehhghost/crosswords_backend:${{ steps.version.outputs.VERSION }}  # Опционально: тег с версией
+            cehhghost/crosswords_backend:${{ steps.version.outputs.VERSION }}
