@@ -14,6 +14,7 @@ import org.opensearch.common.unit.Fuzziness;
 import org.opensearch.data.client.orhlc.NativeSearchQueryBuilder;
 import org.opensearch.index.query.QueryBuilder;
 import org.opensearch.index.query.QueryBuilders;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.IndexOperations;
 import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
@@ -47,6 +48,34 @@ public class DocService {
         this.userService = userService;
     }
 
+    private DocDTO transformDocIntoDocDTO(DocMeta docMeta) {
+        var doc = modelMapper.map(docMeta, DocDTO.class);
+        var docES = docSearchRepository.findById(doc.getId()).orElseThrow();
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+            var user = crosswordUserDetails.getUser();
+            doc.setFavourite(userService.checkDocInFavourites(user, docMeta));
+            var rating = ratingService.getRatingsForDocumentByUser(docMeta, user);
+            doc.setRatingSummary(rating.get(0));
+            doc.setRatingClassification(rating.get(1));
+            doc.setAuthed(true);
+        } catch (ClassCastException e) {
+            doc.setFavourite(null);
+            doc.setRatingClassification(null);
+            doc.setRatingSummary(null);
+            doc.setAuthed(false);
+        }
+        doc.setTagNames(new ArrayList<>());
+        for (var tag : docMeta.getTags()) {
+            doc.getTagNames().add(tag.getName());
+        }
+        doc.setText(docES.getText());
+        doc.setTitle(docES.getTitle());
+        doc.setRusSource(docMeta.getSource().getRussianName());
+        return doc;
+    }
+
     @Transactional
     public void createDoc(CreateDocDTO createDocDTO) {
         var docMeta = modelMapper.map(createDocDTO, DocMeta.class);
@@ -62,48 +91,42 @@ public class DocService {
         docSearchRepository.save(docES);
     }
 
-    // TODO favourite, rusSource, tags, ratingSummary, ratingClassification, authed
+    // TODO документы должны возвращаться в порядке устаревания дат
     public List<DocDTO> getAllDocs() {
         List<DocDTO> result = new ArrayList<>();
         for (var docMeta : docMetaRepository.findAll()) {
-            var doc = modelMapper.map(docMeta, DocDTO.class);
-            var docES = docSearchRepository.findById(doc.getId()).orElseThrow(); // если здесь ошибка, то ошибка на сервере, а именно в ES
-            doc.setText(docES.getText());
-            doc.setTitle(docES.getTitle());
-            result.add(doc);
+            result.add(this.transformDocIntoDocDTO(docMeta));
         }
         return result;
     }
 
-    // TODO favourite, tags, ratingSummary, ratingClassification, authed
     public DocDTO getDocById(Long id) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
-        User user = crosswordUserDetails.getUser();
         var docMeta = docMetaRepository.findById(id).orElseThrow();
-        var doc = modelMapper.map(docMeta, DocDTO.class);
-        var docES = docSearchRepository.findById(doc.getId()).orElseThrow();
-        doc.setText(docES.getText());
-        doc.setTitle(docES.getTitle());
-        doc.setRusSource(docMeta.getSource().getRussianName());
-        return doc;
+        return this.transformDocIntoDocDTO(docMeta);
     }
 
     public List<DocDTO> searchDocs(SearchDocDTO searchDocDTO) {
         List<DocDTO> result = new ArrayList<>();
         QueryBuilder queryBuilder = null;
-        switch(searchDocDTO.getType()) {
-            case "id":
-                result.add(getDocById(searchDocDTO.getId()));
+        switch (searchDocDTO.getSearchMode()) {
+            case "id" -> {
+                result.add(this.getDocById(searchDocDTO.getId()));
                 return result;
-            case "syntax":
+            }
+            case "semantic" -> {
+                if (searchDocDTO.getMatchesPerPage() <= 0) {
+                    return result;
+                }
                 queryBuilder = QueryBuilders.boolQuery()
                         .should(QueryBuilders.matchQuery("text", searchDocDTO.getSearchTerm()).fuzziness(Fuzziness.AUTO))
                         .should(QueryBuilders.matchPhraseQuery("text", searchDocDTO.getSearchTerm())).boost(2.0F);
-                break;
-            case "certain":
+            }
+            case "certain" -> {
+                if (searchDocDTO.getMatchesPerPage() <= 0) {
+                    return result;
+                }
                 queryBuilder = QueryBuilders.matchPhraseQuery("text", searchDocDTO.getSearchTerm());
-                break;
+            }
         }
         if (searchDocDTO.getDateFrom() != null && searchDocDTO.getDateTo() != null && searchDocDTO.getDateFrom().after(searchDocDTO.getDateTo())) {
             var nothing = searchDocDTO.getDateFrom();
@@ -112,36 +135,37 @@ public class DocService {
         }
         List<Long> filtersIds = new ArrayList<>();
         for (var doc : docMetaRepository.findAll()) {
-            if (equalsMetaData(doc, searchDocDTO)) {
+            if (this.equalsMetaData(doc, searchDocDTO)) {
                 filtersIds.add(doc.getId());
             }
         }
         QueryBuilder filterBuilder = QueryBuilders.termsQuery("id", filtersIds);
+        float percentage = searchDocDTO.getApprovalPercentage() == null ? 0.5F : searchDocDTO.getApprovalPercentage();
         var searchQuery = new NativeSearchQueryBuilder()
                 .withFilter(filterBuilder)
                 .withQuery(queryBuilder)
-                .withMinScore(searchDocDTO.getSearchTerm().split(" ").length / 2.0F)
+                .withMinScore(searchDocDTO.getSearchTerm().split(" ").length * percentage)
+                .withPageable(PageRequest.of(searchDocDTO.getPageNumber(), searchDocDTO.getMatchesPerPage()))
                 .build();
         // var hits = elasticsearchOperations.search(searchQuery, DocES.class, IndexCoordinates.of("document"));
         elasticsearchOperations.search(searchQuery, DocES.class, IndexCoordinates.of("document")).forEach(hit ->
         {
             var docES = hit.getContent();
             var docMeta = docMetaRepository.findById(docES.getId()).orElseThrow();
-            var doc = modelMapper.map(docMeta, DocDTO.class);
-            doc.setText(docES.getText());
-            doc.setTitle(docES.getTitle());
-            result.add(doc);
-            System.out.println(hit);
+            result.add(this.transformDocIntoDocDTO(docMeta));
+            // System.out.println(hit.getScore());
         });
         return result;
     }
-    public boolean equalsMetaData(DocMeta doc, SearchDocDTO searchDocDTO) {
+    private boolean equalsMetaData(DocMeta doc, SearchDocDTO searchDocDTO) {
         if (searchDocDTO == null) {
             return true;
         }
         return (searchDocDTO.getDateFrom() == null || searchDocDTO.getDateFrom().before(doc.getDate())) &&
                 (searchDocDTO.getDateTo() == null || searchDocDTO.getDateTo().after(doc.getDate())) &&
-                (searchDocDTO.getLanguage() == null || searchDocDTO.getLanguage().isEmpty() || searchDocDTO.getLanguage().contains(doc.getLanguage().toString()));
+                (searchDocDTO.getLanguage() == null || searchDocDTO.getLanguage().isEmpty() || searchDocDTO.getLanguage().contains(doc.getLanguage().toString())) &&
+                (searchDocDTO.getSources() == null || searchDocDTO.getSources().isEmpty() || searchDocDTO.getSources().contains(doc.getSource().getRussianName())) &&
+                (searchDocDTO.getTags() == null || searchDocDTO.getTags().isEmpty() || tagService.getSetOfTagsNames(doc.getTags()).containsAll(searchDocDTO.getTags()));
     }
 
     @Transactional

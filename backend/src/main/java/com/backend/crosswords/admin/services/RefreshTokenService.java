@@ -1,13 +1,10 @@
 package com.backend.crosswords.admin.services;
 
 import com.auth0.jwt.exceptions.TokenExpiredException;
-import com.backend.crosswords.admin.models.CrosswordUserDetails;
 import com.backend.crosswords.admin.models.RefreshToken;
 import com.backend.crosswords.admin.models.User;
 import com.backend.crosswords.admin.repositories.RefreshTokenRepository;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.ZonedDateTime;

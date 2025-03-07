@@ -2,25 +2,71 @@ package com.backend.crosswords.corpus.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.sql.Timestamp;
 import java.util.List;
 
+@Schema(description = "DTO for editing document")
 public class EditDocDTO {
+    @Schema(
+            example = "Нечто страшное"
+    )
     private String title;
+
+    @Schema(
+            example = "Интерфакс"
+    )
     @JsonProperty("source")
     private String rusSource;
+
+    @Schema(
+            example = "Нечто страшное"
+    )
     private String summary;
+
+    @Schema(
+            example = "Нечто страшное"
+    )
     private String text;
+
+    @Schema(
+            description = "The date of creation in format dd/MM/yyyy",
+            example = "01/01/2003"
+    )
     @JsonFormat(pattern = "dd/MM/yyyy")
     private Timestamp date;
+
+    @Schema(
+            description = "Flag for dropping down a summary rating",
+            example = "true"
+    )
     @JsonProperty("drop_rating_summary")
     private Boolean dropRatingSummary;
+
+    @Schema(
+            description = "Flag for dropping down a classification rating",
+            example = "true"
+    )
     @JsonProperty("drop_rating_classification")
     private Boolean dropRatingClassification;
+
+    @Schema(
+            example = "RU"
+    )
     private String language;
+
+    @Schema(
+            description = "URL of the source",
+            example = "https://www.interfax.ru/business/1001194"
+    )
     @JsonProperty("URL")
     private String url;
+
+    @Schema(
+            description = "Tags that corresponds with document",
+            example = "[\"Финансы\", \"Спорт\"]"
+    )
     @JsonProperty("tags")
     private List<TagDTO> tagDTOs;
 

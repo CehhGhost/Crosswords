@@ -2,32 +2,52 @@ package com.backend.crosswords.corpus.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.sql.Timestamp;
 import java.util.List;
 
+@Schema(description = "DTO to get documents in response by any request")
 public class DocDTO {
+    @Schema(example = "2")
     private Long id;
+    @Schema(example = "Нечто страшное")
     private String title;
+    @Schema(example = "Интерфакс")
     @JsonProperty("source")
     private String rusSource;
+    @Schema(example = "Нечто страшное")
     private String summary;
+    @Schema(example = "Нечто страшное")
     private String text;
+    @Schema(example = "[\n" +
+            "            \"Спорт\",\n" +
+            "            \"Финансы\"\n" +
+            "        ]")
     @JsonProperty("tags")
-    private List<TagDTO> tagDTOs;
+    private List<String> tagNames;
+    @Schema(example = "01/01/2003")
     @JsonFormat(pattern = "dd/MM/yyyy")
     private Timestamp date;
+    @Schema(example = "05/03/2025")
     @JsonFormat(pattern = "dd/MM/yyyy")
     @JsonProperty("last_edit")
     private Timestamp lastEdit;
+    @Schema(example = "1", description = "null, or a number between 1 and 5")
     @JsonProperty("rating_summary")
     private Integer ratingSummary;
+    @Schema(example = "1", description = "null, or a number between 1 and 5")
     @JsonProperty("rating_classification")
     private Integer ratingClassification;
+    @Schema(example = "true", description = "check if authed user added this doc into favourites, can be null or true/false")
     private Boolean favourite;
+    @Schema(example = "true", description = "check if user is authed")
     @JsonProperty("is_authed")
     private Boolean authed;
+    @Schema(example = "RU")
     private String language;
+    @Schema(example = "https://www.interfax.ru/business/1001194")
+    @JsonProperty("URL")
     private String url;
 
     public DocDTO(Long id, String summary, Timestamp date, String url, String language, String text, String title) {
@@ -107,12 +127,12 @@ public class DocDTO {
         this.rusSource = rusSource;
     }
 
-    public List<TagDTO> getTagDTOs() {
-        return tagDTOs;
+    public List<String> getTagNames() {
+        return tagNames;
     }
 
-    public void setTagDTOs(List<TagDTO> tagDTOs) {
-        this.tagDTOs = tagDTOs;
+    public void setTagNames(List<String> tagNames) {
+        this.tagNames = tagNames;
     }
 
     public Timestamp getLastEdit() {
@@ -163,7 +183,7 @@ public class DocDTO {
                 ", rusSource='" + rusSource + '\'' +
                 ", summary='" + summary + '\'' +
                 ", text='" + text + '\'' +
-                ", tagDTOs=" + tagDTOs +
+                ", tagDTOs=" + tagNames +
                 ", date=" + date +
                 ", lastEdit=" + lastEdit +
                 ", ratingSummary=" + ratingSummary +

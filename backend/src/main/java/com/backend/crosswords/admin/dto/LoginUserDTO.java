@@ -1,7 +1,17 @@
 package com.backend.crosswords.admin.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "DTO to login a user")
 public class LoginUserDTO {
+    @Schema(
+            description = "The user's username, that can be his email or username",
+            examples = "Geka"
+    )
     private String username;
+    @Schema(
+            example = "12345"
+    )
     private String password;
 
     public LoginUserDTO(String username, String password) {

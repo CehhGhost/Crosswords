@@ -8,7 +8,6 @@ import com.backend.crosswords.admin.repositories.UserRepository;
 import com.backend.crosswords.config.JWTUtil;
 import com.backend.crosswords.corpus.models.DocMeta;
 import com.backend.crosswords.corpus.models.Rating;
-import com.backend.crosswords.corpus.models.Tag;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -103,5 +102,10 @@ public class UserService {
             user.getFavouriteDocs().remove(docMeta);
             userRepository.save(user);
         }
+    }
+
+    public Boolean checkDocInFavourites(User user, DocMeta docMeta) {
+        user = userRepository.findById(user.getId()).orElseThrow();
+        return user.getFavouriteDocs() != null && user.getFavouriteDocs().contains(docMeta);
     }
 }

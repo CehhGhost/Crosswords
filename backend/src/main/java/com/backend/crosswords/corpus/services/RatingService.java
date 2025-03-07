@@ -9,7 +9,7 @@ import com.backend.crosswords.corpus.repositories.jpa.RatingRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Iterator;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -62,5 +62,18 @@ public class RatingService {
                 ratingRepository.save(rating);
             }
         }
+    }
+
+    public List<Integer> getRatingsForDocumentByUser(DocMeta docMeta, User user) {
+        var rating = ratingRepository.findByUserAndDoc(user, docMeta);
+        List<Integer> result = new ArrayList<>();
+        if (rating.isEmpty()) {
+            result.add(null);
+            result.add(null);
+            return result;
+        }
+        result.add(rating.get().getSummaryRating());
+        result.add(rating.get().getClassificationRating());
+        return result;
     }
 }
