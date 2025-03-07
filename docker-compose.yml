@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "8081:8081"  # Пробрасываем порт Spring Boot
+    depends_on:
+      - postgres
+      - opensearch
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/crossword_new
+      SPRING_DATASOURCE_USERNAME: crossword_new
+      SPRING_DATASOURCE_PASSWORD: 1234567890
+      OPENSEARCH_URIS: http://opensearch:9200
+      OPENSEARCH_USERNAME: admin
+      OPENSEARCH_PASSWORD: CBsZ6#9kHxb
+      JWT_SECRET: SECRET
+      JWT_ACCESS_EXPIRATION_DATE: 15
+      JWT_REFRESH_EXPIRATION_DATE: 10080
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    networks:
+      - shared_network
+
+  postgres:
+    image: postgres:13
+    ports:
+      - "5432:5432"  # Пробрасываем порт PostgreSQL
+    environment:
+      POSTGRES_DB: crossword_new
+      POSTGRES_USER: crossword_new
+      POSTGRES_PASSWORD: 1234567890
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - shared_network
+
+  opensearch:
+    image: opensearchproject/opensearch:2.11.0  # Используем OpenSearch вместо Elasticsearch
+    ports:
+      - "9200:9200"  # Пробрасываем порт OpenSearch
+    environment:
+      discovery.type: single-node
+      plugins.security.disabled: "true"  # Отключаем security для упрощения
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+    networks:
+      - shared_network
+
+volumes:
+  postgres-data:
+  opensearch-data:
+networks:
+  shared_network:
+    external: true
