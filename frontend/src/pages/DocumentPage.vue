@@ -142,6 +142,7 @@ import CommentsSection from 'src/components/CommentsSection.vue'
 import FolderBookmark from 'src/components/FolderBookmark.vue'
 import { Recogito } from '@recogito/recogito-js'
 import '@recogito/recogito-js/dist/recogito.min.css'
+import '../css/customRecogito.scss'
 
 const route = useRoute()
 const router = useRouter()
@@ -151,7 +152,6 @@ const userRating = ref(0)
 const textContainer = ref(null)
 let recogitoInstance = null
 
-// Флаги для открытия/закрытия диалогов
 const showEditDialog = ref(false)
 const showDeleteDialog = ref(false)
 const isLoading = ref(true)
@@ -168,7 +168,7 @@ onMounted(async () => {
   try {
     // Заменить URL на реальный эндпоинт
     // const response = await fetch(`http://localhost:3000/documents/${id}`)
-    const response = await fetch(`https://84f008c7af8846c6828bc24e68bd647a.api.mockbin.io/`)
+    const response = await fetch(`https://a5c62208c62d445db687c99150bfd06e.api.mockbin.io/`)
     console.log(id)
 
     if (!response.ok) {
@@ -181,6 +181,7 @@ onMounted(async () => {
     }
 
     documentData.value = await response.json()
+    // documentData.value.is_authed = false; // для тестирования не зарегистрированного пользователя
     console.log(documentData.value)
   } catch (error) {
     console.error('Ошибка при загрузке документа:', error)
@@ -197,24 +198,52 @@ watch(
     console.log('Watcher triggered:', newDocument, loading, textContainer.value)
 
     if (newDocument && !loading && textContainer.value) {
-      // Теперь элемент точно должен быть доступен
+      let widgets = []
+      widgets.push('COMMENT')
       recogitoInstance = new Recogito({
         content: textContainer.value,
-        readOnly: !newDocument.is_authed,
-        allowEmpty: false,
+        readOnly: false,
+        allowEmpty: true,
         locale: 'RU',
+        widgets: widgets,
+      })
+
+      nextTick(() => {
+        const observer = new MutationObserver((mutations) => {
+          mutations.forEach((mutation) => {
+            if (
+              mutation.target.matches('.r6o-editable-text') &&
+              mutation.target.hasAttribute('disabled')
+            ) {
+              mutation.target.removeAttribute('disabled')
+            }
+          })
+        })
+
+        observer.observe(document.body, {
+          attributes: true,
+          subtree: true,
+        })
       })
 
       const annotations = newDocument.annotations.map((annot) => ({
         id: annot.id,
         type: 'Annotation',
-        body: [],
+        // Преобразуем массив комментариев в массив объектов TextualBody
+        body: annot.comments.map((comment) => ({
+          type: 'TextualBody',
+          value: comment,
+          purpose: 'commenting',
+        })),
         target: {
-          selector: {
-            type: 'TextPositionSelector',
-            start: annot.start,
-            end: annot.end,
-          },
+          // Передаём селектор как массив для поддержки нескольких селекторов
+          selector: [
+            {
+              type: 'TextPositionSelector',
+              start: annot.start,
+              end: annot.end,
+            },
+          ],
         },
       }))
 
@@ -222,20 +251,27 @@ watch(
       recogitoInstance.setAnnotations(annotations)
 
       recogitoInstance.on('createAnnotation', async (annotation, overrideId) => {
+        // Получаем текст из annotation.body, если он есть
         const note = annotation.body && annotation.body[0] ? annotation.body[0].value : ''
+
+        // Ищем селектор с типом 'TextPositionSelector'
         const posSelector = annotation.target.selector.find(
           (s) => s.type === 'TextPositionSelector',
         )
+
         const payload = {
           start: posSelector ? posSelector.start : null,
           end: posSelector ? posSelector.end : null,
-          note: note,
+          comments: [note],
         }
+
         console.log(JSON.stringify(annotation))
         console.log(JSON.stringify(payload))
+
         try {
           const response = await fetch(
-            `http://your-backend/documents/${newDocument.id}/annotations`,
+            //`http://your-backend/documents/${newDocument.id}/annotations`,
+            'https://55236949e4444103acfe1c01326c4084.api.mockbin.io/',
             {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -255,10 +291,13 @@ watch(
           recogitoInstance.removeAnnotation(annotation)
         }
       })
+
       recogitoInstance.on('deleteAnnotation', async (annotation) => {
+        console.log('delete-annotation')
         try {
           const response = await fetch(
-            `http://your-backend/documents/${documentData.value.id}/annotations/${annotation.id}`,
+            //`http://your-backend/documents/${documentData.value.id}/annotations/${annotation.id}`,
+            'https://8be73c6cb1434fa6a55467ff489377b5.api.mockbin.io/',
             {
               method: 'DELETE',
             },
@@ -267,7 +306,7 @@ watch(
             console.log('Аннотация успешно удалена')
           } else {
             console.error('Ошибка при удалении аннотации:', response.status)
-            // При необходимости можно вернуть аннотацию на страницу:
+            // это чтоб при необходимости можно вернуть аннотацию на страницу
             recogitoInstance.addAnnotation(annotation)
           }
         } catch (error) {
@@ -276,32 +315,33 @@ watch(
         }
       })
 
-      // Обработка редактирования аннотации
       recogitoInstance.on('updateAnnotation', async (annotation, previous) => {
-        // Найдем нужный селектор, содержащий start и end
         const posSelector = annotation.target.selector.find(
           (s) => s.type === 'TextPositionSelector',
         )
+
         const updatedPayload = {
           start: posSelector ? posSelector.start : null,
           end: posSelector ? posSelector.end : null,
-          note: annotation.body && annotation.body[0] ? annotation.body[0].value : '',
+          comments: annotation.body.map((bodyItem) => bodyItem.value),
         }
+        console.log(updatedPayload)
 
         try {
           const response = await fetch(
-            `http://your-backend/documents/${documentData.value.id}/annotations/${annotation.id}`,
+            //`http://your-backend/documents/${documentData.value.id}/annotations/${annotation.id}`,
+            'https://8be73c6cb1434fa6a55467ff489377b5.api.mockbin.io/',
             {
-              method: 'PUT', // или PATCH — в зависимости от вашего API
+              method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(updatedPayload),
             },
           )
+
           if (response.ok) {
             console.log('Аннотация успешно обновлена')
           } else {
             console.error('Ошибка при обновлении аннотации:', response.status)
-            // При необходимости можно откатить изменения, используя previous
             recogitoInstance.setAnnotations([previous])
           }
         } catch (error) {
@@ -310,7 +350,6 @@ watch(
           recogitoInstance.setAnnotations([previous])
         }
       })
-      
     }
   },
   { immediate: true },
@@ -337,7 +376,6 @@ async function onRatingChange(newRating) {
 }
 
 function goToEditPage() {
-  // Переходим на /documents/:id/edit
   const currentId = route.params.id
   router.push(`/documents/${currentId}/edit`)
 }
@@ -373,5 +411,11 @@ function onDeleteCancel() {
   .q-dark & {
     background-color: #2b2b2b !important;
   }
+}
+
+.r6o-editable-text {
+  cursor: text !important;
+  color: #b61212 !important;
+  opacity: 1 !important;
 }
 </style>
