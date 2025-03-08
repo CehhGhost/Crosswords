@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   app:
-    build: .
+    image: cehhghost/crosswords_backend:latest
     ports:
       - "8081:8081"  # Пробрасываем порт Spring Boot
     depends_on:
@@ -16,9 +16,12 @@ services:
       OPENSEARCH_USERNAME: admin
       OPENSEARCH_PASSWORD: CBsZ6#9kHxb
       JWT_SECRET: SECRET
-      JWT_ACCESS_EXPIRATION_DATE: 15
-      JWT_REFRESH_EXPIRATION_DATE: 10080
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      JWT_ACCESSEXPIRATIONDATE: 15
+      JWT_REFRESHEXPIRATIONDATE: 10080
+      SPRING_DATASOURCE_DRIVER-CLASS-NAME: org.postgresql.Driver
+      SPRING_JPA_HIBERNATE_DDL-AUTO: update
+      SPRING_JPA_DATABASE: postgresql
+      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.PostgreSQLDialect
     networks:
       - shared_network
 
