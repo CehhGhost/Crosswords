@@ -1,0 +1,19 @@
+spring.application.name=crosswords
+
+opensearch.uris= https://127.0.0.1:9200
+opensearch.username= admin
+opensearch.password= CBsZ6#9kHxb
+
+spring.datasource.url=jdbc:postgresql://localhost:5432/crossword_new
+spring.datasource.username=crossword_new
+spring.datasource.password=1234567890
+spring.datasource.driver-class-name=org.postgresql.Driver
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.database=postgresql
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+spring.jpa.properties.hibernate.show_sql=true
+server.port=8081
+
+jwt_secret=SECRET
+jwt_accessExpirationDate=15
+jwt_refreshExpirationDate=10080
