@@ -16,11 +16,11 @@
       <div class="row items-center">
         <q-toolbar-title>
           <router-link to="/" class="flex items-center no-underline text-black">
-            <img
-              src="https://via.placeholder.com/120x40?text=Logo"
-              alt="тут будет логотип"
-              class="logo"
-            />
+            <q-img
+  src="../assets/crosswords.png"
+  alt="логотип"
+  style="width: 120px; max-width: 100%;"
+/>
           </router-link>
         </q-toolbar-title>
         <div class="hidden-sm-and-down row items-center">

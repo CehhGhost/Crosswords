@@ -9,15 +9,8 @@
           </div>
 
           <!-- В избранное + сердечко (клик по любому элементу) -->
-          <div class="row items-center cursor-pointer text-caption" @click="toggleFavorite">
-            <q-icon
-              name="favorite"
-              size="sm"
-              :color="documentData?.favorite ? 'red' : 'grey-7'"
-              :style="{ opacity: documentData?.favorite ? 1 : 0.6 }"
-            >
-              <q-tooltip class="bg-secondary"> Добавить в избранное </q-tooltip>
-            </q-icon>
+          <div class="row items-center">
+            <FolderBookmark :documentId="documentData.id" />
           </div>
         </div>
         <div class="text-h5 q-my-sm">
@@ -63,7 +56,7 @@
           </div>
         </q-expansion-item>
 
-        <div class="q-my-md">
+        <div ref="textContainer" class="q-my-md">
           {{ documentData?.text }}
         </div>
         <div v-if="documentData?.URL" class="q-mt-sm text-body2">
@@ -140,18 +133,23 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import DocumentTags from '../components/DocumentTags.vue'
 import ConfirmDialog from '../components/ConfirmDialog.vue'
 import BackButton from 'src/components/BackButton.vue'
 import CommentsSection from 'src/components/CommentsSection.vue'
+import FolderBookmark from 'src/components/FolderBookmark.vue'
+import { Recogito } from '@recogito/recogito-js'
+import '@recogito/recogito-js/dist/recogito.min.css'
 
 const route = useRoute()
 const router = useRouter()
 
 const documentData = ref(null)
 const userRating = ref(0)
+const textContainer = ref(null)
+let recogitoInstance = null
 
 // Флаги для открытия/закрытия диалогов
 const showEditDialog = ref(false)
@@ -170,7 +168,7 @@ onMounted(async () => {
   try {
     // Заменить URL на реальный эндпоинт
     // const response = await fetch(`http://localhost:3000/documents/${id}`)
-    const response = await fetch(`https://478dbea22d894b9a8f6623f77a2ed9ee.api.mockbin.io/`)
+    const response = await fetch(`https://84f008c7af8846c6828bc24e68bd647a.api.mockbin.io/`)
     console.log(id)
 
     if (!response.ok) {
@@ -183,12 +181,140 @@ onMounted(async () => {
     }
 
     documentData.value = await response.json()
+    console.log(documentData.value)
   } catch (error) {
     console.error('Ошибка при загрузке документа:', error)
   } finally {
     isLoading.value = false
   }
 })
+
+watch(
+  [documentData, isLoading],
+  async ([newDocument, loading]) => {
+    // Ждем, пока DOM обновится (то есть элемент с ref появится)
+    await nextTick()
+    console.log('Watcher triggered:', newDocument, loading, textContainer.value)
+
+    if (newDocument && !loading && textContainer.value) {
+      // Теперь элемент точно должен быть доступен
+      recogitoInstance = new Recogito({
+        content: textContainer.value,
+        readOnly: !newDocument.is_authed,
+        allowEmpty: false,
+        locale: 'RU',
+      })
+
+      const annotations = newDocument.annotations.map((annot) => ({
+        id: annot.id,
+        type: 'Annotation',
+        body: [],
+        target: {
+          selector: {
+            type: 'TextPositionSelector',
+            start: annot.start,
+            end: annot.end,
+          },
+        },
+      }))
+
+      console.log('Инициализация RecogitoJS, аннотации:', annotations)
+      recogitoInstance.setAnnotations(annotations)
+
+      recogitoInstance.on('createAnnotation', async (annotation, overrideId) => {
+        const note = annotation.body && annotation.body[0] ? annotation.body[0].value : ''
+        const posSelector = annotation.target.selector.find(
+          (s) => s.type === 'TextPositionSelector',
+        )
+        const payload = {
+          start: posSelector ? posSelector.start : null,
+          end: posSelector ? posSelector.end : null,
+          note: note,
+        }
+        console.log(JSON.stringify(annotation))
+        console.log(JSON.stringify(payload))
+        try {
+          const response = await fetch(
+            `http://your-backend/documents/${newDocument.id}/annotations`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload),
+            },
+          )
+
+          if (response.ok) {
+            const data = await response.json()
+            overrideId(data.id)
+          } else {
+            console.error('Ошибка при сохранении аннотации:', response.status)
+            recogitoInstance.removeAnnotation(annotation)
+          }
+        } catch (error) {
+          console.error('Ошибка при сохранении аннотации:', error)
+          recogitoInstance.removeAnnotation(annotation)
+        }
+      })
+      recogitoInstance.on('deleteAnnotation', async (annotation) => {
+        try {
+          const response = await fetch(
+            `http://your-backend/documents/${documentData.value.id}/annotations/${annotation.id}`,
+            {
+              method: 'DELETE',
+            },
+          )
+          if (response.ok) {
+            console.log('Аннотация успешно удалена')
+          } else {
+            console.error('Ошибка при удалении аннотации:', response.status)
+            // При необходимости можно вернуть аннотацию на страницу:
+            recogitoInstance.addAnnotation(annotation)
+          }
+        } catch (error) {
+          console.error('Ошибка при удалении аннотации:', error)
+          recogitoInstance.addAnnotation(annotation)
+        }
+      })
+
+      // Обработка редактирования аннотации
+      recogitoInstance.on('updateAnnotation', async (annotation, previous) => {
+        // Найдем нужный селектор, содержащий start и end
+        const posSelector = annotation.target.selector.find(
+          (s) => s.type === 'TextPositionSelector',
+        )
+        const updatedPayload = {
+          start: posSelector ? posSelector.start : null,
+          end: posSelector ? posSelector.end : null,
+          note: annotation.body && annotation.body[0] ? annotation.body[0].value : '',
+        }
+
+        try {
+          const response = await fetch(
+            `http://your-backend/documents/${documentData.value.id}/annotations/${annotation.id}`,
+            {
+              method: 'PUT', // или PATCH — в зависимости от вашего API
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(updatedPayload),
+            },
+          )
+          if (response.ok) {
+            console.log('Аннотация успешно обновлена')
+          } else {
+            console.error('Ошибка при обновлении аннотации:', response.status)
+            // При необходимости можно откатить изменения, используя previous
+            recogitoInstance.setAnnotations([previous])
+          }
+        } catch (error) {
+          console.error('Ошибка при обновлении аннотации:', error)
+          // Откат изменений
+          recogitoInstance.setAnnotations([previous])
+        }
+      })
+      
+    }
+  },
+  { immediate: true },
+)
 
 async function onRatingChange(newRating) {
   try {
@@ -207,33 +333,6 @@ async function onRatingChange(newRating) {
     }
   } catch (err) {
     console.error('Ошибка при отправке рейтинга:', err)
-  }
-}
-
-async function toggleFavorite() {
-  const newValue = !documentData.value?.favorite
-  documentData.value.favorite = newValue
-
-  try {
-    const response = await fetch(
-      `https://4ec3051a148c46c8a8aa6dcfef35cdf8.api.mockbin.io/`,
-      // `http://localhost:3000/documents/${route.params.id}/favorite`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ favorite: newValue }),
-      },
-    )
-
-    if (!response.ok) {
-      documentData.value.favorite = !newValue
-      console.error('Не удалось обновить favorite:', response.status)
-    }
-  } catch (error) {
-    documentData.value.favorite = !newValue
-    console.error('Ошибка при отправке favorite:', error)
   }
 }
 

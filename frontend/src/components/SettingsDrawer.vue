@@ -1,8 +1,8 @@
 <template>
   <div>
-    <q-btn label="Открыть меню" @click="rightDrawerOpen = true" />
+    <q-btn label="Открыть меню" @click="toggleDrawer" />
 
-    <q-drawer v-model="rightDrawerOpen" side="left" overlay bordered>
+    <q-drawer v-model="drawerOpen" side="left" overlay bordered>
       <q-list>
         <q-item clickable v-close-popup @click="onPrivacy">
           <q-item-section>
@@ -14,7 +14,7 @@
         </q-item>
         <q-item clickable v-close-popup @click="onExport" v-ripple>
           <q-item-section>
-          <div class="row items-center justify-center">
+            <div class="row items-center justify-center">
               <q-icon name="download" class="q-mr-sm" />
               <span>Экспорт данных</span>
             </div>
@@ -26,10 +26,14 @@
 </template>
 
 <script>
+import useDrawer from 'src/composables/useDrawer'
+
 export default {
-  data() {
+  setup() {
+    const { drawerOpen, toggleDrawer } = useDrawer()
     return {
-      rightDrawerOpen: true,
+      drawerOpen,
+      toggleDrawer,
     }
   },
   methods: {
@@ -42,6 +46,3 @@ export default {
   },
 }
 </script>
-
-<style scoped>
-</style>

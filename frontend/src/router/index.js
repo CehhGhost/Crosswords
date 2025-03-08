@@ -2,15 +2,6 @@ import { defineRouter } from '#q-app/wrappers'
 import { createRouter, createMemoryHistory, createWebHistory, createWebHashHistory } from 'vue-router'
 import routes from './routes'
 
-/*
- * If not building with SSR mode, you can
- * directly export the Router instantiation;
- *
- * The function below can be async too; either use
- * async/await or return a Promise which resolves
- * with the Router instance.
- */
-
 export default defineRouter(function (/* { store, ssrContext } */) {
   const createHistory = process.env.SERVER
     ? createMemoryHistory
@@ -19,11 +10,52 @@ export default defineRouter(function (/* { store, ssrContext } */) {
   const Router = createRouter({
     scrollBehavior: () => ({ left: 0, top: 0 }),
     routes,
-
-    // Leave this as is and make changes in quasar.conf.js instead!
-    // quasar.conf.js -> build -> vueRouterMode
-    // quasar.conf.js -> build -> publicPath
     history: createHistory(process.env.VUE_ROUTER_BASE)
+  })
+
+  // Глобальный guard для проверки авторизации и прав доступа
+  Router.beforeEach((to, from, next) => {
+    // Если маршрут не требует авторизации, продолжаем навигацию
+    if (!to.meta.requiresAuth) {
+      return next()
+    }
+
+    // Проверяем авторизацию пользователя через endpoint /api/auth/me.
+    // HttpOnly cookie отправляются автоматически благодаря опции credentials: 'include'
+    fetch('/api/auth/me', { credentials: 'include' })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Not authenticated')
+        }
+        return response.json()
+      })
+      .then(user => {
+        // Если маршрут требует, чтобы пользователь был модератором, проверяем поле is_moderator
+        if (to.meta.moderatorOnly && !user.is_moderator) {
+          return next({ name: 'home' })
+        }
+        // Если маршрут требует проверки владельца подписки, выполняем дополнительный запрос
+        if (to.meta.subscriptionOwner) {
+          fetch(`/api/subscriptions/${to.params.id}/check-owner`, { credentials: 'include' })
+            .then(response => {
+              if (!response.ok) {
+                throw new Error('Not authorized')
+              }
+              return response.json()
+            })
+            .then(data => {
+              if (data.is_owner) {
+                return next()
+              }
+              return next({ name: 'home' })
+            })
+            .catch(() => next({ name: 'home' }))
+          return // Выходим, т.к. next() будет вызван внутри fetch
+        }
+        // Если дополнительных проверок нет, разрешаем переход
+        return next()
+      })
+      .catch(() => next({ name: 'login' }))
   })
 
   return Router

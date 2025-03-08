@@ -50,13 +50,13 @@ export default {
     // При загрузке страницы делаем "пустой" точный поиск
     // Чтобы показать все документы
     const initialPayload = {
-      searchMode: "exact",  
-      searchBody: "",      
+      search_mode: "exact",  
+      search_body: "",      
       sources: [],
       tags: [],
-      dateFrom: null,
-      dateTo: null,
-      searchInText: false,
+      date_from: null,
+      date_to: null,
+      search_in_text: false,
     };
     this.onSearch(initialPayload);
   },
