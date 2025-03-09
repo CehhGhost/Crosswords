@@ -22,6 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.firewall.RequestRejectedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -94,6 +95,7 @@ public class DocService {
     }
 
     // TODO документы должны возвращаться в порядке устаревания дат
+    // TODO возможно нужна будет пагинация
     public List<DocDTO> getAllDocs() {
         List<DocDTO> result = new ArrayList<>();
         for (var docMeta : docMetaRepository.findAll()) {
@@ -159,6 +161,7 @@ public class DocService {
         });
         return result;
     }
+
     private boolean equalsMetaData(DocMeta doc, SearchDocDTO searchDocDTO) {
         if (searchDocDTO == null) {
             return true;
@@ -171,52 +174,55 @@ public class DocService {
     }
 
     @Transactional
-    public ResponseEntity<HttpStatus> deleteDocById(Long id) {
-        try {
-            var docMeta = docMetaRepository.findById(id).orElseThrow();
-            tagService.removeTagsFromDoc(docMeta);
-            packageService.removeDocFromPackages(docMeta);
-            docMetaRepository.delete(docMeta);
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.badRequest().build();
+    public void deleteDocById(Long id) {
+        var checkDocMeta = docMetaRepository.findById(id);
+        if (checkDocMeta.isEmpty()) {
+            throw new NoSuchElementException("There is no documents in Postgres with such id!");
         }
+        var docMeta = docMetaRepository.findById(id).orElseThrow();
+        tagService.removeTagsFromDoc(docMeta);
+        packageService.removeDocFromPackages(docMeta);
+        docMetaRepository.delete(docMeta);
         // TODO учесть, что ES не понимает @Transactional и в случае ошибки не откатит изменения обратно, поэтому может произойти повреждение данных в ES
-        try {
-            var docES = docSearchRepository.findById(id).orElseThrow();
-            docSearchRepository.delete(docES);
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.badRequest().build();
+        var checkDocEs = docSearchRepository.findById(id);
+        if (checkDocEs.isEmpty()) {
+            throw new NoSuchElementException("There is no documents in ES with such id!");
         }
-        return ResponseEntity.ok(HttpStatus.OK);
+        var docES = docSearchRepository.findById(id).orElseThrow();
+        docSearchRepository.delete(docES);
     }
 
-    public ResponseEntity<HttpStatus> rateDocById(Long id, RateDocDTO rateDocDTO) {
-        // TODO возможно стоит вставить проверку на значения рейтингов от 1 до 5
+    public void rateDocById(Long id, RateDocDTO rateDocDTO) {
+        if (rateDocDTO.getClassificationRating() < 1 || rateDocDTO.getClassificationRating() > 5 || rateDocDTO.getSummaryRating() < 1 || rateDocDTO.getSummaryRating() > 5) {
+            throw new IllegalArgumentException("Rating's arguments must be in range of 1 to 5!");
+        }
         DocMeta doc;
+
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
         User user = crosswordUserDetails.getUser();
-        try {
-            doc = docMetaRepository.findById(id).orElseThrow();
-            docSearchRepository.findById(id).orElseThrow();
-            user = userService.loadUserById(user.getId());
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.badRequest().build();
-        }
+
+        doc = docMetaRepository.findById(id).orElseThrow();
+        docSearchRepository.findById(id).orElseThrow(); // проверка, что базы данных синхронизированы
+        user = userService.loadUserById(user.getId());
+
         ratingService.createRating(doc, user, rateDocDTO.getSummaryRating(), rateDocDTO.getClassificationRating());
-        return ResponseEntity.ok(HttpStatus.OK);
     }
 
     @Transactional
     public ResponseEntity<HttpStatus> editDocById(Long id, EditDocDTO editDocDTO) {
-        DocMeta docMeta;
-        DocES docES;
-        try {
-            docMeta = docMetaRepository.findById(id).orElseThrow();
-            docES = docSearchRepository.findById(id).orElseThrow();
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.badRequest().build();
+        var checkDocMeta = docMetaRepository.findById(id);
+        if (checkDocMeta.isEmpty()) {
+            throw new NoSuchElementException("There is no documents in Postgres with such id!");
         }
+        DocMeta docMeta = checkDocMeta.get();
+
+        var checkDocES = docSearchRepository.findById(id);
+        if (checkDocES.isEmpty()) {
+            throw new NoSuchElementException("There is no documents in ES with such id!");
+        }
+        DocES docES = checkDocES.get();
+
         docMeta.setSource(Source.fromRussianName(editDocDTO.getRusSource()));
         docMeta.setDate(editDocDTO.getDate());
         docMeta.setLanguage(Language.valueOf(editDocDTO.getLanguage().toUpperCase()));
@@ -241,6 +247,7 @@ public class DocService {
 
         return ResponseEntity.ok(HttpStatus.OK);
     }
+
     public void deleteDocumentsItself() {
         IndexOperations indexOps = elasticsearchOperations.indexOps(IndexCoordinates.of("document"));
         if (indexOps.exists()) {
@@ -248,10 +255,10 @@ public class DocService {
             if (isDeleted) {
                 System.out.println("Index '" + "document" + "' deleted successfully.");
             } else {
-                System.out.println("Failed to delete index '" + "document" + "'.");
+                throw new RequestRejectedException("Failed to delete index '" + "document" + "'.");
             }
         } else {
-            System.out.println("Index '" + "document" + "' does not exist.");
+            throw new NoSuchElementException("Index '" + "document" + "' does not exist.");
         }
     }
 

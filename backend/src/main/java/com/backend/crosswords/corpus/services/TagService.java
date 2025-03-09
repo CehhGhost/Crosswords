@@ -22,22 +22,20 @@ public class TagService {
         this.modelMapper = modelMapper;
     }
 
-    public ResponseEntity<HttpStatus> createTag(CreateTagDTO createTagDTO) {
+    public void createTag(CreateTagDTO createTagDTO) {
         if (tagRepository.existsTagByName(createTagDTO.getName())) {
-            return ResponseEntity.badRequest().build();
+            throw new IllegalArgumentException("The tag with such name is already existing!");
         }
         var tag = modelMapper.map(createTagDTO, Tag.class);
         tagRepository.save(tag);
-        return ResponseEntity.ok(HttpStatus.OK);
     }
 
-    public ResponseEntity<HttpStatus> deleteTagById(Long id) {
+    public void deleteTagById(Long id) {
         var tag = tagRepository.findById(id);
         if (tag.isEmpty()) {
-            return ResponseEntity.badRequest().build();
+            throw new NoSuchElementException("There is no tags with such id!");
         }
         tagRepository.delete(tag.get());
-        return ResponseEntity.ok(HttpStatus.OK);
     }
 
     public List<Tag> getTagsInNamesAndSaveForDoc(List<TagDTO> tagDTOs, DocMeta docMeta) {

@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.firewall.RequestRejectedException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.NoSuchElementException;
@@ -22,9 +23,7 @@ import java.util.NoSuchElementException;
 // TODO создать роли и набор разрешений
 // TODO сделать ручку для проверки набора разрешений
 // TODO сделать ручку для проверки владения подпиской
-// TODO сделать модель папок документов (при регистрации пользователя тут же создается папка избранное)
 // TODO сделать ручку для получения всех папок пользователя, включая отображение присутствия выбранного документа в папках
-// TODO ручка для удаления документа из папки
 // TODO просто проверка настройки CI/CD
 
 @RestController
@@ -39,7 +38,7 @@ public class DocController {
 
     @Operation(summary = "Create a document", description = "This is a simple creating document endpoint")
     @PostMapping("/create")
-    public ResponseEntity<HttpStatus> createDoc(@RequestBody CreateDocDTO createDocDTO) {
+    public ResponseEntity<?> createDoc(@RequestBody CreateDocDTO createDocDTO) {
         docService.createDoc(createDocDTO);
         return ResponseEntity.ok(HttpStatus.OK);
     }
@@ -95,28 +94,58 @@ public class DocController {
             @ApiResponse(responseCode = "400", description = "There is no documents with such id")
     })
     @DeleteMapping("/{id}")
-    public ResponseEntity<HttpStatus> deleteDocById(@PathVariable Long id) {
-        return docService.deleteDocById(id);
+    public ResponseEntity<?> deleteDocById(@PathVariable Long id) {
+        try {
+            docService.deleteDocById(id);
+        } catch (NoSuchElementException e) {
+            ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+        return ResponseEntity.ok(HttpStatus.OK);
     }
-    @Operation(summary = "Rate doc by id", description = "This endpoint lets you rate document, parametres can be null or numbers from 1 to 5, user must be authenticated")
+    @Operation(summary = "Rate doc by id", description = "This endpoint lets you rate a document, parameters can be null or numbers from 1 to 5, user must be authenticated")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "You successfully rated a document"),
-            @ApiResponse(responseCode = "401", description = "You are trying to rate a doc while not authenticated")
+            @ApiResponse(responseCode = "401", description = "You are trying to rate a doc while not authenticated"),
+            @ApiResponse(responseCode = "400", description = "You successfully rated a document"),
+            @ApiResponse(responseCode = "404", description = "There is no documents with such id")
     })
     @PatchMapping("/{id}/rate")
-    public ResponseEntity<HttpStatus> rateDocById(@PathVariable Long id, @RequestBody RateDocDTO rateDocDTO) {
-        return docService.rateDocById(id, rateDocDTO);
+    public ResponseEntity<?> rateDocById(@PathVariable Long id, @RequestBody RateDocDTO rateDocDTO) {
+        try {
+            docService.rateDocById(id, rateDocDTO);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("There is no documents with such id!");
+        }
+        return ResponseEntity.ok(HttpStatus.OK);
     }
-    @Operation(summary = "Edit doc by id", description = "This endpoint lets you rate document, parametres can be null or numbers from 1 to 5")
+    @Operation(summary = "Edit doc by id", description = "This endpoint lets you edit a document")
     @PutMapping("/{id}/edit")
-    public ResponseEntity<HttpStatus> updateDocById(@PathVariable Long id, @RequestBody EditDocDTO editDocDTO) {
-        return docService.editDocById(id, editDocDTO);
+    public ResponseEntity<?> updateDocById(@PathVariable Long id, @RequestBody EditDocDTO editDocDTO) {
+        try {
+            docService.editDocById(id, editDocDTO);
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+        return ResponseEntity.ok(HttpStatus.OK);
     }
     // Очистка индекса документов из ES, если предварительно не почистить доки из Postgres, то дальше возникнут ошибки
-    @Operation(summary = "Delete index from ES", description = "This endpoint lets clean the document's index from ES, if you do not clean the docs from Postgres at the same time, then errors may occur")
+    @Operation(summary = "Delete index from ES", description = "This endpoint lets clean the documents' index from ES, if you do not clean the docs from Postgres at the same time, then errors may occur")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully deleted the documents' index"),
+            @ApiResponse(responseCode = "404", description = "You are trying to delete index, that doesn't exist (maybe it has been already deleted)"),
+            @ApiResponse(responseCode = "500", description = "This error means, that something is wrong with ES itself, it has an index, but couldn't delete it")
+    })
     @DeleteMapping("/itself")
-    public ResponseEntity<HttpStatus> deleteDocumentsItself() {
-        docService.deleteDocumentsItself();
+    public ResponseEntity<?> deleteDocumentsItself() {
+        try {
+            docService.deleteDocumentsItself();
+        } catch (NoSuchElementException e) {
+            ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (RequestRejectedException e) {
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
         return ResponseEntity.ok(HttpStatus.OK);
     }
     @Operation(summary = "Add doc into the package", description = "This endpoint lets add document by its id into the user's package, specified by its name")
