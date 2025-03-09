@@ -1,6 +1,6 @@
 <template>
   <div class="page-body">
-    <search-section @search="onSearch" />
+    <search-section :is_authed="is_authed" @search="onSearch" />
 
     <div class="q-mt-md">
       <document-card
@@ -40,6 +40,7 @@ export default {
       // Параметры пагинации, приходящие с сервера и отправляемые ему
       lastSentencePos: 0,
       matchesPerPage: 20,
+      is_authed: false,
 
       // Текущие фильтры (передаём в запрос)
       // Здесь будем хранить все поля, которые приходят из SearchSection
@@ -96,7 +97,7 @@ export default {
         matchesPerPage: this.matchesPerPage,
       };
 
-      fetch("https://5d4c468d941c4e8e8d7fc1d74ebc4862.api.mockbin.io/", {
+      fetch("https://60b277858b7d4dbc8347955c8dc89e8e.api.mockbin.io/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -116,7 +117,7 @@ export default {
           //   "lastSentencePos": число,
           //   "matchesPerPage": число
           // }
-          const { documents, lastSentencePos, matchesPerPage } = data;
+          const { documents, lastSentencePos, matchesPerPage, is_authed } = data;
 
           if (reset) {
             // При новом поиске полностью заменяем массив
@@ -129,6 +130,7 @@ export default {
           // Обновляем lastSentencePos/matchesPerPage
           this.lastSentencePos = lastSentencePos;
           this.matchesPerPage = matchesPerPage;
+          this.is_authed = is_authed;
 
           // Если lastSentencePos === -1, значит больше ничего не грузим
           // (кнопка "Show more" спрячется по v-if="lastSentencePos !== -1")

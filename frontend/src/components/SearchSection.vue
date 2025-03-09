@@ -125,6 +125,11 @@
         </template>
       </q-input>
     </div>
+    <div v-if="showFolder" class="row q-col-gutter-md">
+      <div class="col">
+        <folder-selector v-model="selected_folder" label="Папка" />
+      </div>
+    </div>
 
     <div v-if="search_mode === 'semantic' || search_mode === 'exact'" class="q-mt-sm">
       <q-btn label="Сбросить фильтры" color="secondary" no-caps @click="resetFilters" />
@@ -135,10 +140,19 @@
 <script>
 import { availableSources, availableTags } from 'src/data/lookups.js'
 import FilterSelector from './FilterSelector.vue'
+import FolderSelector from './FolderSelector.vue'
+
 export default {
   name: 'SearchSection',
   components: {
     FilterSelector,
+    FolderSelector,
+  },
+  props: {
+    is_authed: {
+      type: Boolean,
+      default: false
+    }
   },
   data() {
     return {
@@ -156,6 +170,7 @@ export default {
       date_to: null,
       availableSources,
       availableTags,
+      selected_folder: null,
     }
   },
   computed: {
@@ -167,6 +182,9 @@ export default {
     },
     showDateRange() {
       return this.search_mode === 'semantic' || this.search_mode === 'exact'
+    },
+    showFolder() {
+      return (this.search_mode === 'semantic' || this.search_mode === 'exact') && this.is_authed
     },
   },
   methods: {
@@ -184,6 +202,7 @@ export default {
       this.date_to = null
       this.search_in_text = false
       this.search_body = ''
+      this.selected_folder = null
     },
     formatToISO(str) {
       if (!str) return null
@@ -206,6 +225,7 @@ export default {
     payload.tags = this.selected_tags.map(tag => tag.value)
     payload.date_from = this.formatToISO(this.date_from)
     payload.date_to = this.formatToISO(this.date_to)
+    payload.folders = this.selected_folder.map(folder => folder.value)
   }
 
   if (this.search_mode === 'exact') {
