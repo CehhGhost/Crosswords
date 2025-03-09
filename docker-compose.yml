@@ -30,7 +30,9 @@ services:
       - "9200:9200"  # Пробрасываем порт OpenSearch
     environment:
       discovery.type: single-node
-      plugins.security.disabled: "true"  # Отключаем security для упрощения
+      plugins.security.disabled: "false"
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: "CBsZ6#9kHxb"  # Пароль администратора
+      OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
     volumes:
       - opensearch-data:/usr/share/opensearch/data
     networks:
