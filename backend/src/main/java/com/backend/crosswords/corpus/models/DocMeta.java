@@ -6,6 +6,8 @@ import jakarta.persistence.*;
 
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 @Table(name = "_documents")
 @Entity
@@ -37,6 +39,9 @@ public class DocMeta {
 
     @ManyToMany(mappedBy = "docs")
     private List<Tag> tags;
+
+    @ManyToMany(mappedBy = "docs")
+    private Set<Package> packages;
 
     @OneToMany(mappedBy = "doc", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Rating> ratings;
@@ -137,18 +142,11 @@ public class DocMeta {
         this.lastEdit = lastEdit;
     }
 
-    @Override
-    public String toString() {
-        return "DocMeta{" +
-                "id=" + id +
-                ", summary='" + summary + '\'' +
-                ", date=" + date +
-                ", lastEdit=" + lastEdit +
-                ", url='" + url + '\'' +
-                ", language=" + language +
-                ", source=" + source +
-                ", tags=" + tags +
-                ", ratings=" + ratings +
-                '}';
+    public Set<Package> getPackages() {
+        return packages;
+    }
+
+    public void setPackages(Set<Package> packages) {
+        this.packages = packages;
     }
 }

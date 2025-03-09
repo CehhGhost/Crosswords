@@ -37,8 +37,9 @@ public class DocService {
     private final TagService tagService;
     private final RatingService ratingService;
     private final UserService userService;
+    private final PackageService packageService;
 
-    public DocService(ModelMapper modelMapper, DocSearchRepository docSearchRepository, DocMetaRepository docMetaRepository, ElasticsearchOperations elasticsearchOperations, TagService tagService, RatingService ratingService, UserService userService) {
+    public DocService(ModelMapper modelMapper, DocSearchRepository docSearchRepository, DocMetaRepository docMetaRepository, ElasticsearchOperations elasticsearchOperations, TagService tagService, RatingService ratingService, UserService userService, PackageService packageService) {
         this.modelMapper = modelMapper;
         this.docSearchRepository = docSearchRepository;
         this.docMetaRepository = docMetaRepository;
@@ -46,6 +47,7 @@ public class DocService {
         this.tagService = tagService;
         this.ratingService = ratingService;
         this.userService = userService;
+        this.packageService = packageService;
     }
 
     private DocDTO transformDocIntoDocDTO(DocMeta docMeta) {
@@ -55,7 +57,7 @@ public class DocService {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
             var user = crosswordUserDetails.getUser();
-            doc.setFavourite(userService.checkDocInFavourites(user, docMeta));
+            doc.setFavourite(packageService.checkDocInFavourites(user, docMeta));
             var rating = ratingService.getRatingsForDocumentByUser(docMeta, user);
             doc.setRatingSummary(rating.get(0));
             doc.setRatingClassification(rating.get(1));
@@ -173,7 +175,7 @@ public class DocService {
         try {
             var docMeta = docMetaRepository.findById(id).orElseThrow();
             tagService.removeTagsFromDoc(docMeta);
-            userService.removeDocFromFavouritesForAllUsers(docMeta);
+            packageService.removeDocFromPackages(docMeta);
             docMetaRepository.delete(docMeta);
         } catch (NoSuchElementException e) {
             return ResponseEntity.badRequest().build();
@@ -253,17 +255,35 @@ public class DocService {
         }
     }
 
+    public void addDocByIdIntoPackageByName(User user, Long docId, String packageName) {
+        var check = docMetaRepository.findById(docId);
+        if (check.isEmpty()) {
+            throw new NoSuchElementException("There is no documents with such id!");
+        }
+        var doc = check.get();
+        packageService.addDocIntoPackageByName(user, doc, packageName);
+    }
+
+    public void removeDocByIdFromPackageByName(User user, Long docId, String packageName) {
+        var check = docMetaRepository.findById(docId);
+        if (check.isEmpty()) {
+            throw new NoSuchElementException("There is no documents with such id!");
+        }
+        var doc = check.get();
+        packageService.removeDocFromPackageByName(user, doc, packageName);
+    }
+
     public void addDocToFavouritesById(Long id) {
         var docMeta = docMetaRepository.findById(id).orElseThrow();
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
-        userService.addDocToFavourites(docMeta, crosswordUserDetails.getUser());
+        packageService.addDocToFavourites(crosswordUserDetails.getUser(), docMeta);
     }
 
     public void removeDocFromFavouritesById(Long id) {
         var docMeta = docMetaRepository.findById(id).orElseThrow();
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
-        userService.removeDocFromFavourites(docMeta, crosswordUserDetails.getUser());
+        packageService.removeDocFromFavourites(crosswordUserDetails.getUser(), docMeta);
     }
 }

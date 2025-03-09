@@ -53,13 +53,4 @@ public class Tag {
     public void setDocs(List<DocMeta> docs) {
         this.docs = docs;
     }
-
-    @Override
-    public String toString() {
-        return "Tag{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", docs=" + docs +
-                '}';
-    }
 }

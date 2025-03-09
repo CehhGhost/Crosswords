@@ -1,6 +1,8 @@
 package com.backend.crosswords.corpus.controllers;
 
+import com.backend.crosswords.admin.models.CrosswordUserDetails;
 import com.backend.crosswords.corpus.dto.*;
+import com.backend.crosswords.corpus.models.Package;
 import com.backend.crosswords.corpus.services.DocService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -11,6 +13,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.NoSuchElementException;
@@ -75,7 +79,7 @@ public class DocController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Searched documents",
                     content = @Content(array = @ArraySchema(schema = @Schema(implementation = DocDTO.class)))),
-            @ApiResponse(responseCode = "404", description = "Can appear dew to wrong id, while searching by id")
+            @ApiResponse(responseCode = "404", description = "May appear dew to wrong id, while searching by id")
     })
     @PostMapping("/search")
     public ResponseEntity<?> getDocsBySearch(@RequestBody SearchDocDTO searchDocDTO) {
@@ -86,6 +90,10 @@ public class DocController {
         }
     }
     @Operation(summary = "Delete doc by id", description = "This endpoint deletes document by id and destroys all connections with other models")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully deleted the document"),
+            @ApiResponse(responseCode = "400", description = "There is no documents with such id")
+    })
     @DeleteMapping("/{id}")
     public ResponseEntity<HttpStatus> deleteDocById(@PathVariable Long id) {
         return docService.deleteDocById(id);
@@ -111,17 +119,48 @@ public class DocController {
         docService.deleteDocumentsItself();
         return ResponseEntity.ok(HttpStatus.OK);
     }
+    @Operation(summary = "Add doc into the package", description = "This endpoint lets add document by its id into the user's package, specified by its name")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully added a document into the package"),
+            @ApiResponse(responseCode = "401", description = "You are trying to add a doc while not authenticated"),
+            @ApiResponse(responseCode = "404", description = "This user doesn't have packages with such name or the document's id is incorrect")
+    })
+    @PostMapping("/{docId}/put_into/{packageName}")
+    public ResponseEntity<?> addDocIntoPackage(@PathVariable Long docId, @PathVariable String packageName) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+            docService.addDocByIdIntoPackageByName(crosswordUserDetails.getUser(), docId, packageName);
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+        return ResponseEntity.ok(HttpStatus.OK);
+    }
+    @PostMapping("/{docId}/remove_from/{packageName}")
+    public ResponseEntity<?> removeFromPackage(@PathVariable Long docId, @PathVariable String packageName) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+            docService.removeDocByIdFromPackageByName(crosswordUserDetails.getUser(), docId, packageName);
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+        return ResponseEntity.ok(HttpStatus.OK);
+    }
     @Operation(summary = "Add doc to favourites", description = "This endpoint lets you add doc to favourites, user must be authenticated")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "You successfully added a document to favourites"),
-            @ApiResponse(responseCode = "401", description = "You are trying to add a doc while not authenticated")
+            @ApiResponse(responseCode = "401", description = "You are trying to add a doc while not authenticated"),
+            @ApiResponse(responseCode = "404", description = "This user doesn't have packages with such name or the document's id is incorrect")
     })
     @PostMapping("/{id}/add_to_favourites")
     public ResponseEntity<?> addDocToFavouritesById(@PathVariable Long id) {
         try {
-            docService.addDocToFavouritesById(id);
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+            docService.addDocByIdIntoPackageByName(crosswordUserDetails.getUser(), id, Package.favouritesName);
         } catch (NoSuchElementException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No document with such id!");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
         return ResponseEntity.ok(HttpStatus.OK);
     }
@@ -133,9 +172,11 @@ public class DocController {
     @PostMapping("/{id}/remove_from_favourites")
     public ResponseEntity<?> removeDocFromFavouritesById(@PathVariable Long id) {
         try {
-            docService.removeDocFromFavouritesById(id);
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+            docService.removeDocByIdFromPackageByName(crosswordUserDetails.getUser(), id, Package.favouritesName);
         } catch (NoSuchElementException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No document with such id!");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
         return ResponseEntity.ok(HttpStatus.OK);
     }

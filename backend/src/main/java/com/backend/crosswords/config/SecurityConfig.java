@@ -41,6 +41,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH, "/documents/{id}/rate").authenticated()
                         .requestMatchers(HttpMethod.POST, "/documents/{id}/add_to_favourites").authenticated()
                         .requestMatchers(HttpMethod.POST, "/documents/{id}/remove_from_favourites").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/documents/{docId}/put_into/{packageName}").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/documents/{docId}/remove_from/{packageName}").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/packages/**").permitAll()
+                        .requestMatchers("/packages/**").authenticated()
                         .anyRequest().permitAll()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
