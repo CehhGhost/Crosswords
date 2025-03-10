@@ -2,6 +2,7 @@ package com.backend.crosswords.admin.services;
 
 import com.backend.crosswords.admin.dto.LoginUserDTO;
 import com.backend.crosswords.admin.dto.RegisterUserDTO;
+import com.backend.crosswords.admin.enums.RoleEnum;
 import com.backend.crosswords.admin.models.CrosswordUserDetails;
 import com.backend.crosswords.admin.models.RefreshToken;
 import com.backend.crosswords.admin.models.User;
@@ -22,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class UserService {
@@ -52,6 +54,13 @@ public class UserService {
             throw new IllegalArgumentException("This email is already existed");
         }
         user.setPassword(passwordEncoder.encode(registerUserDTO.getPassword()));
+        for (var role : RoleEnum.values()) {
+            for (var username : role.getUsersWhiteList()) {
+                if (Objects.equals(username, user.getUsername()) || Objects.equals(username, user.getEmail())) {
+                    user.setRole(role);
+                }
+            }
+        }
         user = userRepository.save(user);
         packageService.createPackage(Package.favouritesName, user);
         return this.loginUser(new LoginUserDTO(registerUserDTO.getUsername(), registerUserDTO.getPassword()), ipAddress, userAgent);
@@ -99,5 +108,23 @@ public class UserService {
             authoritiesNames.add(authority.getAuthority().toLowerCase());
         }
         return authoritiesNames;
+    }
+
+    public void createDefaultUsers() {
+        for (var role : RoleEnum.values()) {
+            for (var username : role.getUsersWhiteList()) {
+                var user = userRepository.findByUsernameOrEmail(username, username);
+                if (user.isPresent() && !user.get().getRole().name().equals(role.name())) {
+                    user.get().setRole(role);
+                }
+            }
+        }
+        // String name, String surname, String username, String password, RoleEnum role
+        for (var username : RoleEnum.ADMIN.getUsersWhiteList()) {
+            if (userRepository.findByUsernameOrEmail(username, username).isEmpty()) {
+                // TODO сделать пароль admin настраиваемым через параметры среды запуска или придумать другой более безопасный и удобный способ
+                userRepository.save(new User(username, username, username, passwordEncoder.encode(username), RoleEnum.ADMIN));
+            }
+        }
     }
 }

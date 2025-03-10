@@ -1,5 +1,6 @@
 package com.backend.crosswords.config;
 
+import com.backend.crosswords.admin.enums.AuthorityEnum;
 import com.backend.crosswords.admin.services.CrosswordUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -44,6 +45,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/documents/{docId}/put_into/{packageName}").authenticated()
                         .requestMatchers(HttpMethod.POST, "/documents/{docId}/remove_from/{packageName}").authenticated()
                         .requestMatchers(HttpMethod.GET, "/users/check_auth").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/documents/{id}/edit").hasAuthority(AuthorityEnum.EDIT_DELETE_DOCS.name())
+                        .requestMatchers(HttpMethod.DELETE, "/documents/{id}").hasAuthority(AuthorityEnum.EDIT_DELETE_DOCS.name())
                         .requestMatchers(HttpMethod.GET, "/packages/**").permitAll()
                         .requestMatchers("/packages/**").authenticated()
                         .anyRequest().permitAll()

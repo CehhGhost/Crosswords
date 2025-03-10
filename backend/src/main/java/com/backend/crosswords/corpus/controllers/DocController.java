@@ -91,7 +91,9 @@ public class DocController {
     @Operation(summary = "Delete doc by id", description = "This endpoint deletes document by id and destroys all connections with other models")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "You successfully deleted the document"),
-            @ApiResponse(responseCode = "400", description = "There is no documents with such id")
+            @ApiResponse(responseCode = "401", description = "You are trying to delete a document while unauthorized"),
+            @ApiResponse(responseCode = "403", description = "You don't have enough rights to delete documents"),
+            @ApiResponse(responseCode = "404", description = "There is no documents with such id")
     })
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteDocById(@PathVariable Long id) {
@@ -105,8 +107,6 @@ public class DocController {
     @Operation(summary = "Rate doc by id", description = "This endpoint lets you rate a document, parameters can be null or numbers from 1 to 5, user must be authenticated")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "You successfully rated a document"),
-            @ApiResponse(responseCode = "401", description = "You are trying to rate a doc while not authenticated"),
-            @ApiResponse(responseCode = "400", description = "You successfully rated a document"),
             @ApiResponse(responseCode = "404", description = "There is no documents with such id")
     })
     @PatchMapping("/{id}/rate")
@@ -121,6 +121,12 @@ public class DocController {
         return ResponseEntity.ok(HttpStatus.OK);
     }
     @Operation(summary = "Edit doc by id", description = "This endpoint lets you edit a document")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully updated the document"),
+            @ApiResponse(responseCode = "401", description = "You are trying to updated a document while unauthorized"),
+            @ApiResponse(responseCode = "403", description = "You don't have enough rights to updated documents"),
+            @ApiResponse(responseCode = "404", description = "There is no documents with such id")
+    })
     @PutMapping("/{id}/edit")
     public ResponseEntity<?> updateDocById(@PathVariable Long id, @RequestBody EditDocDTO editDocDTO) {
         try {
@@ -137,7 +143,7 @@ public class DocController {
             @ApiResponse(responseCode = "404", description = "You are trying to delete index, that doesn't exist (maybe it has been already deleted)"),
             @ApiResponse(responseCode = "500", description = "This error means, that something is wrong with ES itself, it has an index, but couldn't delete it")
     })
-    @DeleteMapping("/itself")
+    @DeleteMapping("/ES/itself")
     public ResponseEntity<?> deleteDocumentsItself() {
         try {
             docService.deleteDocumentsItself();

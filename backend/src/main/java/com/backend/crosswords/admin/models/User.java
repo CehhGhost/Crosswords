@@ -1,5 +1,6 @@
 package com.backend.crosswords.admin.models;
 
+import com.backend.crosswords.admin.enums.RoleEnum;
 import com.backend.crosswords.corpus.models.Rating;
 import jakarta.persistence.*;
 
@@ -33,9 +34,9 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Rating> ratings;
 
-    @ManyToOne
-    @JoinColumn(name = "role_id", referencedColumnName = "id")
-    private Role role;
+    @Column(name = "role")
+    @Enumerated(EnumType.ORDINAL)
+    private RoleEnum role;
 
     public User(Long id, String name, String surname, String username, String email, String password, List<Rating> ratings) {
         this.id = id;
@@ -58,6 +59,14 @@ public class User {
     }
 
     public User() {
+    }
+
+    public User(String name, String surname, String username, String password, RoleEnum role) {
+        this.name = name;
+        this.surname = surname;
+        this.username = username;
+        this.password = password;
+        this.role = role;
     }
 
     public List<Rating> getRatings() {
@@ -116,11 +125,11 @@ public class User {
         this.email = email;
     }
 
-    public Role getRole() {
+    public RoleEnum getRole() {
         return role;
     }
 
-    public void setRole(Role role) {
+    public void setRole(RoleEnum role) {
         this.role = role;
     }
 }
