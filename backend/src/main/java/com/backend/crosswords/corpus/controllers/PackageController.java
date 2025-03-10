@@ -46,6 +46,7 @@ public class PackageController {
         }
         return ResponseEntity.ok(HttpStatus.OK);
     }
+
     @Operation(summary = "Delete package by name", description = "This endpoint lets you delete a package for a certain user by specified package's name")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "You have successfully deleted this package for a certain user"),

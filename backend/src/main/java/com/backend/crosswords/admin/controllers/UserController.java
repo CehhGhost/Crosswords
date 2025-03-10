@@ -1,8 +1,10 @@
 package com.backend.crosswords.admin.controllers;
 
 import com.auth0.jwt.exceptions.TokenExpiredException;
+import com.backend.crosswords.admin.dto.AuthorityDTO;
 import com.backend.crosswords.admin.dto.LoginUserDTO;
 import com.backend.crosswords.admin.dto.RegisterUserDTO;
+import com.backend.crosswords.admin.models.CrosswordUserDetails;
 import com.backend.crosswords.admin.services.UserService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -10,6 +12,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -99,6 +103,11 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage() + " At: " + e.getExpiredOn());
         }
         return setCookies(response, jwt);
+    }
+    @GetMapping("/check_auth")
+    public ResponseEntity<?> checkUsersAuthorities() {
+        List<String> authoritiesNames = userService.getAuthoritiesNamesByUser();
+        return ResponseEntity.ok(new AuthorityDTO(authoritiesNames));
     }
     // TODO добавить удаление пользователя, учтя тот факт, что перед удалением необходимо очистить связанные с ним данные
     /*@DeleteMapping("/{id}")

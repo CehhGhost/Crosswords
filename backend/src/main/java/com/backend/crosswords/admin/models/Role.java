@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 
 import java.util.List;
 import java.util.Set;
-
+// TODO добавить две роли
 @Entity
 @Table(name = "_roles")
 public class Role {

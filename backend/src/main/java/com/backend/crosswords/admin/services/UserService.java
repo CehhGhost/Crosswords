@@ -2,6 +2,7 @@ package com.backend.crosswords.admin.services;
 
 import com.backend.crosswords.admin.dto.LoginUserDTO;
 import com.backend.crosswords.admin.dto.RegisterUserDTO;
+import com.backend.crosswords.admin.models.CrosswordUserDetails;
 import com.backend.crosswords.admin.models.RefreshToken;
 import com.backend.crosswords.admin.models.User;
 import com.backend.crosswords.admin.repositories.UserRepository;
@@ -13,6 +14,8 @@ import com.backend.crosswords.corpus.services.PackageService;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -86,5 +89,15 @@ public class UserService {
 
     public User loadUserById(Long id) {
         return userRepository.findById(id).orElseThrow();
+    }
+
+    public List<String> getAuthoritiesNamesByUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+        List<String> authoritiesNames = new ArrayList<>();
+        for (var authority : crosswordUserDetails.getAuthorities()) {
+            authoritiesNames.add(authority.getAuthority().toLowerCase());
+        }
+        return authoritiesNames;
     }
 }
