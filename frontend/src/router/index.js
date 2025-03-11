@@ -20,8 +20,7 @@ export default defineRouter(function (/* { store, ssrContext } */) {
       return next()
     }
 
-    // Проверяем авторизацию пользователя через endpoint /api/auth/me.
-    // HttpOnly cookie отправляются автоматически благодаря опции credentials: 'include'
+    // Запрашиваем данные о пользователе. HttpOnly cookie отправляются автоматически
     fetch('/api/auth/me', { credentials: 'include' })
       .then(response => {
         if (!response.ok) {
@@ -30,8 +29,8 @@ export default defineRouter(function (/* { store, ssrContext } */) {
         return response.json()
       })
       .then(user => {
-        // Если маршрут требует, чтобы пользователь был модератором, проверяем поле is_moderator
-        if (to.meta.moderatorOnly && !user.is_moderator) {
+        // Если маршрут требует права модератора, проверяем наличие разрешения "edit_docs"
+        if (to.meta.moderatorOnly && !user.authorities.includes("edit_delete_docs")) {
           return next({ name: 'home' })
         }
         // Если маршрут требует проверки владельца подписки, выполняем дополнительный запрос

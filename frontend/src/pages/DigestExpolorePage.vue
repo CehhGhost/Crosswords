@@ -1,10 +1,17 @@
 <template>
-  <q-page class="flex flex-center">
+  <ServerResponseSpinner v-if="isLoading"/>
+  <q-page v-if="!isLoading" class="flex flex-center">
     <div class="full-width q-pa-md page-body">
       <q-carousel
         v-if="featuredDigests.length"
         v-model="activeFeaturedSlide"
         swipeable
+        infinite
+        :autoplay="autoplay"
+        @mouseenter="autoplay = false"
+        @mouseleave="autoplay = true"
+        transition-prev="slide-right"
+        transition-next="slide-left"
         arrows
         control-type="flat"
         animated
@@ -12,6 +19,7 @@
         control-color="primary"
         style="width: 100%; max-height: 80vh; overflow: hidden"
         class="q-mb-md"
+        :class="{ lightBgClass: !$q.dark.isActive }"
       >
         <q-carousel-slide
           v-for="(digest, index) in featuredDigests.slice(0, 3)"
@@ -62,7 +70,11 @@
         </q-carousel-slide>
       </q-carousel>
 
-      <my-subscriptions />
+      <my-subscriptions v-if="is_authed" />
+      <locked-content
+        description="Войдите в аккаунт, чтобы создавать собственные дайджесты или подписываться на существующие"
+        v-else
+      />
       <div
         :class="{ 'text-secondary': !$q.dark.isActive, 'text-white': $q.dark.isActive }"
         class="caption text-h4 text-center q-mt-xl q-mb-md"
@@ -90,7 +102,7 @@
           text-color="dark"
           padding="md"
           unelevated
-          :loading="isLoading"
+          :loading="isDigestLoading"
           class="col-auto search-btn"
           @click="fetchDigests"
         />
@@ -190,7 +202,12 @@
       <!-- Чекбокс и кнопка -->
       <div class="row q-col-gutter-md items-center q-mb-md justify-between">
         <div class="col-auto">
-          <q-checkbox v-model="subscribeOnly" label="Только подписки" color="primary" />
+          <q-checkbox
+            v-if="is_authed"
+            v-model="subscribeOnly"
+            label="Только подписки"
+            color="primary"
+          />
         </div>
         <div class="col-auto">
           <q-btn
@@ -199,7 +216,7 @@
             no-caps
             text-color="white"
             @click="resetFilters"
-            :loading="isLoading"
+            :loading="isDigestLoading"
           />
         </div>
       </div>
@@ -207,10 +224,10 @@
       <!-- Список дайджестов -->
       <div>
         <digest-card
+          :is_authed="is_authed"
           v-for="digest in digests"
           :key="digest.id"
           :digest="digest"
-          @subscription-changed="refreshDigests"
         />
       </div>
     </div>
@@ -222,6 +239,8 @@ import DigestCard from '../components/DigestCard.vue'
 import { availableTags, availableSources } from '../data/lookups.js'
 import MySubscriptions from '../components/MySubscriptions.vue'
 import FilterSelector from 'src/components/FilterSelector.vue'
+import LockedContent from 'src/components/LockedContent.vue'
+import ServerResponseSpinner from 'src/components/ServerResponseSpinner.vue'
 
 export default {
   name: 'NewsPage',
@@ -229,6 +248,8 @@ export default {
     DigestCard,
     MySubscriptions,
     FilterSelector,
+    LockedContent,
+    ServerResponseSpinner,
   },
   data() {
     return {
@@ -237,11 +258,14 @@ export default {
       date_to: '',
       selected_tags: [],
       selected_sources: [],
-      subscribeOnly: false, 
+      subscribeOnly: false,
       digests: [],
       featuredDigests: [],
-      isLoading: false,
+      isDigestLoading: false,
+      isLoading: true,
       activeFeaturedSlide: '0',
+      is_authed: false,
+      autoplay: true,
 
       // это из lookups.js
       availableTags,
@@ -251,12 +275,12 @@ export default {
         '#092449',
         '#121858',
         '#151240',
-        '#161E4C', 
+        '#161E4C',
         '#1E151C',
         '#121C18',
         '#1C1E0D',
         '#201717',
-        '#351510', 
+        '#351510',
       ],
 
       // Чтобы при повторном рендере не генерировать другой цвет,
@@ -313,7 +337,7 @@ export default {
       }
     },
     async fetchDigests() {
-      this.isLoading = true
+      this.isDigestLoading = true
 
       try {
         const params = new URLSearchParams()
@@ -345,7 +369,7 @@ export default {
         params.append('subscribe_only', this.subscribeOnly ? 'true' : 'false')
         const response = await fetch(
           //`https://example.com/api/digests?${params.toString()}`,
-          `https://8024b1014784472b9eaa8b894d33e52e.api.mockbin.io/`,
+          `https://38eb0762b63f400b81812fc5431695d1.api.mockbin.io/`,
           {
             method: 'GET',
             headers: {
@@ -364,27 +388,19 @@ export default {
         //   "digests": [ ... ]
         // }
         this.digests = data.digests || []
-        //console.log(data.digests)
-        //console.log(this.digests)
+        this.is_authed = data.is_authed
       } catch (error) {
         console.error(error)
       } finally {
-        this.isLoading = false
+        this.isDigestLoading = false
       }
-    },
-    refreshDigests() {
-      this.digests = [] // убрать на реальном бекенде
-      this.fetchDigests()
     },
     async fetchFeaturedDigests() {
       try {
-        const response = await fetch(
-          `https://d0ef77d78d0747daa591ac2497df51ed.api.mockbin.io/`,
-          {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-          },
-        )
+        const response = await fetch(`https://d0ef77d78d0747daa591ac2497df51ed.api.mockbin.io/`, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+        })
 
         if (!response.ok) {
           throw new Error('Ошибка при получении featured дайджестов')
@@ -406,10 +422,17 @@ export default {
       this.search_body = ''
     },
   },
-  mounted() {
-    // При первом заходе на страницу можно сразу получить список дайджестов
-    this.fetchFeaturedDigests()
-    this.fetchDigests()
+  async mounted() {
+    try {
+      await Promise.all([
+        this.fetchFeaturedDigests(),
+        this.fetchDigests()
+      ]);
+    } catch (error) {
+      console.error("Ошибка при загрузке дайджестов:", error);
+    } finally {
+      this.isLoading = false;
+    }
   },
 }
 </script>
@@ -417,8 +440,8 @@ export default {
 <style scoped lang="scss">
 .description {
   display: -webkit-box;
-  -webkit-line-clamp: 10; 
-  line-clamp: 10; 
+  -webkit-line-clamp: 10;
+  line-clamp: 10;
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -428,11 +451,11 @@ export default {
 /* Для мобильных устройств */
 @media (max-width: 600px) {
   .description {
-    -webkit-line-clamp: 3; 
+    -webkit-line-clamp: 3;
     line-clamp: 3;
   }
 }
-.caption {
-  font-family: 'TinkoffSansBold', sans-serif;
+.lightBgClass {
+  background-color: $lightaccent;
 }
 </style>

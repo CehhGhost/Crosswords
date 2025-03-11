@@ -1,8 +1,7 @@
 <template>
-  <q-page class="page-body q-pa-xs">
-    <div class="q-gutter-lg">
-      <q-btn label="к другим настройкам" @click="toggleDrawer" class="q-mb-md" outline />
-      <h4 class="caption">Настройки аккаунта</h4>
+  <q-page class="page-body q-pa-md">
+      <q-btn label="к другим настройкам" @click="toggleDrawer" class="q-mb-xl" outline />
+      <div class="text-h4 caption">Настройки аккаунта</div>
 
       <div>
         <h6 class="q-mb-none UIText">Сменить почту</h6>
@@ -58,7 +57,7 @@
           </div>
         </div>
       </div>
-    </div>
+
   </q-page>
 </template>
 

@@ -1,45 +1,88 @@
 <template>
-    <q-page class="row justify-center items-center">
-      <q-card class="col-12 col-sm-6 col-md-4">
-        <q-card-section>
-          <div class="text-h6">Вход</div>
-        </q-card-section>
+  <q-page class="flex flex-center q-pa-sm">
+    <div class="login-container">
+      <!-- Логотип, располагается чуть выше центра -->
+      <div class="logo-container">
+        <q-img :src="logoSrc" alt="Логотип" class="logo-img" />
+      </div>
+      
+      <!-- Заголовок -->
+      <div class="title text-center q-mt-sm">
+        <h4 class="caption">Добро пожаловать!</h4>
+      </div>
+
+      <!-- Форма входа -->
+      <q-form @submit.prevent="login" class="q-mt-md">
+        <!-- Поля для ввода -->
+        <q-input
+          filled
+          v-model="email"
+          label="Email"
+          type="email"
+          class="q-mb-md"
+          :color="$q.dark.isActive ? 'primary' : 'accent'"
+        />
+        <q-input
+          filled
+          v-model="password"
+          label="Пароль"
+          type="password"
+          class="q-mb-md"
+          :color="$q.dark.isActive ? 'primary' : 'accent'"
+        />
         
-        <q-card-section>
-          <q-input filled v-model="form.email" label="Email" />
-          <q-input filled v-model="form.password" type="password" label="Пароль" />
-        </q-card-section>
-  
-        <q-card-actions align="right">
-          <q-btn label="Войти" color="primary" @click="login" />
-        </q-card-actions>
-      </q-card>
-    </q-page>
-  </template>
-  
-  <script setup>
-  import { ref } from 'vue'
-  import { useRouter } from 'vue-router'
-  import api from 'src/boot/axios' 
-  
-  const router = useRouter()
-  
-  const form = ref({
-    email: '',
-    password: ''
-  })
-  
-  async function login() {
-    try {
-      const response = await api.post('/login', form.value)
-      if (response.status === 200) {
-        const { accessToken } = response.data
-        localStorage.setItem('accessToken', accessToken)
-        router.push('/')
-      }
-    } catch (error) {
-      console.error('Ошибка при логине', error)
+        <!-- Текст с предложением регистрации -->
+        <div class="text-center q-mb-md">
+          <p >
+            Нет аккаунта? <a href="/register">Зарегистрируйтесь - это быстро!</a>
+          </p>
+        </div>
+        
+        <!-- Кнопка входа -->
+        <q-btn type="submit" label="Войти" no-caps text-color="secondary" color="primary" class="full-width" />
+      </q-form>
+    </div>
+  </q-page>
+</template>
+
+<script>
+import lightLogo from '../assets/crosswords_mono.png';
+import darkLogo from '../assets/crosswords_mono_white.png';
+export default {
+  name: 'LoginPage',
+  data() {
+    return {
+      email: '',
+      password: ''
+    }
+  },
+  computed: {
+    logoSrc() {
+      return this.$q.dark.isActive ? darkLogo : lightLogo;
+    }
+  },
+  methods: {
+    login() {
+      // Здесь можно добавить логику аутентификации
+      console.log('Email:', this.email);
+      console.log('Password:', this.password);
     }
   }
-  </script>
-  
+}
+</script>
+
+<style scoped>
+.login-container {
+
+  /* Поднимаем контейнер чуть выше центра */
+  margin-top: -50px;
+}
+
+.logo-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+
+</style>

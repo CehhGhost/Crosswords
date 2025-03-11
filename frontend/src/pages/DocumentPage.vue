@@ -1,4 +1,5 @@
 <template>
+  <ServerResponseSpinner v-if="isLoading"/>
   <div v-if="!isLoading" class="page-body q-pa-md">
     <BackButton to="/documents" />
     <q-page>
@@ -8,9 +9,8 @@
             {{ documentData?.date }} | {{ documentData?.source }}
           </div>
 
-          <!-- В избранное + сердечко (клик по любому элементу) -->
           <div class="row items-center">
-            <FolderBookmark :documentId="documentData.id" />
+            <FolderBookmark v-if="documentData.is_authed" :documentId="documentData.id" />
           </div>
         </div>
         <div class="text-h5 q-my-sm">
@@ -22,10 +22,10 @@
         </div>
 
         <div class="q-my-sm">
-          <div class="q-mb-xs">
+          <div class="q-mb-xs" v-if="documentData.is_authed">
             Оцените подобранные теги:
             <q-rating
-              v-model="userRating"
+              v-model="documentData.rating_classification"
               max="5"
               color="primary"
               icon="star"
@@ -107,7 +107,9 @@
           />
         </div>
       </div>
-      <CommentsSection :articleId="documentData?.id" />
+
+      <CommentsSection v-if="documentData.is_authed" :articleId="documentData?.id" />
+      <LockedContent v-else description="Войдите в аккаунт, чтобы ставить рейтинги, оставлять персональные заметки, аннотировать текст и добавлять статьи в папки!"/>
 
       <ConfirmDialog
         v-model="showEditDialog"
@@ -140,6 +142,8 @@ import ConfirmDialog from '../components/ConfirmDialog.vue'
 import BackButton from 'src/components/BackButton.vue'
 import CommentsSection from 'src/components/CommentsSection.vue'
 import FolderBookmark from 'src/components/FolderBookmark.vue'
+import LockedContent from 'src/components/LockedContent.vue'
+import ServerResponseSpinner from 'src/components/ServerResponseSpinner.vue'
 import { Recogito } from '@recogito/recogito-js'
 import '@recogito/recogito-js/dist/recogito.min.css'
 import '../css/customRecogito.scss'
@@ -148,7 +152,6 @@ const route = useRoute()
 const router = useRouter()
 
 const documentData = ref(null)
-const userRating = ref(0)
 const textContainer = ref(null)
 let recogitoInstance = null
 
@@ -168,7 +171,7 @@ onMounted(async () => {
   try {
     // Заменить URL на реальный эндпоинт
     // const response = await fetch(`http://localhost:3000/documents/${id}`)
-    const response = await fetch(`https://a5c62208c62d445db687c99150bfd06e.api.mockbin.io/`)
+    const response = await fetch(`https://a1561caa2fca4614bc614fc099f6af6e.api.mockbin.io/`)
     console.log(id)
 
     if (!response.ok) {
@@ -202,7 +205,7 @@ watch(
       widgets.push('COMMENT')
       recogitoInstance = new Recogito({
         content: textContainer.value,
-        readOnly: false,
+        readOnly: !newDocument.is_authed,
         allowEmpty: true,
         locale: 'RU',
         widgets: widgets,

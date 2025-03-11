@@ -27,6 +27,7 @@ const routes = [
         path: 'documents/:id/edit',
         name: 'document-edit',
         component: () => import('../pages/DocumentEditPage.vue'),
+        // meta: { requiresAuth: true, moderatorOnly: true }
       },
       {
         path: 'subscriptions/create',
@@ -37,6 +38,7 @@ const routes = [
         path: 'subscriptions/:id/edit',
         name: 'subscription-edit',
         component: () => import('../pages/SubscriptionEdit.vue'),
+        // meta: { requiresAuth: true, subscriptionOwner: true }
       },
       {
         path: 'digests',
@@ -69,7 +71,8 @@ const routes = [
       {
         path: '',
         name: 'privacy',
-        component: () => import('../pages/PrivacyPage.vue')
+        component: () => import('../pages/PrivacyPage.vue'),
+        // meta: { requiresAuth: true }
       }
     ]
   },
@@ -81,6 +84,7 @@ const routes = [
         path: '',
         name: 'data',
         component: () => import('../pages/DataPage.vue')
+        // meta: { requiresAuth: true}
       }
     ]
   },
