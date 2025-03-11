@@ -86,16 +86,4 @@ public class RefreshToken {
     public void setExpiryDate(Instant expiryDate) {
         this.expiryDate = expiryDate;
     }
-
-    @Override
-    public String toString() {
-        return "RefreshToken{" +
-                "id=" + id +
-                ", token='" + token + '\'' +
-                ", ip='" + ip + '\'' +
-                ", userAgent='" + userAgent + '\'' +
-                ", expiryDate=" + expiryDate +
-                ", user=" + user +
-                '}';
-    }
 }

@@ -2,21 +2,28 @@ package com.backend.crosswords.admin.services;
 
 import com.backend.crosswords.admin.dto.LoginUserDTO;
 import com.backend.crosswords.admin.dto.RegisterUserDTO;
+import com.backend.crosswords.admin.enums.RoleEnum;
+import com.backend.crosswords.admin.models.CrosswordUserDetails;
 import com.backend.crosswords.admin.models.RefreshToken;
 import com.backend.crosswords.admin.models.User;
 import com.backend.crosswords.admin.repositories.UserRepository;
 import com.backend.crosswords.config.JWTUtil;
 import com.backend.crosswords.corpus.models.DocMeta;
+import com.backend.crosswords.corpus.models.Package;
 import com.backend.crosswords.corpus.models.Rating;
+import com.backend.crosswords.corpus.services.PackageService;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class UserService {
@@ -26,18 +33,19 @@ public class UserService {
     private final JWTUtil jwtUtil;
     private final RefreshTokenService refreshTokenService;
     private final PasswordEncoder passwordEncoder;
+    private final PackageService packageService;
 
-    public UserService(ModelMapper modelMapper, UserRepository userRepository, AuthenticationManager authenticationManager, JWTUtil jwtUtil, RefreshTokenService refreshTokenService, PasswordEncoder passwordEncoder) {
+    public UserService(ModelMapper modelMapper, UserRepository userRepository, AuthenticationManager authenticationManager, JWTUtil jwtUtil, RefreshTokenService refreshTokenService, PasswordEncoder passwordEncoder, PackageService packageService) {
         this.modelMapper = modelMapper;
         this.userRepository = userRepository;
         this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
         this.refreshTokenService = refreshTokenService;
         this.passwordEncoder = passwordEncoder;
+        this.packageService = packageService;
     }
 
     public List<String> registerUser(RegisterUserDTO registerUserDTO, String ipAddress, String userAgent) {
-
         var user = modelMapper.map(registerUserDTO, User.class);
         if (userRepository.existsUserByUsername(user.getUsername())) {
             throw new IllegalArgumentException("This username is already existed");
@@ -46,7 +54,15 @@ public class UserService {
             throw new IllegalArgumentException("This email is already existed");
         }
         user.setPassword(passwordEncoder.encode(registerUserDTO.getPassword()));
-        userRepository.save(user);
+        for (var role : RoleEnum.values()) {
+            for (var username : role.getUsersWhiteList()) {
+                if (Objects.equals(username, user.getUsername()) || Objects.equals(username, user.getEmail())) {
+                    user.setRole(role);
+                }
+            }
+        }
+        user = userRepository.save(user);
+        packageService.createPackage(Package.favouritesName, user);
         return this.loginUser(new LoginUserDTO(registerUserDTO.getUsername(), registerUserDTO.getPassword()), ipAddress, userAgent);
     }
 
@@ -84,28 +100,31 @@ public class UserService {
         return userRepository.findById(id).orElseThrow();
     }
 
-    public void addDocToFavourites(DocMeta docMeta, User user) {
-        user = this.loadUserById(user.getId()); // подгружаем пользователя из БД, чтобы избежать ленивой загрузки
-        user.getFavouriteDocs().add(docMeta);
-        userRepository.save(user);
-    }
-
-    public void removeDocFromFavourites(DocMeta docMeta, User user) {
-        user = userRepository.findById(user.getId()).orElseThrow(); // подгружаем пользователя из БД, чтобы избежать ленивой загрузки
-        user.getFavouriteDocs().remove(docMeta);
-        userRepository.save(user);
-    }
-
-    public void removeDocFromFavouritesForAllUsers(DocMeta docMeta) {
-        var users = userRepository.findAllByFavouriteDocsContaining(docMeta);
-        for (var user : users) {
-            user.getFavouriteDocs().remove(docMeta);
-            userRepository.save(user);
+    public List<String> getAuthoritiesNamesByUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+        List<String> authoritiesNames = new ArrayList<>();
+        for (var authority : crosswordUserDetails.getAuthorities()) {
+            authoritiesNames.add(authority.getAuthority().toLowerCase());
         }
+        return authoritiesNames;
     }
 
-    public Boolean checkDocInFavourites(User user, DocMeta docMeta) {
-        user = userRepository.findById(user.getId()).orElseThrow();
-        return user.getFavouriteDocs() != null && user.getFavouriteDocs().contains(docMeta);
+    public void createDefaultUsers() {
+        for (var role : RoleEnum.values()) {
+            for (var username : role.getUsersWhiteList()) {
+                var user = userRepository.findByUsernameOrEmail(username, username);
+                if (user.isPresent() && !user.get().getRole().name().equals(role.name())) {
+                    user.get().setRole(role);
+                }
+            }
+        }
+        // String name, String surname, String username, String password, RoleEnum role
+        for (var username : RoleEnum.ADMIN.getUsersWhiteList()) {
+            if (userRepository.findByUsernameOrEmail(username, username).isEmpty()) {
+                // TODO сделать пароль admin настраиваемым через параметры среды запуска или придумать другой более безопасный и удобный способ
+                userRepository.save(new User(username, username, username, passwordEncoder.encode(username), RoleEnum.ADMIN));
+            }
+        }
     }
 }

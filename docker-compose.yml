@@ -8,20 +8,6 @@ services:
     depends_on:
       - postgres
       - opensearch
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/crossword_new
-      SPRING_DATASOURCE_USERNAME: crossword_new
-      SPRING_DATASOURCE_PASSWORD: 1234567890
-      OPENSEARCH_URIS: http://opensearch:9200
-      OPENSEARCH_USERNAME: admin
-      OPENSEARCH_PASSWORD: CBsZ6#9kHxb
-      JWT_SECRET: SECRET
-      JWT_ACCESSEXPIRATIONDATE: 15
-      JWT_REFRESHEXPIRATIONDATE: 10080
-      SPRING_DATASOURCE_DRIVER-CLASS-NAME: org.postgresql.Driver
-      SPRING_JPA_HIBERNATE_DDL-AUTO: update
-      SPRING_JPA_DATABASE: postgresql
-      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.PostgreSQLDialect
     networks:
       - shared_network
 
@@ -44,7 +30,11 @@ services:
       - "9200:9200"  # Пробрасываем порт OpenSearch
     environment:
       discovery.type: single-node
-      plugins.security.disabled: "true"  # Отключаем security для упрощения
+      plugins.security.disabled: "false"
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: "CBsZ6#9kHxb"
+      OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
+      DISABLE_INSTALL_DEMO_CONFIG: "false"
+      plugins.security.ssl.http.enabled: "true"
     volumes:
       - opensearch-data:/usr/share/opensearch/data
     networks:

@@ -1,13 +1,12 @@
 package com.backend.crosswords.admin.models;
 
-import com.backend.crosswords.corpus.models.DocMeta;
+import com.backend.crosswords.admin.enums.RoleEnum;
 import com.backend.crosswords.corpus.models.Rating;
 import jakarta.persistence.*;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @Entity
 @Table(name = "_users")
@@ -32,23 +31,20 @@ public class User {
     @Column(name = "password")
     private String password;
 
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "_users_favourite_documents",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "doc_id"))
-    private Set<DocMeta> favouriteDocs;
-
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Rating> ratings;
 
-    public User(Long id, String name, String surname, String username, String email, String password, Set<DocMeta>  favouriteDocs, List<Rating> ratings) {
+    @Column(name = "role")
+    @Enumerated(EnumType.ORDINAL)
+    private RoleEnum role;
+
+    public User(Long id, String name, String surname, String username, String email, String password, List<Rating> ratings) {
         this.id = id;
         this.name = name;
         this.surname = surname;
         this.username = username;
         this.email = email;
         this.password = password;
-        this.favouriteDocs = favouriteDocs;
         this.ratings = ratings;
     }
 
@@ -59,11 +55,18 @@ public class User {
         this.username = username;
         this.password = password;
         this.email = email;
-        this.favouriteDocs = new HashSet<>();
         this.ratings = new ArrayList<>();
     }
 
     public User() {
+    }
+
+    public User(String name, String surname, String username, String password, RoleEnum role) {
+        this.name = name;
+        this.surname = surname;
+        this.username = username;
+        this.password = password;
+        this.role = role;
     }
 
     public List<Rating> getRatings() {
@@ -122,25 +125,11 @@ public class User {
         this.email = email;
     }
 
-    public Set<DocMeta> getFavouriteDocs() {
-        return favouriteDocs;
+    public RoleEnum getRole() {
+        return role;
     }
 
-    public void setFavouriteDocs(Set<DocMeta> favouriteDocs) {
-        this.favouriteDocs = favouriteDocs;
-    }
-
-    @Override
-    public String toString() {
-        return "User{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", surname='" + surname + '\'' +
-                ", username='" + username + '\'' +
-                ", email='" + email + '\'' +
-                ", password='" + password + '\'' +
-                ", favouriteDocs=" + favouriteDocs +
-                ", ratings=" + ratings +
-                '}';
+    public void setRole(RoleEnum role) {
+        this.role = role;
     }
 }

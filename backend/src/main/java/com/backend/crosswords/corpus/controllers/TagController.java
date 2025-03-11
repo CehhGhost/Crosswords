@@ -6,6 +6,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.NoSuchElementException;
+
 @RestController
 @RequestMapping("/tags")
 public class TagController {
@@ -15,11 +17,21 @@ public class TagController {
         this.tagService = tagService;
     }
     @PostMapping("/create")
-    public ResponseEntity<HttpStatus> createDoc(@RequestBody CreateTagDTO createTagDTO) {
-        return tagService.createTag(createTagDTO);
+    public ResponseEntity<?> createTag(@RequestBody CreateTagDTO createTagDTO) {
+        try {
+            tagService.createTag(createTagDTO);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+        return ResponseEntity.ok(HttpStatus.OK);
     }
     @DeleteMapping("/{id}")
-    public ResponseEntity<HttpStatus> deleteTagById(@PathVariable Long id) {
-        return tagService.deleteTagById(id);
+    public ResponseEntity<?> deleteTagById(@PathVariable Long id) {
+        try {
+            tagService.deleteTagById(id);
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+        return ResponseEntity.ok(HttpStatus.OK);
     }
 }

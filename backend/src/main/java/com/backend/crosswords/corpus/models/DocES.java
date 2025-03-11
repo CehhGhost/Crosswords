@@ -43,14 +43,6 @@ public class DocES {
         this.title = title;
     }
 
-    @Override
-    public String toString() {
-        return "DocES{" +
-                "text='" + text + '\'' +
-                ", title='" + title + '\'' +
-                '}';
-    }
-
     public Long getId() {
         return id;
     }
