@@ -4,23 +4,23 @@
       <div class="row items-center justify-between">
         <div><b>ID:</b> {{ digest.id }}</div>
         <div>
-          <b class="q-mr-sm"><q-icon name="star" color="primary"/> {{ digest.average_rating != -1 ? digest.average_rating : "Нет оценок" }} </b>
-          <b>{{ subscribed ? "Подписан" : "Не подписан" }}</b>
+          <b class="q-mr-sm"
+            ><q-icon name="star" color="primary" />
+            {{ digest.average_rating != -1 ? digest.average_rating : 'Нет оценок' }}
+          </b>
+          <b v-if="is_authed">{{ subscribed ? 'Подписан' : 'Не подписан' }}</b>
           <span v-if="subscribed">
-            <q-icon v-if="sendToMail" name="mail" class="q-ml-xs" />
-            <q-icon v-if="mobileNotifications" name="phone_iphone" class="q-ml-xs" />
+            <q-icon v-if="sendToMail && is_authed" name="mail" class="q-ml-xs" />
+            <q-icon v-if="mobileNotifications && is_authed" name="phone_iphone" class="q-ml-xs" />
           </span>
           <span class="q-ml-sm"><b>Дата:</b> {{ digest.date }}</span>
-        
         </div>
       </div>
-      
 
       <div class="row items-center q-mt-sm">
         <div class="text-h4 ellipsis">{{ truncatedTitle }}</div>
       </div>
 
-      
       <div class="q-mt-sm">{{ truncatedText }}</div>
 
       <!-- Тэги -->
@@ -49,15 +49,19 @@
 </template>
 
 <script>
-import DocumentTags from "../components/DocumentTags.vue";
+import DocumentTags from '../components/DocumentTags.vue'
 
 export default {
-  name: "DocumentCard",
+  name: 'DocumentCard',
   components: {
     DocumentTags,
   },
   props: {
     digest: {
+      type: Object,
+      required: true,
+    },
+    is_authed: {
       type: Object,
       required: true,
     },
@@ -67,34 +71,34 @@ export default {
       dropdown: false,
 
       // Инициализируем локальное состояние подписки из пропсов
-      subscribed: this.digest.subscribe_options.subscribed,
-      sendToMail: this.digest.subscribe_options.send_to_mail,
-      mobileNotifications: this.digest.subscribe_options.mobile_notifications,
-    };
+      subscribed: this.digest?.subscribe_options?.subscribed ?? false,
+      sendToMail: this.digest?.subscribe_options?.send_to_mail ?? false,
+      mobileNotifications: this.digest?.subscribe_options?.mobile_notifications ?? false,
+    }
   },
   computed: {
     truncatedTitle() {
       return this.digest.title.length > 22
-        ? this.digest.title.substring(0, 22) + "..."
-        : this.digest.title;
+        ? this.digest.title.substring(0, 22) + '...'
+        : this.digest.title
     },
     truncatedText() {
       return this.digest.text.length > 665
-        ? this.digest.text.substring(0, 665) + "..."
-        : this.digest.text;
+        ? this.digest.text.substring(0, 665) + '...'
+        : this.digest.text
     },
   },
   methods: {
     viewDigest() {
-      this.$router.push(`/digests/${this.digest.id}`);
+      this.$router.push(`/digests/${this.digest.id}`)
     },
 
     downloadPdf() {
-      console.log("Скачать PDF для документа", this.digest.id);
+      console.log('Скачать PDF для документа', this.digest.id)
       // window.open(pdfUrl, "_blank");
     },
   },
-};
+}
 </script>
 
 <style scoped>

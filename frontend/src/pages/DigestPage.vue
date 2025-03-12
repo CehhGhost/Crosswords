@@ -6,19 +6,20 @@
         <div class="row items-center justify-between">
           <div class="text-caption row items-center text-left">
             <q-icon name="calendar_today" class="q-mr-xs" />
-            {{ DigestData?.date }}
+            {{ digestData?.date }}
             <q-icon :name="fasCrown" class="q-ml-sm q-mr-xs" />
-            {{ DigestData?.owner }}
+            {{ digestData?.owner }}
             <q-icon name="star" color="primary" class="q-ml-sm q-mr-xs" />
-            {{ DigestData.average_rating != -1 ? DigestData.average_rating : 'Нет оценок' }}
+            {{ digestData.average_rating != -1 ? digestData.average_rating : 'Нет оценок' }}
           </div>
         </div>
         <div class="row items-center q-my-sm">
           <div class="text-h4 q-mr-xs">
-            {{ DigestData?.title }}
+            {{ digestData?.title }}
           </div>
           <subscription-button
-            :digest="DigestData"
+            v-if="digestData.is_authed"
+            :digest="digestData"
             :ownerChangeBackendUrl="ownerChangeBackendUrl"
             :subscriptionUpdateBackendUrl="subscriptionUpdateBackendUrl"
           />
@@ -31,15 +32,15 @@
               { 'text-yellow': $q.dark.isActive, 'text-accent': !$q.dark.isActive },
             ]"
           >
-            "{{ DigestData?.description }}"
+            "{{ digestData?.description }}"
           </text-body1>
         </div>
 
-        <div class="q-my-sm">
+        <div v-if="digestData.is_authed" class="q-my-sm">
           <div class="q-mb-xs">
             Оцените качество этого дайджетса:
             <q-rating
-              v-model="userRating"
+              v-model="digestData.rating_classification"
               max="5"
               color="primary"
               icon="star"
@@ -51,18 +52,18 @@
         </div>
 
         <div class="q-my-md">
-          {{ DigestData?.text }}
+          {{ digestData?.text }}
         </div>
         <q-separator />
         <div class="q-mt-sm">
-          <DocumentTags :tags="DigestData?.tags" />
+          <DocumentTags :tags="digestData?.tags" />
         </div>
         <q-expansion-item
-          v-if="DigestData?.urls && DigestData.urls.length"
-          :label="`Показать источники (${DigestData.urls.length})`"
+          v-if="digestData?.urls && digestData.urls.length"
+          :label="`Показать источники (${digestData.urls.length})`"
           class="q-mt-xs"
         >
-          <div v-for="(url, index) in DigestData.urls" :key="index">
+          <div v-for="(url, index) in digestData.urls" :key="index">
             <a
               :href="url"
               target="_blank"
@@ -145,9 +146,7 @@ import { fasCrown } from '@quasar/extras/fontawesome-v6'
 
 const route = useRoute()
 const router = useRouter()
-
-const DigestData = ref(null)
-const userRating = ref(0)
+const digestData = ref(null)
 const isLoading = ref(true)
 const showEditDialog = ref(false)
 const showDeleteDialog = ref(false)
@@ -159,7 +158,7 @@ const subscriptionUpdateBackendUrl = 'TODO connect backend endpoint subscription
 
 onMounted(async () => {
   try {
-    const response = await fetch(`https://d529a459cb7c410f943795a36f35f5ab.api.mockbin.io/`)
+    const response = await fetch(`https://6c9c5a9aa3994e299d4bca39f4b5fb42.api.mockbin.io/`)
     if (!response.ok) {
       if (response.status === 404) {
         router.replace('/404')
@@ -168,12 +167,8 @@ onMounted(async () => {
       }
       return
     }
-    DigestData.value = await response.json()
+    digestData.value = await response.json()
     // Инициализация дополнительных данных, если необходимо
-    if (DigestData.value && DigestData.value.subscribe_options) {
-      // Локальные данные подписки больше не используются в этой странице
-      // SubscriptionButton самостоятельно берет данные из DigestData.subscribe_options
-    }
   } catch (error) {
     console.error('Ошибка при загрузке документа:', error)
   } finally {
@@ -192,7 +187,7 @@ async function onRatingChange(newRating) {
     if (!postResponse.ok) {
       console.error('Ошибка при отправке рейтинга:', postResponse.status)
     } else {
-      DigestData.value.rating_classification = newRating
+      digestData.value.rating_classification = newRating
     }
   } catch (err) {
     console.error('Ошибка при отправке рейтинга:', err)
@@ -209,7 +204,7 @@ function onEditCancel() {
 }
 
 function downloadPdf() {
-  console.log('Скачать PDF для документа', DigestData.value?.id)
+  console.log('Скачать PDF для документа', digestData.value?.id)
 }
 
 async function onDeleteConfirm() {

@@ -38,10 +38,10 @@ export default {
   },
   methods: {
     onPrivacy() {
-      console.log('Кнопка "Приватность" нажата')
+      this.$router.push({ name: 'privacy' });
     },
     onExport() {
-      console.log('Кнопка "Экспорт данных" нажата')
+      this.$router.push({ name: 'data' });
     },
   },
 }
