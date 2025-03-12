@@ -49,6 +49,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/documents/{id}").hasAuthority(AuthorityEnum.EDIT_DELETE_DOCS.name())
                         .requestMatchers(HttpMethod.GET, "/packages/**").permitAll()
                         .requestMatchers("/packages/**").authenticated()
+                        .requestMatchers( "digests/subscriptions/**").authenticated()
                         .anyRequest().permitAll()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

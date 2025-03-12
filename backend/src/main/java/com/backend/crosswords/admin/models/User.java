@@ -33,7 +33,7 @@ public class User {
     @Column(name = "send_to_mail")
     private Boolean sendToMail;
 
-    @Column(name = "mobile_Notifications")
+    @Column(name = "mobile_notifications")
     private Boolean mobileNotifications;
 
     @Column(name = "role")

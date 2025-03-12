@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 
 @Service
@@ -125,5 +126,9 @@ public class UserService {
                 userRepository.save(new User(username, username, username, passwordEncoder.encode(username), RoleEnum.ADMIN));
             }
         }
+    }
+
+    public User getUserByUsername(String username) {
+        return userRepository.findByUsernameOrEmail(username, username).orElseThrow(() -> new NoSuchElementException("There is no users with such username/email!"));
     }
 }

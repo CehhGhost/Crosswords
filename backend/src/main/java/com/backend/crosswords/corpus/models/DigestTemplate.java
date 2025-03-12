@@ -22,6 +22,15 @@ public class DigestTemplate {
     private Set<Tag> tags;
     @OneToMany(mappedBy = "template", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private List<DigestCore> cores;
+
+    public DigestTemplate(Set<Source> sources, Set<Tag> tags) {
+        this.sources = sources;
+        this.tags = tags;
+    }
+
+    public DigestTemplate() {
+    }
+
     @PrePersist
     private void generateUuidForDigest() {
         this.uuid = generateUuid(this.sources, this.tags);
