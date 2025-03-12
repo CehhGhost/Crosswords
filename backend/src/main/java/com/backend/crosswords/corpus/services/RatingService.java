@@ -3,8 +3,8 @@ package com.backend.crosswords.corpus.services;
 import com.backend.crosswords.admin.models.User;
 import com.backend.crosswords.admin.services.UserService;
 import com.backend.crosswords.corpus.models.DocMeta;
-import com.backend.crosswords.corpus.models.Rating;
-import com.backend.crosswords.corpus.models.RatingId;
+import com.backend.crosswords.corpus.models.DocRating;
+import com.backend.crosswords.corpus.models.DocRatingId;
 import com.backend.crosswords.corpus.repositories.jpa.RatingRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,18 +23,18 @@ public class RatingService {
         this.userService = userService;
     }
 
-    public Optional<Rating> findById(RatingId ratingId) {
+    public Optional<DocRating> findById(DocRatingId ratingId) {
         return ratingRepository.findById(ratingId);
     }
 
     public void createRating(DocMeta doc, User user, Integer summaryRating, Integer classificationRating) {
-        RatingId ratingId = new RatingId(doc.getId(), user.getId());
-        Rating rating;
+        DocRatingId ratingId = new DocRatingId(doc.getId(), user.getId());
+        DocRating rating;
         var check = ratingRepository.findById(ratingId);
         if (check.isPresent()) {
             rating = check.get();
         } else {
-            rating = new Rating();
+            rating = new DocRating();
             rating.setId(ratingId);
             rating.setDoc(doc);
             rating.setUser(user);
@@ -44,10 +44,10 @@ public class RatingService {
         ratingRepository.save(rating);
     }
     @Transactional
-    public void dropRatings(List<Rating> ratings, Boolean dropRatingSummary, Boolean dropRatingClassification) {
+    public void dropRatings(List<DocRating> ratings, Boolean dropRatingSummary, Boolean dropRatingClassification) {
         var iterator = ratings.iterator();
         while (iterator.hasNext()) {
-            Rating rating = iterator.next();
+            DocRating rating = iterator.next();
             if (dropRatingSummary && dropRatingClassification) {
                 iterator.remove();
                 userService.removeRating(rating);

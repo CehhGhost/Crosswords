@@ -20,6 +20,11 @@ public class Tag {
             joinColumns = @JoinColumn(name = "tag_id"),
             inverseJoinColumns = @JoinColumn(name = "doc_id"))
     private List<DocMeta> docs;
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(name = "_digest_templates_tags",
+            joinColumns = @JoinColumn(name = "tag_id"),
+            inverseJoinColumns = @JoinColumn(name = "digest_template_id"))
+    private List<DigestTemplate> digestTemplates;
 
     public Tag() {
     }
@@ -52,5 +57,13 @@ public class Tag {
 
     public void setDocs(List<DocMeta> docs) {
         this.docs = docs;
+    }
+
+    public List<DigestTemplate> getDigestTemplates() {
+        return digestTemplates;
+    }
+
+    public void setDigestTemplates(List<DigestTemplate> digestTemplates) {
+        this.digestTemplates = digestTemplates;
     }
 }

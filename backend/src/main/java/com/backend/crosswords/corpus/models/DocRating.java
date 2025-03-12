@@ -5,9 +5,15 @@ import jakarta.persistence.*;
 
 @Table(name = "_ratings")
 @Entity
-public class Rating {
+public class DocRating {
     @EmbeddedId
-    private RatingId id;
+    private DocRatingId id;
+
+    @Column(name = "summary_rating")
+    private Integer summaryRating;
+
+    @Column(name = "classification_rating")
+    private Integer classificationRating;
 
     @ManyToOne
     @MapsId("docId")
@@ -19,11 +25,7 @@ public class Rating {
     @JoinColumn(name = "user_id")
     private User user;
 
-    private Integer summaryRating;
-
-    private Integer classificationRating;
-
-    public Rating(RatingId id, DocMeta doc, User user, Integer summaryRating, Integer classificationRating) {
+    public DocRating(DocRatingId id, DocMeta doc, User user, Integer summaryRating, Integer classificationRating) {
         this.id = id;
         this.doc = doc;
         this.user = user;
@@ -31,14 +33,14 @@ public class Rating {
         this.classificationRating = classificationRating;
     }
 
-    public Rating() {
+    public DocRating() {
     }
 
-    public RatingId getId() {
+    public DocRatingId getId() {
         return id;
     }
 
-    public void setId(RatingId id) {
+    public void setId(DocRatingId id) {
         this.id = id;
     }
 

@@ -8,9 +8,8 @@ import com.backend.crosswords.admin.models.RefreshToken;
 import com.backend.crosswords.admin.models.User;
 import com.backend.crosswords.admin.repositories.UserRepository;
 import com.backend.crosswords.config.JWTUtil;
-import com.backend.crosswords.corpus.models.DocMeta;
 import com.backend.crosswords.corpus.models.Package;
-import com.backend.crosswords.corpus.models.Rating;
+import com.backend.crosswords.corpus.models.DocRating;
 import com.backend.crosswords.corpus.services.PackageService;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -90,7 +89,7 @@ public class UserService {
     }
 
     @Transactional
-    public void removeRating(Rating rating) {
+    public void removeRating(DocRating rating) {
         var user = rating.getUser();
         user.getRatings().remove(rating);
         userRepository.save(user);
