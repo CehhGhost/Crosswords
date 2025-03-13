@@ -26,9 +26,11 @@ public class DigestSubscription {
     @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "owner_id")
     private User owner;
-    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "core_id")
-    private DigestCore core;
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(name = "_digest_cores_subscriptions",
+            joinColumns = @JoinColumn(name = "digest_subscriptions_id"),
+            inverseJoinColumns = @JoinColumn(name = "digest_core_id"))
+    private List<DigestCore> core;
 
     public Long getId() {
         return id;
@@ -86,11 +88,11 @@ public class DigestSubscription {
         this.owner = owner;
     }
 
-    public DigestCore getCore() {
+    public List<DigestCore> getCore() {
         return core;
     }
 
-    public void setCores(DigestCore core) {
+    public void setCore(List<DigestCore> core) {
         this.core = core;
     }
 }

@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @Service
 public class DigestSubscriptionSettingsService {
@@ -22,7 +23,6 @@ public class DigestSubscriptionSettingsService {
         this.userService = userService;
     }
 
-    // TODO доделать
     @Transactional
     public void setSubscribersForSubscription(List<String> subscribers, DigestSubscription subscription) {
         User user = subscription.getOwner();
@@ -40,5 +40,9 @@ public class DigestSubscriptionSettingsService {
             userSettingsList.add(userSettings);
         }
         subscriptionSettingsRepository.saveAll(userSettingsList);
+    }
+
+    public DigestSubscriptionSettings getSubscriptionSettingsBySubscriptionAndUser(DigestSubscription subscription, User user) {
+        return subscriptionSettingsRepository.findById(new DigestSubscriptionSettingsId(subscription.getId(), user.getId())).orElseThrow(() -> new NoSuchElementException("There is no settings between these user and subscription!"));
     }
 }

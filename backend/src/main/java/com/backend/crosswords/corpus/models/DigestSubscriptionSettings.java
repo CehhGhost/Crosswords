@@ -18,7 +18,7 @@ public class DigestSubscriptionSettings {
     private DigestSubscription digestSubscription;
     @ManyToOne
     @MapsId("userId")
-    @JoinColumn(name = "subscriber")
+    @JoinColumn(name = "subscriber_id")
     private User subscriber;
 
     public DigestSubscriptionSettings(DigestSubscriptionSettingsId id, DigestSubscription digestSubscription, User subscriber, Boolean sendToMail, Boolean mobileNotifications) {

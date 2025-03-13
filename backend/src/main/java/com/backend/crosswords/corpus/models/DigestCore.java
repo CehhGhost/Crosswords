@@ -19,7 +19,7 @@ public class DigestCore {
     @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "digest_template_id")
     private DigestTemplate template;
-    @OneToMany(mappedBy = "core")
+    @ManyToMany(mappedBy = "core")
     private List<DigestSubscription> subscriptions;
     @ManyToMany(mappedBy = "digestCores")
     private List<DocMeta> docs;

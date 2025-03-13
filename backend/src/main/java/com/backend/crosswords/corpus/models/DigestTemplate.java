@@ -16,7 +16,7 @@ public class DigestTemplate {
     private String uuid;
     @ElementCollection
     @Enumerated(EnumType.ORDINAL)
-    @CollectionTable(name = "digest_templates_sources", joinColumns = @JoinColumn(name = "digest_template_id"))
+    @CollectionTable(name = "_digest_templates_sources", joinColumns = @JoinColumn(name = "digest_template_id"))
     private Set<Source> sources = new HashSet<>();
     @ManyToMany(mappedBy = "digestTemplates")
     private Set<Tag> tags;
