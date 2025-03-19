@@ -54,7 +54,7 @@ public class UserController {
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Incorrect credentials!");
         }
-        return setCookies(response, jwt);
+        return this.setCookies(response, jwt);
     }
 
     @PostMapping("/login")
@@ -70,7 +70,7 @@ public class UserController {
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Incorrect credentials!");
         }
-        return setCookies(response, jwt);
+        return this.setCookies(response, jwt);
     }
 
     @PostMapping("/refresh")
@@ -102,7 +102,7 @@ public class UserController {
         } catch (TokenExpiredException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage() + " At: " + e.getExpiredOn());
         }
-        return setCookies(response, jwt);
+        return this.setCookies(response, jwt);
     }
     @GetMapping("/check_auth")
     public ResponseEntity<?> checkUsersAuthorities() {

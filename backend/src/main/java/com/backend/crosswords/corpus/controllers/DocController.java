@@ -54,6 +54,7 @@ public class DocController {
         try {
             return ResponseEntity.ok(docService.getAllDocs());
         } catch (NoSuchElementException e) {
+            // TODO переделать данную фигню
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Sorry, our database is corrupted (check ES)");
         }
     }
@@ -98,13 +99,15 @@ public class DocController {
         try {
             docService.deleteDocById(id);
         } catch (NoSuchElementException e) {
-            ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
         return ResponseEntity.ok(HttpStatus.OK);
     }
     @Operation(summary = "Rate doc by id", description = "This endpoint lets you rate a document, parameters can be null or numbers from 1 to 5, user must be authenticated")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "You successfully rated a document"),
+            @ApiResponse(responseCode = "401", description = "You are trying to rate a document while unauthorized"),
+            @ApiResponse(responseCode = "400", description = "Rating's arguments must be in range of 1 to 5"),
             @ApiResponse(responseCode = "404", description = "There is no documents with such id")
     })
     @PatchMapping("/{id}/rate")
@@ -210,6 +213,56 @@ public class DocController {
             docService.removeDocByIdFromPackageByName(crosswordUserDetails.getUser(), id, Package.favouritesName);
         } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+        return ResponseEntity.ok(HttpStatus.OK);
+    }
+
+    @PostMapping("/{id}/annotate")
+    public ResponseEntity<?> annotateDocById(@PathVariable Long id, @RequestBody CreateUpdateAnnotationDTO createUpdateAnnotationDTO) {
+        Long annotationId;
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+            annotationId = docService.annotateDocById(crosswordUserDetails.getUser(), id, createUpdateAnnotationDTO);
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+        return ResponseEntity.ok(annotationId);
+    }
+    @DeleteMapping("/{docId}/annotate/{annotationId}")
+    public ResponseEntity<?> deleteAnnotationByIdFromDocById(@PathVariable Long docId, @PathVariable Long annotationId) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+            docService.deleteAnnotationByIdFromDocById(crosswordUserDetails.getUser(), docId, annotationId);
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+        return ResponseEntity.ok(HttpStatus.OK);
+    }
+    @PostMapping("/{id}/comment")
+    public ResponseEntity<?> commentDocById(@PathVariable Long id, @RequestBody CreateUpdateCommentDTO createUpdateCommentDTO) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+            docService.commentDocById(crosswordUserDetails.getUser(), id, createUpdateCommentDTO);
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+        return ResponseEntity.ok(HttpStatus.OK);
+    }
+    @DeleteMapping("/{docId}/comment/{commentId}")
+    public ResponseEntity<?> deleteCommentByIdFromDocById(@PathVariable Long docId, @PathVariable Long commentId) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+            docService.deleteCommentByIdFromDocById(crosswordUserDetails.getUser(), docId, commentId);
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
         return ResponseEntity.ok(HttpStatus.OK);
     }

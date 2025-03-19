@@ -1,8 +1,8 @@
 package com.backend.crosswords.admin.enums;
 
 public enum RoleEnum {
-    ADMIN(AuthorityEnum.values(), new String[]{"admin"}),
-    MODERATOR(new AuthorityEnum[]{AuthorityEnum.EDIT_DELETE_DOCS}, new String[]{"Gek"});
+    ROLE_ADMIN(AuthorityEnum.values(), new String[]{"admin"}),
+    ROLE_MODERATOR(new AuthorityEnum[]{AuthorityEnum.EDIT_DELETE_DOCS}, new String[]{"Gek", "Chook"});
 
     private final AuthorityEnum[] authorities;
     private final String[] usersWhiteList;

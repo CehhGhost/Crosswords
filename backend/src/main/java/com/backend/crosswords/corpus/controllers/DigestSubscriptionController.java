@@ -31,6 +31,7 @@ public class DigestSubscriptionController {
     @Operation(summary = "Create Digest Subscription", description = "This endpoint lets you create a new subscription, owner will be extracted from auth, he also will be added into subscribers")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "You successfully created a new subscription and subscribed users on it"),
+            // TODO ошибка 401
             @ApiResponse(responseCode = "400", description = "At least one source has an incorrect name"),
             @ApiResponse(responseCode = "404", description = "At least one subscriber cant be found in the DB")
     })
