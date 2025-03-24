@@ -1,21 +1,21 @@
 <template>
-  <div class="fullscreen bg-blue text-white text-center q-pa-md flex flex-center">
+  <div class="fullscreen bg-primary text-white text-center q-pa-md flex flex-center">
     <div>
-      <div style="font-size: 30vh">
+      <div style="font-size: 30vh" class="text-secondary">
         404
       </div>
 
-      <div class="text-h2" style="opacity:.4">
-        Oops. Nothing here...
+      <div class="text-h2 text-secondary" style="opacity:.4">
+        Похоже, что в корпусе нет такой страницы...
       </div>
 
       <q-btn
         class="q-mt-xl"
-        color="white"
-        text-color="blue"
+        color="secondary"
+        text-color="white"
         unelevated
         to="/"
-        label="Go Home"
+        label="Вернуться на главную"
         no-caps
       />
     </div>
