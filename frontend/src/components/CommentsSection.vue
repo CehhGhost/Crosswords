@@ -11,15 +11,15 @@
         style="border-radius: 8px"
       />
       <div class="row justify-end">
-      <q-btn
-        label="Отправить"
-        no-caps
-        text-color="secondary"
-        color="primary"
-        @click="submitComment"
-        :disable="isPosting || !newCommentText.trim()"
-      />
-    </div>
+        <q-btn
+          label="Отправить"
+          no-caps
+          text-color="secondary"
+          color="primary"
+          @click="submitComment"
+          :disable="isPosting || !newCommentText.trim()"
+        />
+      </div>
     </div>
 
     <!-- Лоадер, если комментарии загружаются -->
@@ -32,24 +32,17 @@
         v-for="comment in comments"
         :key="comment.id"
         class="q-pa-sm q-mb-md"
-        :class="['q-px-md q-py-sm' , { 'no-shadow': $q.dark.isActive }]"
+        :class="['q-px-md q-py-sm', { 'no-shadow': $q.dark.isActive }]"
         style="position: relative; border-radius: 8px"
       >
         <div class="row items-center justify-between">
           <div class="row items-center text-caption">
-            <q-icon name="event" class="q-mr-xs"/>
+            <q-icon name="event" class="q-mr-xs" />
             {{ formatCommentDate(comment) }}
           </div>
           <div>
             <q-btn flat round dense size="sm" icon="edit" @click="enableEdit(comment)" />
-            <q-btn 
-              flat
-              round
-              dense
-              size="sm"
-              icon="delete"
-              @click="deleteComment(comment)"
-            />
+            <q-btn flat round dense size="sm" icon="delete" @click="deleteComment(comment)" />
           </div>
         </div>
 
@@ -149,7 +142,11 @@ export default {
       })
         .then((response) => {
           if (!response.ok) {
-            throw new Error(`Ошибка отправки комментария: ${response.status}`)
+            if (response.status === 401) {
+              this.$router.replace('/login')
+            } else {
+              throw new Error(`Ошибка отправки комментария: ${response.status}`)
+            }
           }
           return response.json()
         })
@@ -179,15 +176,15 @@ export default {
       this.editCommentText = ''
     },
     updateComment(comment) {
-  if (!this.editCommentText.trim()) return;
-  const now = new Date().toISOString();
-  const updatedComment = {
-    id: comment.id,
-    text: this.editCommentText,
-    articleId: comment.articleId,
-    createdAt: comment.createdAt,
-    updatedAt: now
-  };
+      if (!this.editCommentText.trim()) return
+      const now = new Date().toISOString()
+      const updatedComment = {
+        id: comment.id,
+        text: this.editCommentText,
+        articleId: comment.articleId,
+        createdAt: comment.createdAt,
+        updatedAt: now,
+      }
       // PUT запрос для обновления комментария.
       fetch(
         //
@@ -199,57 +196,67 @@ export default {
           body: JSON.stringify(updatedComment),
         },
       )
-      .then(response => {
-      if (!response.ok) {
-        throw new Error(`Ошибка обновления комментария: ${response.status}`);
-      }
-      // Если бекенд не возвращает тело, продолжаем
-      return response.text();
-    })
-    .then(() => {
-      // Обновляем локально комментарий, используя данные, которые отправили
-      const index = this.comments.findIndex(c => c.id === comment.id);
-      if (index !== -1) {
-        // Обновляем комментарий в локальном массиве
-        this.comments.splice(index, 1, { ...comment, ...updatedComment });
-      }
-      this.cancelEdit();
-    })
-    .catch(error => {
-      console.error(error);
-      this.$q.notify.create({
-        message: error.message,
-        color: 'negative',
-        position: 'top'
-      });
-    });
-},
-deleteComment(comment) {
-      // Отправляем delete запрос для удаления комментария
-      fetch(
-        //`https://example.com/api/comments/${comment.id}`
-        "https://f776e92186144f8e8cc6cfc807c771e8.api.mockbin.io/", {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' }
-      })
-        .then(response => {
+        .then((response) => {
           if (!response.ok) {
-            throw new Error(`Ошибка удаления комментария: ${response.status}`);
+            if (response.status === 401) {
+              this.$router.replace('/login')
+            } else {
+              throw new Error(`Ошибка обновления комментария: ${response.status}`)
+            }
           }
-          // Если запрос успешный, удаляем комментарий из массива
-          const index = this.comments.findIndex(c => c.id === comment.id);
-          if (index !== -1) {
-            this.comments.splice(index, 1);
-          }
+          // Если бекенд не возвращает тело, продолжаем
+          return response.text()
         })
-        .catch(error => {
-          console.error(error);
+        .then(() => {
+          // Обновляем локально комментарий, используя данные, которые отправили
+          const index = this.comments.findIndex((c) => c.id === comment.id)
+          if (index !== -1) {
+            // Обновляем комментарий в локальном массиве
+            this.comments.splice(index, 1, { ...comment, ...updatedComment })
+          }
+          this.cancelEdit()
+        })
+        .catch((error) => {
+          console.error(error)
           this.$q.notify.create({
             message: error.message,
             color: 'negative',
-            position: 'top'
-          });
-        });
+            position: 'top',
+          })
+        })
+    },
+    deleteComment(comment) {
+      // Отправляем delete запрос для удаления комментария
+      fetch(
+        //`https://example.com/api/comments/${comment.id}`
+        'https://f776e92186144f8e8cc6cfc807c771e8.api.mockbin.io/',
+        {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+        },
+      )
+        .then((response) => {
+          if (!response.ok) {
+            if (response.status === 401) {
+              this.$router.replace('/login')
+            } else {
+              throw new Error(`Ошибка удаления комментария: ${response.status}`)
+            }
+          }
+          // Если запрос успешный, удаляем комментарий из массива
+          const index = this.comments.findIndex((c) => c.id === comment.id)
+          if (index !== -1) {
+            this.comments.splice(index, 1)
+          }
+        })
+        .catch((error) => {
+          console.error(error)
+          this.$q.notify.create({
+            message: error.message,
+            color: 'negative',
+            position: 'top',
+          })
+        })
     },
     formatDate(dateStr) {
       const date = new Date(dateStr)
@@ -272,5 +279,4 @@ deleteComment(comment) {
 }
 </script>
 
-<style scoped>
-</style>
+<style scoped></style>

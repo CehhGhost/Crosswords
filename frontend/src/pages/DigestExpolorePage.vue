@@ -401,7 +401,6 @@ export default {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },
         })
-
         if (!response.ok) {
           throw new Error('Ошибка при получении featured дайджестов')
         }

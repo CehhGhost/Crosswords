@@ -1,8 +1,8 @@
 <template>
-  <ServerResponseSpinner v-if="isLoading"/>
+  <ServerResponseSpinner v-if="isLoading" />
   <div v-if="!isLoading" class="page-body q-pa-md">
     <BackButton to="/documents" />
-    <q-page>
+    <q-page v-if="documentData">
       <q-card :class="['q-px-md q-py-sm', { 'no-shadow': $q.dark.isActive }]">
         <div class="row items-center justify-between">
           <div class="text-caption text-left">
@@ -86,7 +86,7 @@
           class="col-auto"
         />
 
-        <div class="row items-start wrap col-auto">
+        <div v-if="documentData.is_authed" class="row items-start wrap col-auto">
           <q-btn
             label="Редактировать"
             color="primary"
@@ -109,7 +109,10 @@
       </div>
 
       <CommentsSection v-if="documentData.is_authed" :articleId="documentData?.id" />
-      <LockedContent v-else description="Войдите в аккаунт, чтобы ставить рейтинги, оставлять персональные заметки, аннотировать текст и добавлять статьи в папки!"/>
+      <LockedContent
+        v-else
+        description="Войдите в аккаунт, чтобы ставить рейтинги, оставлять персональные заметки, аннотировать текст и добавлять статьи в папки!"
+      />
 
       <ConfirmDialog
         v-model="showEditDialog"
@@ -175,7 +178,9 @@ onMounted(async () => {
     console.log(id)
 
     if (!response.ok) {
-      if (response.status === 404) {
+      if (response.status === 401) {
+        router.replace('/login')
+      } else if (response.status === 404) {
         router.replace('/404')
       } else {
         console.error('Ошибка HTTP:', response.status)
@@ -288,6 +293,9 @@ watch(
           } else {
             console.error('Ошибка при сохранении аннотации:', response.status)
             recogitoInstance.removeAnnotation(annotation)
+            if (response.status === 401) {
+              router.replace('/login')
+            }
           }
         } catch (error) {
           console.error('Ошибка при сохранении аннотации:', error)
@@ -308,9 +316,12 @@ watch(
           if (response.ok) {
             console.log('Аннотация успешно удалена')
           } else {
-            console.error('Ошибка при удалении аннотации:', response.status)
-            // это чтоб при необходимости можно вернуть аннотацию на страницу
             recogitoInstance.addAnnotation(annotation)
+            if (response.status === 401) {
+              router.replace('/login')
+            } else {
+              console.error('Ошибка при удалении аннотации:', response.status)
+            }
           }
         } catch (error) {
           console.error('Ошибка при удалении аннотации:', error)
@@ -344,8 +355,12 @@ watch(
           if (response.ok) {
             console.log('Аннотация успешно обновлена')
           } else {
-            console.error('Ошибка при обновлении аннотации:', response.status)
             recogitoInstance.setAnnotations([previous])
+            if (response.status === 401) {
+              router.replace('/login')
+            } else {
+              console.error('Ошибка при обновлении аннотации:', response.status)
+            }
           }
         } catch (error) {
           console.error('Ошибка при обновлении аннотации:', error)
@@ -357,7 +372,6 @@ watch(
   },
   { immediate: true },
 )
-
 async function onRatingChange(newRating) {
   try {
     const id = route.params.id
@@ -369,7 +383,11 @@ async function onRatingChange(newRating) {
       body: JSON.stringify({ rating: newRating }),
     })
     if (!postResponse.ok) {
-      console.error('Ошибка при отправке рейтинга:', postResponse.status)
+      if (postResponse.status === 401) {
+        router.replace('/login')
+      } else {
+        console.error('Ошибка при отправке рейтинга:', postResponse.status)
+      }
     } else {
       documentData.value.rating_classification = newRating
     }

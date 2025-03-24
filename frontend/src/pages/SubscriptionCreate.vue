@@ -1,9 +1,12 @@
 <template>
   <q-page class="page-body q-mt-md">
-    <BackButton to="/digests"/>
-    <div class="text-h5 caption" :class="{ 'text-secondary': !$q.dark.isActive, 'text-white': $q.dark.isActive }" >
-        Заказ дайджеста
-      </div>
+    <BackButton to="/digests" />
+    <div
+      class="text-h5 caption"
+      :class="{ 'text-secondary': !$q.dark.isActive, 'text-white': $q.dark.isActive }"
+    >
+      Заказ дайджеста
+    </div>
     <q-form @submit="submitForm" class="q-gutter-md">
       <q-input
         v-model="title"
@@ -20,11 +23,7 @@
           :label="'Источники'"
           :options="availableSources"
         />
-        <FilterSelector
-          v-model="selectedTags"
-          :label="'Теги'"
-          :options="availableTags"
-        />
+        <FilterSelector v-model="selectedTags" :label="'Теги'" :options="availableTags" />
       </div>
 
       <q-input
@@ -41,7 +40,7 @@
         <q-checkbox v-model="notificationMobile" label="В мобильное приложение" />
       </div>
       <div class="q-mt-md">
-      <span>Доступ:</span>
+        <span>Доступ:</span>
         <q-checkbox v-model="isPublic" label="Сделать публичным" />
       </div>
 
@@ -71,10 +70,16 @@
       <div class="q-mt-sm">
         <!-- тут потом заменить на email текущего пользователя-->
         <q-chip :label="ownerEmail" color="primary" text-color="secondary" class="q-mb-xs">
-          <q-icon :name="fasCrown" color="secondary" class="q-ml-xs" >
-            <q-tooltip anchor="top middle" self="bottom middle" class="bg-primary text-secondary" transition-show="scale" transition-hide="scale">
+          <q-icon :name="fasCrown" color="secondary" class="q-ml-xs">
+            <q-tooltip
+              anchor="top middle"
+              self="bottom middle"
+              class="bg-primary text-secondary"
+              transition-show="scale"
+              transition-hide="scale"
+            >
               Вы владелец этого дайджеста
-              </q-tooltip>
+            </q-tooltip>
           </q-icon>
         </q-chip>
         <q-chip
@@ -88,12 +93,20 @@
           class="q-mb-xs"
         >
           <q-icon v-if="chip.has_email" name="mail" color="secondary" class="q-ml-xs">
-            <q-tooltip class="bg-primary text-secondary" transition-show="scale" transition-hide="scale">
+            <q-tooltip
+              class="bg-primary text-secondary"
+              transition-show="scale"
+              transition-hide="scale"
+            >
               Этот пользователь получает уведомления на почту
             </q-tooltip>
           </q-icon>
           <q-icon v-if="chip.has_mobile" name="phone_iphone" color="secondary" class="q-ml-xs">
-            <q-tooltip class="bg-primary text-secondary" transition-show="scale" transition-hide="scale">
+            <q-tooltip
+              class="bg-primary text-secondary"
+              transition-show="scale"
+              transition-hide="scale"
+            >
               Этот пользователь получает мобильные уведомления
             </q-tooltip>
           </q-icon>
@@ -117,12 +130,15 @@
 import { availableSources, availableTags } from '../data/lookups.js'
 import { fasCrown } from '@quasar/extras/fontawesome-v6'
 import FilterSelector from '../components/FilterSelector.vue'
-import BackButton from 'src/components/BackButton.vue';
+import BackButton from 'src/components/BackButton.vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 export default {
   components: {
     FilterSelector,
-    BackButton
+    BackButton,
   },
   setup() {
     return {
@@ -145,25 +161,26 @@ export default {
       availableSources,
       availableTags,
       ownerEmail: '',
+      router,
     }
   },
   mounted() {
-    this.fetchOwnerEmail();
+    this.fetchOwnerEmail()
   },
   methods: {
     async fetchOwnerEmail() {
       try {
         const response = await fetch(
           // '/api/get-owner-email'
-          'https://f52a38db04bb4e4ab4c5b6b0bd1f9285.api.mockbin.io/'
-        );
+          'https://f52a38db04bb4e4ab4c5b6b0bd1f9285.api.mockbin.io/',
+        )
         if (!response.ok) {
-          throw new Error('Не удалось получить email владельца');
+          throw new Error('Не удалось получить email владельца')
         }
-        const data = await response.json();
-        this.ownerEmail = data.email; // Записываем email в переменную
+        const data = await response.json()
+        this.ownerEmail = data.email // Записываем email в переменную
       } catch (error) {
-        console.error('Ошибка при получении email владельца:', error);
+        console.error('Ошибка при получении email владельца:', error)
       }
     },
     addEmail() {
@@ -179,14 +196,20 @@ export default {
       }
 
       if (this.email) {
-        fetch('https://a37743da82a54b24895ba26ea5cbc277.api.mockbin.io/', {
+        fetch(
+          'https://a37743da82a54b24895ba26ea5cbc277.api.mockbin.io/', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ credentials: this.email }),
         })
-          .then((response) => response.json())
+          .then((response) => {
+            if (response.status === 401) {
+              this.$router.replace('/login')
+            }
+            return response.json()
+          })
           .then((data) => {
             const { has_email, has_mobile } = data
             if (has_email !== undefined || has_mobile !== undefined) {
