@@ -1,7 +1,10 @@
 package com.backend.crosswords.config;
 
 import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.auth0.jwt.exceptions.TokenExpiredException;
+import com.backend.crosswords.admin.models.RefreshToken;
 import com.backend.crosswords.admin.services.CrosswordUserDetailsService;
+import com.backend.crosswords.admin.services.RefreshTokenService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -17,32 +20,43 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.NoSuchElementException;
 
 @Component
 public class JWTFilter extends OncePerRequestFilter {
     private final JWTUtil jwtUtil;
     private final CrosswordUserDetailsService crosswordUserDetailsService;
+    private final RefreshTokenService refreshTokenService;
 
-    public JWTFilter(JWTUtil jwtUtil, CrosswordUserDetailsService crosswordUserDetailsService) {
+    public JWTFilter(JWTUtil jwtUtil, CrosswordUserDetailsService crosswordUserDetailsService, RefreshTokenService refreshTokenService) {
         this.jwtUtil = jwtUtil;
         this.crosswordUserDetailsService = crosswordUserDetailsService;
+        this.refreshTokenService = refreshTokenService;
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        String jwt = null;
+        String accessToken = null;
+        String oldRefreshToken = null;
         if (request.getCookies() != null) {
             for (Cookie cookie : request.getCookies()) {
                 if ("access_token".equals(cookie.getName())) {
-                    jwt = cookie.getValue();
-                    break;
+                    accessToken = cookie.getValue();
+                    if (oldRefreshToken != null) {
+                        break;
+                    }
+                } else if ("refresh_token".equals(cookie.getName())) {
+                    oldRefreshToken = cookie.getValue();
+                    if (accessToken != null) {
+                        break;
+                    }
                 }
             }
         }
 
-        if (jwt != null && !jwt.isBlank()) {
+        if (accessToken != null && !accessToken.isBlank()) {
             try {
-                String username = jwtUtil.validateTokenAndRetrieveClaim(jwt);
+                String username = jwtUtil.validateTokenAndRetrieveClaim(accessToken);
                 UserDetails userDetails = crosswordUserDetailsService.loadUserByUsername(username);
 
                 UsernamePasswordAuthenticationToken authToken =
@@ -54,16 +68,58 @@ public class JWTFilter extends OncePerRequestFilter {
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                 }
             } catch (UsernameNotFoundException | JWTVerificationException exception) {
+                refreshUser(oldRefreshToken, request, response, filterChain);
+            }
+        } else {
+            refreshUser(oldRefreshToken, request, response, filterChain);
+        }
+
+        filterChain.doFilter(request, response);
+    }
+
+    private void refreshUser(String oldToken, HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        if (oldToken != null && !oldToken.isBlank()) {
+            String ipAddress = request.getHeader("X-Forwarded-For");
+            if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
+                ipAddress = request.getRemoteAddr();
+            }
+            String userAgent = request.getHeader("User-Agent");
+            RefreshToken newRefreshToken;
+            try {
+                newRefreshToken = refreshTokenService.refreshUser(oldToken, ipAddress, userAgent);
+            } catch (TokenExpiredException | NoSuchElementException e) {
                 AnonymousAuthenticationToken anonymousToken = new AnonymousAuthenticationToken(
                         "anonymous", "anonymousUser", AuthorityUtils.createAuthorityList("ROLE_ANONYMOUS"));
                 SecurityContextHolder.getContext().setAuthentication(anonymousToken);
+                return;
             }
+            String newAccessToken = jwtUtil.generateAccessToken(newRefreshToken.getUser().getUsername());
+            String username = jwtUtil.validateTokenAndRetrieveClaim(newAccessToken);
+            UserDetails userDetails = crosswordUserDetailsService.loadUserByUsername(username);
+
+            UsernamePasswordAuthenticationToken authToken =
+                    new UsernamePasswordAuthenticationToken(userDetails,
+                            userDetails.getPassword(),
+                            userDetails.getAuthorities());
+
+            if (SecurityContextHolder.getContext().getAuthentication() == null) {
+                SecurityContextHolder.getContext().setAuthentication(authToken);
+            }
+            var accessTokenCookie = new Cookie("access_token", newAccessToken);
+            accessTokenCookie.setHttpOnly(true);
+            // accessTokenCookie.setSecure(true); // TODO Для HTTPS
+            accessTokenCookie.setPath("/");
+            var refreshTokenCookie = new Cookie("refresh_token", newRefreshToken.getToken());
+            refreshTokenCookie.setHttpOnly(true);
+            // refreshTokenCookie.setSecure(true); // TODO Для HTTPS
+            refreshTokenCookie.setPath("/");
+            response.addCookie(accessTokenCookie);
+            response.addCookie(refreshTokenCookie);
+            filterChain.doFilter(request, response); // TODO Учесть, что при доходе до сюда, ответ получается дважды, либо исправить, либо убедится, что все работает корректно
         } else {
             AnonymousAuthenticationToken anonymousToken = new AnonymousAuthenticationToken(
                     "anonymous", "anonymousUser", AuthorityUtils.createAuthorityList("ROLE_ANONYMOUS"));
             SecurityContextHolder.getContext().setAuthentication(anonymousToken);
         }
-
-        filterChain.doFilter(request, response);
     }
 }

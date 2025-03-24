@@ -1,11 +1,10 @@
 package com.backend.crosswords.admin.models;
 
 import com.backend.crosswords.admin.enums.RoleEnum;
-import com.backend.crosswords.corpus.models.Rating;
+import com.backend.crosswords.corpus.models.DocRating;
 import jakarta.persistence.*;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 
 @Entity
@@ -31,14 +30,20 @@ public class User {
     @Column(name = "password")
     private String password;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Rating> ratings;
+    @Column(name = "send_to_mail")
+    private Boolean sendToMail;
+
+    @Column(name = "mobile_notifications")
+    private Boolean mobileNotifications;
 
     @Column(name = "role")
     @Enumerated(EnumType.ORDINAL)
     private RoleEnum role;
 
-    public User(Long id, String name, String surname, String username, String email, String password, List<Rating> ratings) {
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<DocRating> ratings;
+
+    public User(Long id, String name, String surname, String username, String email, String password, List<DocRating> ratings) {
         this.id = id;
         this.name = name;
         this.surname = surname;
@@ -69,11 +74,11 @@ public class User {
         this.role = role;
     }
 
-    public List<Rating> getRatings() {
+    public List<DocRating> getRatings() {
         return ratings;
     }
 
-    public void setRatings(List<Rating> ratings) {
+    public void setRatings(List<DocRating> ratings) {
         this.ratings = ratings;
     }
 
@@ -131,5 +136,21 @@ public class User {
 
     public void setRole(RoleEnum role) {
         this.role = role;
+    }
+
+    public Boolean getSendToMail() {
+        return sendToMail;
+    }
+
+    public void setSendToMail(Boolean sendToMail) {
+        this.sendToMail = sendToMail;
+    }
+
+    public Boolean getMobileNotifications() {
+        return mobileNotifications;
+    }
+
+    public void setMobileNotifications(Boolean mobileNotifications) {
+        this.mobileNotifications = mobileNotifications;
     }
 }

@@ -1,8 +1,11 @@
 package com.backend.crosswords.admin.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.util.ArrayList;
 import java.util.List;
 
+@Schema(description = "DTO to return authorities from user")
 public class AuthorityDTO {
     private List<String> authorities;
 

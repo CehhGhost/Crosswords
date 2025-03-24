@@ -3,18 +3,17 @@ package com.backend.crosswords.corpus.models;
 import java.io.Serializable;
 import java.util.Objects;
 
-public class RatingId implements Serializable {
-    private Long docId;
+public class DigestRatingId implements Serializable {
+    private Long digestCoreId;
     private Long userId;
 
-    public RatingId(Long docId, Long userId) {
-        this.docId = docId;
+    public DigestRatingId(Long digestCoreId, Long userId) {
+        this.digestCoreId = digestCoreId;
         this.userId = userId;
     }
 
-    public RatingId() {
+    public DigestRatingId() {
     }
-
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
@@ -23,21 +22,21 @@ public class RatingId implements Serializable {
         if (obj == null || getClass() != obj.getClass()) {
             return false;
         }
-        RatingId that = (RatingId) obj;
-        return Objects.equals(docId, that.docId) && Objects.equals(userId, that.userId);
+        DigestRatingId that = (DigestRatingId) obj;
+        return Objects.equals(digestCoreId, that.digestCoreId) && Objects.equals(userId, that.userId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(docId, userId);
+        return Objects.hash(digestCoreId, userId);
     }
 
-    public Long getDocId() {
-        return docId;
+    public Long getDigestCoreId() {
+        return digestCoreId;
     }
 
-    public void setDocId(Long docId) {
-        this.docId = docId;
+    public void setDigestCoreId(Long digestCoreId) {
+        this.digestCoreId = digestCoreId;
     }
 
     public Long getUserId() {

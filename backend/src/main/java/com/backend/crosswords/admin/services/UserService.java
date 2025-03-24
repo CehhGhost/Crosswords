@@ -8,9 +8,8 @@ import com.backend.crosswords.admin.models.RefreshToken;
 import com.backend.crosswords.admin.models.User;
 import com.backend.crosswords.admin.repositories.UserRepository;
 import com.backend.crosswords.config.JWTUtil;
-import com.backend.crosswords.corpus.models.DocMeta;
 import com.backend.crosswords.corpus.models.Package;
-import com.backend.crosswords.corpus.models.Rating;
+import com.backend.crosswords.corpus.models.DocRating;
 import com.backend.crosswords.corpus.services.PackageService;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -23,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 
 @Service
@@ -90,7 +90,7 @@ public class UserService {
     }
 
     @Transactional
-    public void removeRating(Rating rating) {
+    public void removeRating(DocRating rating) {
         var user = rating.getUser();
         user.getRatings().remove(rating);
         userRepository.save(user);
@@ -120,11 +120,16 @@ public class UserService {
             }
         }
         // String name, String surname, String username, String password, RoleEnum role
-        for (var username : RoleEnum.ADMIN.getUsersWhiteList()) {
+        for (var username : RoleEnum.ROLE_ADMIN.getUsersWhiteList()) {
             if (userRepository.findByUsernameOrEmail(username, username).isEmpty()) {
                 // TODO сделать пароль admin настраиваемым через параметры среды запуска или придумать другой более безопасный и удобный способ
-                userRepository.save(new User(username, username, username, passwordEncoder.encode(username), RoleEnum.ADMIN));
+                var user = userRepository.save(new User(username, username, username, passwordEncoder.encode(username), RoleEnum.ROLE_ADMIN));
+                packageService.createPackage(Package.favouritesName, user);
             }
         }
+    }
+
+    public User getUserByUsername(String username) {
+        return userRepository.findByUsernameOrEmail(username, username).orElseThrow(() -> new NoSuchElementException("There is no users with such username/email!"));
     }
 }

@@ -38,7 +38,7 @@ public class TagService {
         tagRepository.delete(tag.get());
     }
 
-    public List<Tag> getTagsInNamesAndSaveForDoc(List<TagDTO> tagDTOs, DocMeta docMeta) {
+    public Set<Tag> getTagsInNamesAndSaveForDoc(List<TagDTO> tagDTOs, DocMeta docMeta) {
         List<String> names = new ArrayList<>();
         for (var tagDTO : tagDTOs) {
             names.add(tagDTO.getName());
@@ -67,5 +67,9 @@ public class TagService {
             tagsNames.add(tag.getName());
         }
         return tagsNames;
+    }
+
+    public Set<Tag> getTagsInNames(List<String> tagNames) {
+        return tagRepository.getTagsByNameIsIn(tagNames);
     }
 }

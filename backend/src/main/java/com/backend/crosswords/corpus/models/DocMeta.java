@@ -6,7 +6,6 @@ import jakarta.persistence.*;
 
 import java.sql.Timestamp;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
 @Table(name = "_documents")
@@ -44,7 +43,19 @@ public class DocMeta {
     private Set<Package> packages;
 
     @OneToMany(mappedBy = "doc", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Rating> ratings;
+    private List<DocRating> ratings;
+
+    @OneToMany(mappedBy = "doc", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Annotation> annotations;
+
+    @OneToMany(mappedBy = "doc", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Comment> comments;
+
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(name = "_digest_cores_docs",
+            joinColumns = @JoinColumn(name = "doc_id"),
+            inverseJoinColumns = @JoinColumn(name = "digest_core_id"))
+    private List<DigestCore> digestCores;
 
     // TODO добавить модель дайджестов
 
@@ -57,7 +68,7 @@ public class DocMeta {
     public DocMeta() {
     }
 
-    public DocMeta(Long id, String summary, Timestamp date, Timestamp lastEdit, String url, Language language, Source source, List<Tag> tags, List<Rating> ratings) {
+    public DocMeta(Long id, String summary, Timestamp date, Timestamp lastEdit, String url, Language language, Source source, List<Tag> tags, List<DocRating> ratings) {
         this.id = id;
         this.summary = summary;
         this.date = date;
@@ -110,11 +121,11 @@ public class DocMeta {
         this.tags = tags;
     }
 
-    public List<Rating> getRatings() {
+    public List<DocRating> getRatings() {
         return ratings;
     }
 
-    public void setRatings(List<Rating> ratings) {
+    public void setRatings(List<DocRating> ratings) {
         this.ratings = ratings;
     }
 
@@ -148,5 +159,29 @@ public class DocMeta {
 
     public void setPackages(Set<Package> packages) {
         this.packages = packages;
+    }
+
+    public List<DigestCore> getDigestCores() {
+        return digestCores;
+    }
+
+    public void setDigestCores(List<DigestCore> digestCores) {
+        this.digestCores = digestCores;
+    }
+
+    public List<Annotation> getAnnotations() {
+        return annotations;
+    }
+
+    public void setAnnotations(List<Annotation> annotations) {
+        this.annotations = annotations;
+    }
+
+    public List<Comment> getComments() {
+        return comments;
+    }
+
+    public void setComments(List<Comment> comments) {
+        this.comments = comments;
     }
 }

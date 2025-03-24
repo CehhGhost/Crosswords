@@ -39,8 +39,10 @@ public class DocService {
     private final RatingService ratingService;
     private final UserService userService;
     private final PackageService packageService;
+    private final AnnotationService annotationService;
+    private final CommentService commentService;
 
-    public DocService(ModelMapper modelMapper, DocSearchRepository docSearchRepository, DocMetaRepository docMetaRepository, ElasticsearchOperations elasticsearchOperations, TagService tagService, RatingService ratingService, UserService userService, PackageService packageService) {
+    public DocService(ModelMapper modelMapper, DocSearchRepository docSearchRepository, DocMetaRepository docMetaRepository, ElasticsearchOperations elasticsearchOperations, TagService tagService, RatingService ratingService, UserService userService, PackageService packageService, AnnotationService annotationService, CommentService commentService) {
         this.modelMapper = modelMapper;
         this.docSearchRepository = docSearchRepository;
         this.docMetaRepository = docMetaRepository;
@@ -49,6 +51,8 @@ public class DocService {
         this.ratingService = ratingService;
         this.userService = userService;
         this.packageService = packageService;
+        this.annotationService = annotationService;
+        this.commentService = commentService;
     }
 
     private DocDTO transformDocIntoDocDTO(DocMeta docMeta) {
@@ -173,7 +177,6 @@ public class DocService {
                 (searchDocDTO.getTags() == null || searchDocDTO.getTags().isEmpty() || tagService.getSetOfTagsNames(doc.getTags()).containsAll(searchDocDTO.getTags()));
     }
 
-    @Transactional
     public void deleteDocById(Long id) {
         var checkDocMeta = docMetaRepository.findById(id);
         if (checkDocMeta.isEmpty()) {
@@ -292,5 +295,36 @@ public class DocService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
         packageService.removeDocFromFavourites(crosswordUserDetails.getUser(), docMeta);
+    }
+
+    @Transactional
+    public Long annotateDocById(User user, Long id, CreateUpdateAnnotationDTO createUpdateAnnotationDTO) {
+        var docMeta = docMetaRepository.findById(id).orElseThrow(() -> new NoSuchElementException("There is no documents with such id!"));
+        Annotation annotation = annotationService.createAnnotation(user, docMeta, createUpdateAnnotationDTO);
+        docMeta.getAnnotations().add(annotation);
+        docMetaRepository.save(docMeta);
+        return annotation.getId();
+    }
+
+    @Transactional
+    public void deleteAnnotationByIdFromDocById(User user, Long docId, Long annotationId) {
+        var docMeta = docMetaRepository.findById(docId).orElseThrow(() -> new NoSuchElementException("There is no documents with such id!"));
+        annotationService.deleteAnnotationByIdFromDoc(user, docMeta, annotationId);
+        docMetaRepository.save(docMeta);
+    }
+
+    @Transactional
+    public void commentDocById(User user, Long id, CreateUpdateCommentDTO createUpdateCommentDTO) {
+        var docMeta = docMetaRepository.findById(id).orElseThrow(() -> new NoSuchElementException("There is no documents with such id!"));
+        Comment comment = commentService.commentDoc(user, docMeta, createUpdateCommentDTO);
+        docMeta.getComments().add(comment);
+        docMetaRepository.save(docMeta);
+    }
+
+    @Transactional
+    public void deleteCommentByIdFromDocById(User user, Long docId, Long commentId) {
+        var docMeta = docMetaRepository.findById(docId).orElseThrow(() -> new NoSuchElementException("There is no documents with such id!"));
+        commentService.deleteCommentByIdFromDoc(user, docMeta, commentId);
+        docMetaRepository.save(docMeta);
     }
 }
