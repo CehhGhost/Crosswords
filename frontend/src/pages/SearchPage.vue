@@ -86,15 +86,21 @@ export default {
         matchesPerPage: this.matchesPerPage,
       }
 
-      fetch('https://60b277858b7d4dbc8347955c8dc89e8e.api.mockbin.io/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      fetch(
+        'https://60b277858b7d4dbc8347955c8dc89e8e.api.mockbin.io/',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
         },
-        body: JSON.stringify(payload),
-      })
+      )
         .then((response) => {
           if (!response.ok) {
+            if (response.status === 401) {
+              this.$router.replace('/login')
+            }
             throw new Error('Ошибка при поиске')
           }
           return response.json()

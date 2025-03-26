@@ -62,7 +62,7 @@ export default {
       required: true,
     },
     is_authed: {
-      type: Object,
+      type: Boolean,
       required: true,
     },
   },

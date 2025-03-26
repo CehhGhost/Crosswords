@@ -37,7 +37,7 @@
         <subscription-button
           :digest="digest"
           :ownerChangeBackendUrl="ownerChangeBackendUrl"
-          :subscriptionUpdateBackendUrl = "subscriptionUpdateBackendUrl"
+          :is_digest=false
         />
       </div>
   

@@ -27,7 +27,11 @@
                   :color="$q.dark.isActive ? 'primary' : 'accent'"
                   size="18px"
                 />
-                <q-icon v-else-if="folder.is_included" name="check" :color="$q.dark.isActive ? 'primary' : 'accent'" />
+                <q-icon
+                  v-else-if="folder.is_included"
+                  name="check"
+                  :color="$q.dark.isActive ? 'primary' : 'accent'"
+                />
                 <!-- Если ни одно из условий не выполнено, можно оставить секцию пустой -->
               </q-item-section>
             </q-item>
@@ -59,6 +63,9 @@
 <script setup>
 import { ref } from 'vue'
 import { useQuasar } from 'quasar'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 const props = defineProps({
   documentId: {
@@ -87,7 +94,11 @@ async function fetchFolders() {
   try {
     const response = await fetch('https://eb7e097b1cf3426985d690585bff64e0.api.mockbin.io/')
     if (!response.ok) {
-      throw new Error('Ошибка при загрузке папок')
+      if (response.status === 401) {
+        router.replace('/login')
+      } else {
+        throw new Error('Ошибка при загрузке папок')
+      }
     }
     const data = await response.json()
     // Ожидается, что бекенд вернет объект: { folders: [ { name, is_included } ] }

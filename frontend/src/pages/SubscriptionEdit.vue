@@ -209,14 +209,21 @@
       }
 
       if (this.email) {
-        fetch('https://a37743da82a54b24895ba26ea5cbc277.api.mockbin.io/', {
+        fetch(
+          'https://a37743da82a54b24895ba26ea5cbc277.api.mockbin.io/',
+        {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ credentials: this.email }),
         })
-          .then((response) => response.json())
+        .then((response) => {
+            if (response.status === 401) {
+              this.$router.replace('/login')
+            }
+            return response.json()
+          })
           .then((data) => {
             const { has_email, has_mobile } = data;
             if (has_email !== undefined || has_mobile !== undefined) {

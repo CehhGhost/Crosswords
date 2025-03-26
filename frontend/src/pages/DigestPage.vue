@@ -10,7 +10,7 @@
             <q-icon :name="fasCrown" class="q-ml-sm q-mr-xs" />
             {{ digestData?.owner }}
             <q-icon name="star" color="primary" class="q-ml-sm q-mr-xs" />
-            {{ digestData.average_rating != -1 ? digestData.average_rating : 'Нет оценок' }}
+            {{ digestData?.average_rating != -1 ? digestData?.average_rating : 'Нет оценок' }}
           </div>
         </div>
         <div class="row items-center q-my-sm">
@@ -18,25 +18,25 @@
             {{ digestData?.title }}
           </div>
           <subscription-button
-            v-if="digestData.is_authed"
+            v-if="digestData?.is_authed"
             :digest="digestData"
             :ownerChangeBackendUrl="ownerChangeBackendUrl"
-            :subscriptionUpdateBackendUrl="subscriptionUpdateBackendUrl"
+            :is_digest=true
           />
         </div>
 
         <div>
-          <text-body1
+          <p
             :class="[
               'text-italic',
               { 'text-yellow': $q.dark.isActive, 'text-accent': !$q.dark.isActive },
             ]"
           >
             "{{ digestData?.description }}"
-          </text-body1>
+        </p>
         </div>
 
-        <div v-if="digestData.is_authed" class="q-my-sm">
+        <div v-if="digestData?.is_authed" class="q-my-sm">
           <div class="q-mb-xs">
             Оцените качество этого дайджетса:
             <q-rating
@@ -59,20 +59,26 @@
           <DocumentTags :tags="digestData?.tags" />
         </div>
         <q-expansion-item
-          v-if="digestData?.urls && digestData.urls.length"
-          :label="`Показать источники (${digestData.urls.length})`"
-          class="q-mt-xs"
+          v-if="digestData?.based_on && digestData?.based_on.length"
+          :label="`Показать источники (${digestData?.based_on.length})`"
+          class="q-mt-xs q-pa-xs"
         >
-          <div v-for="(url, index) in digestData.urls" :key="index">
-            <a
-              :href="url"
-              target="_blank"
-              :class="[
-                'q-mb-xs',
-                { 'text-primary': $q.dark.isActive, 'text-accent': !$q.dark.isActive },
-              ]"
-              >{{ url }}</a
+          <div v-for="source in digestData?.based_on" :key="source.id" class="q-mb-xs">
+            <router-link
+              :to="`/documents/${source.id}`"
+              class="no-underline cursor-pointer q-ml-md"
+              :class="$q.dark.isActive ? 'text-white' : 'text-secondary'"
             >
+              {{ source.title }}
+            </router-link>
+            : 
+            <a
+              :href="source.url"
+              target="_blank"
+              :class="$q.dark.isActive ? 'text-primary' : 'text-accent'"
+            >
+              {{ source.url }}
+            </a>
           </div>
         </q-expansion-item>
       </q-card>
@@ -143,6 +149,8 @@ import ConfirmDialog from '../components/ConfirmDialog.vue'
 import SubscriptionButton from '../components/SubscriptionButton.vue'
 import BackButton from 'src/components/BackButton.vue'
 import { fasCrown } from '@quasar/extras/fontawesome-v6'
+import { backendURL } from 'src/data/lookups'
+
 
 const route = useRoute()
 const router = useRouter()
@@ -154,18 +162,23 @@ const showAdmin = ref(false)
 
 // URL для изменения настроек подписки, который передаётся в SubscriptionButton
 const ownerChangeBackendUrl = 'TODO connect backend endpoint ownerChangeBackendUrl'
-const subscriptionUpdateBackendUrl = 'TODO connect backend endpoint subscriptionUpdateBackendUrl'
+
 
 onMounted(async () => {
   try {
-    const response = await fetch(`https://6c9c5a9aa3994e299d4bca39f4b5fb42.api.mockbin.io/`)
+    const id = route.params.id
+    const response = await fetch(`${backendURL}digests/${id}`
+     // `https://93442d81ece6495b95e185b5215b36f8.api.mockbin.io/`
+    )
     if (!response.ok) {
-      if (response.status === 404) {
+      if (response.status === 401) {
+        router.replace('/login')
+      } else if (response.status === 404) {
         router.replace('/404')
       } else {
         console.error('Ошибка HTTP:', response.status)
       }
-      return
+      return;
     }
     digestData.value = await response.json()
     // Инициализация дополнительных данных, если необходимо
@@ -185,6 +198,9 @@ async function onRatingChange(newRating) {
       body: JSON.stringify({ rating: newRating }),
     })
     if (!postResponse.ok) {
+      if (postResponse.status === 401) {
+        router.replace('/login')
+      }
       console.error('Ошибка при отправке рейтинга:', postResponse.status)
     } else {
       digestData.value.rating_classification = newRating
@@ -214,6 +230,9 @@ async function onDeleteConfirm() {
       method: 'DELETE',
     })
     if (!response.ok) {
+      if (response.status === 401) {
+        router.replace('/login')
+      }
       console.error('Ошибка при удалении документа:', response.status)
     } else {
       console.log('Документ удалён')
@@ -236,5 +255,9 @@ function onDeleteCancel() {
   .q-dark & {
     background-color: #2b2b2b !important;
   }
+}
+
+.no-underline {
+  text-decoration: none;
 }
 </style>

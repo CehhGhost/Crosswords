@@ -57,8 +57,15 @@
         this.loading = true;
         // Запрос к бэкенду для получения папок.
         // Замените '/api/folders' на нужный URL, если требуется.
-        fetch("https://da60a9bd46b9478585c028e21b6b5e71.api.mockbin.io/")
-          .then(response => response.json())
+        fetch(
+         "https://da60a9bd46b9478585c028e21b6b5e71.api.mockbin.io/"
+        )
+        .then((response) => {
+          if (response.status === 401) {
+            this.$router.replace('/login')
+          }
+        return response.json();
+      })
           .then(data => {
             // Преобразуем массив строк в формат { label, value }
             this.options = data.folders.map(folder => ({
