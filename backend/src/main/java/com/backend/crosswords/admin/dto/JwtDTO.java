@@ -2,6 +2,7 @@ package com.backend.crosswords.admin.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+@Deprecated
 public class JwtDTO {
     @JsonProperty("access_token")
     private String accessToken;

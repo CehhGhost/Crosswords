@@ -147,6 +147,12 @@ public class DocService {
                 filtersIds.add(doc.getId());
             }
         }
+        if (searchDocDTO.getPageNumber() == null || searchDocDTO.getPageNumber() < 0) {
+            searchDocDTO.setPageNumber(0);
+        }
+        if (searchDocDTO.getMatchesPerPage() == null || searchDocDTO.getMatchesPerPage() < 0) {
+            searchDocDTO.setMatchesPerPage(10);
+        }
         QueryBuilder filterBuilder = QueryBuilders.termsQuery("id", filtersIds);
         float percentage = searchDocDTO.getApprovalPercentage() == null ? 0.5F : searchDocDTO.getApprovalPercentage();
         var searchQuery = new NativeSearchQueryBuilder()

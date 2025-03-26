@@ -3,6 +3,7 @@ version: '3.8'
 services:
   app:
     image: cehhghost/crosswords_backend:latest
+    # cehhghost/crosswords_backend:latest
     ports:
       - "8081:8081"  # Пробрасываем порт Spring Boot
     depends_on:
@@ -30,19 +31,22 @@ services:
       - "9200:9200"  # Пробрасываем порт OpenSearch
     environment:
       discovery.type: single-node
-      plugins.security.disabled: "false"
+      plugins.security.disabled: "true"
       OPENSEARCH_INITIAL_ADMIN_PASSWORD: "CBsZ6#9kHxb"
       OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
       DISABLE_INSTALL_DEMO_CONFIG: "false"
-      plugins.security.ssl.http.enabled: "true"
+      plugins.security.ssl.http.enabled: "false"
     volumes:
       - opensearch-data:/usr/share/opensearch/data
     networks:
-      - shared_network
+      shared_network:
+        aliases:
+          - node-0.example.com
 
 volumes:
   postgres-data:
   opensearch-data:
+
 networks:
   shared_network:
     external: true
