@@ -49,7 +49,8 @@ public class DocDTO {
     @Schema(example = "https://www.interfax.ru/business/1001194")
     @JsonProperty("URL")
     private String url;
-
+    @JsonProperty("annotations")
+    private List<AnnotationDTO> docsAnnotations;
     public DocDTO(Long id, String summary, Timestamp date, String url, String language, String text, String title) {
         this.id = id;
         this.summary = summary;
@@ -175,6 +176,14 @@ public class DocDTO {
         this.authed = authed;
     }
 
+    public List<AnnotationDTO> getDocsAnnotations() {
+        return docsAnnotations;
+    }
+
+    public void setDocsAnnotations(List<AnnotationDTO> docsAnnotations) {
+        this.docsAnnotations = docsAnnotations;
+    }
+
     @Override
     public String toString() {
         return "DocDTO{" +
@@ -183,15 +192,16 @@ public class DocDTO {
                 ", rusSource='" + rusSource + '\'' +
                 ", summary='" + summary + '\'' +
                 ", text='" + text + '\'' +
-                ", tagDTOs=" + tagNames +
+                ", tagNames=" + tagNames +
                 ", date=" + date +
                 ", lastEdit=" + lastEdit +
                 ", ratingSummary=" + ratingSummary +
                 ", ratingClassification=" + ratingClassification +
                 ", favourite=" + favourite +
-                ", isAuthed=" + authed +
+                ", authed=" + authed +
                 ", language='" + language + '\'' +
                 ", url='" + url + '\'' +
+                ", docsAnnotations=" + docsAnnotations +
                 '}';
     }
 }

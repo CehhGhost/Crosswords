@@ -110,28 +110,49 @@ public class DocService {
 
     public DocDTO getDocById(Long id) {
         var docMeta = docMetaRepository.findById(id).orElseThrow();
-        return this.transformDocIntoDocDTO(docMeta);
+        var docDTO = this.transformDocIntoDocDTO(docMeta);
+        if (docDTO.getDocsAnnotations() == null) {
+            docDTO.setDocsAnnotations(new ArrayList<>());
+        }
+        for (var annotation : docMeta.getAnnotations()) {
+            docDTO.getDocsAnnotations().add(modelMapper.map(annotation, AnnotationDTO.class));
+        }
+        return docDTO;
     }
 
-    public List<DocDTO> searchDocs(SearchDocDTO searchDocDTO) {
-        List<DocDTO> result = new ArrayList<>();
+    private SearchResultDTO formSearchResultDTO(int pageNumber, List<DocDTO> resultHits) {
+        boolean isAuthed = true;
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+        } catch (ClassCastException e) {
+            isAuthed = false;
+        }
+        return new SearchResultDTO(pageNumber, isAuthed, resultHits);
+    }
+
+    public SearchResultDTO searchDocs(SearchDocDTO searchDocDTO) {
+        List<DocDTO> resultHits = new ArrayList<>();
         QueryBuilder queryBuilder = null;
+        float minScore = 0F;
         switch (searchDocDTO.getSearchMode()) {
             case "id" -> {
-                result.add(this.getDocById(searchDocDTO.getId()));
-                return result;
+                resultHits.add(this.getDocById(searchDocDTO.getId()));
+                return this.formSearchResultDTO(searchDocDTO.getPageNumber(), resultHits);
             }
             case "semantic" -> {
                 if (searchDocDTO.getMatchesPerPage() <= 0) {
-                    return result;
+                    return this.formSearchResultDTO(searchDocDTO.getPageNumber(), resultHits);
                 }
                 queryBuilder = QueryBuilders.boolQuery()
                         .should(QueryBuilders.matchQuery("text", searchDocDTO.getSearchTerm()).fuzziness(Fuzziness.AUTO))
                         .should(QueryBuilders.matchPhraseQuery("text", searchDocDTO.getSearchTerm())).boost(2.0F);
+                float percentage = searchDocDTO.getApprovalPercentage() == null ? 0.5F : searchDocDTO.getApprovalPercentage();
+                minScore = searchDocDTO.getSearchTerm().split(" ").length * percentage;
             }
             case "certain" -> {
                 if (searchDocDTO.getMatchesPerPage() <= 0) {
-                    return result;
+                    return this.formSearchResultDTO(searchDocDTO.getPageNumber(), resultHits);
                 }
                 queryBuilder = QueryBuilders.matchPhraseQuery("text", searchDocDTO.getSearchTerm());
             }
@@ -154,22 +175,26 @@ public class DocService {
             searchDocDTO.setMatchesPerPage(10);
         }
         QueryBuilder filterBuilder = QueryBuilders.termsQuery("id", filtersIds);
-        float percentage = searchDocDTO.getApprovalPercentage() == null ? 0.5F : searchDocDTO.getApprovalPercentage();
         var searchQuery = new NativeSearchQueryBuilder()
                 .withFilter(filterBuilder)
                 .withQuery(queryBuilder)
-                .withMinScore(searchDocDTO.getSearchTerm().split(" ").length * percentage)
+                .withMinScore(minScore)
                 .withPageable(PageRequest.of(searchDocDTO.getPageNumber(), searchDocDTO.getMatchesPerPage()))
                 .build();
-        // var hits = elasticsearchOperations.search(searchQuery, DocES.class, IndexCoordinates.of("document"));
-        elasticsearchOperations.search(searchQuery, DocES.class, IndexCoordinates.of("document")).forEach(hit ->
+        var searchHits = elasticsearchOperations.search(searchQuery, DocES.class, IndexCoordinates.of("document"));
+        searchHits.forEach(hit ->
         {
             var docES = hit.getContent();
             var docMeta = docMetaRepository.findById(docES.getId()).orElseThrow();
-            result.add(this.transformDocIntoDocDTO(docMeta));
-            // System.out.println(hit.getScore());
+            resultHits.add(this.transformDocIntoDocDTO(docMeta));
+            System.out.println(hit.getScore());
         });
-        return result;
+        // System.out.println(hits.getTotalHits());
+        int nextPage = searchDocDTO.getPageNumber() + 1;
+        if (searchHits.getTotalHits() <= (long) nextPage * searchDocDTO.getMatchesPerPage()) {
+            nextPage = -1;
+        }
+        return this.formSearchResultDTO(nextPage, resultHits);
     }
 
     private boolean equalsMetaData(DocMeta doc, SearchDocDTO searchDocDTO) {

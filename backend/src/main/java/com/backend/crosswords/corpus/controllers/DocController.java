@@ -76,8 +76,7 @@ public class DocController {
 
     @Operation(summary = "Get docs by search", description = "This endpoint gets you all documents by your filtration's and search's arguments")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Searched documents",
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = DocDTO.class)))),
+            @ApiResponse(responseCode = "200", description = "Searched documents (annotations are not included)", content = @Content(schema = @Schema(implementation = SearchResultDTO.class))),
             @ApiResponse(responseCode = "404", description = "May appear dew to wrong id, while searching by id")
     })
     @PostMapping("/search")
@@ -159,7 +158,7 @@ public class DocController {
     @Operation(summary = "Add doc into the package", description = "This endpoint lets add document by its id into the user's package, specified by its name")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "You successfully added a document into the package"),
-            @ApiResponse(responseCode = "401", description = "You are trying to add a doc while not authenticated"),
+            @ApiResponse(responseCode = "401", description = "You are trying to add a doc into the package while not authenticated"),
             @ApiResponse(responseCode = "404", description = "This user doesn't have packages with such name or the document's id is incorrect")
     })
     @PostMapping("/{docId}/put_into/{packageName}")
@@ -173,6 +172,12 @@ public class DocController {
         }
         return ResponseEntity.ok(HttpStatus.OK);
     }
+    @Operation(summary = "Remove a doc from the package", description = "This endpoint lets remove a document by its id from the user's package, specified by its name")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully removed a doc from the package"),
+            @ApiResponse(responseCode = "401", description = "You are trying to remove a doc from the package while not authenticated"),
+            @ApiResponse(responseCode = "404", description = "This user doesn't have packages with such name or the document's id is incorrect")
+    })
     @PostMapping("/{docId}/remove_from/{packageName}")
     public ResponseEntity<?> removeFromPackage(@PathVariable Long docId, @PathVariable String packageName) {
         try {
@@ -300,7 +305,7 @@ public class DocController {
             @ApiResponse(responseCode = "404", description = "There is no documents with such id")
     })
     @GetMapping("/{id}/packages")
-    public ResponseEntity<?> getPackagesForDocument(@PathVariable Long id) {
+    public ResponseEntity<?> getPackagesForDoc(@PathVariable Long id) {
         List<GetPackagesForDocDTO> docsPackages = null;
         try {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

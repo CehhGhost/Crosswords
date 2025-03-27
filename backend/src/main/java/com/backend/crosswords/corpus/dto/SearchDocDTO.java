@@ -48,7 +48,7 @@ public class SearchDocDTO {
             description = "Page number for pagination (begins from 0). Modified version of the last_sentence_pos",
             example = "0"
     )
-    @JsonProperty("page_number")
+    @JsonProperty("next_page")
     private Integer pageNumber;
 
     @Schema(

@@ -31,10 +31,9 @@ public class EditDocDTO {
     private String text;
 
     @Schema(
-            description = "The date of creation in format dd/MM/yyyy",
-            example = "01/01/2003"
+            description = "The date of creation in ISO format",
+            example = "2024-03-25"
     )
-    @JsonFormat(pattern = "dd/MM/yyyy")
     private Timestamp date;
 
     @Schema(
