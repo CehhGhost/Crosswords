@@ -42,11 +42,13 @@ public class JWTFilter extends OncePerRequestFilter {
             for (Cookie cookie : request.getCookies()) {
                 if ("access_token".equals(cookie.getName())) {
                     accessToken = cookie.getValue();
+                    System.out.println("Old access token: " + accessToken);
                     if (oldRefreshToken != null) {
                         break;
                     }
                 } else if ("refresh_token".equals(cookie.getName())) {
                     oldRefreshToken = cookie.getValue();
+                    System.out.println("Old refresh token: " + oldRefreshToken);
                     if (accessToken != null) {
                         break;
                     }
@@ -63,7 +65,6 @@ public class JWTFilter extends OncePerRequestFilter {
         } else {
             refreshUser(oldRefreshToken, request, response, filterChain);
         }
-
         filterChain.doFilter(request, response);
     }
 
@@ -79,6 +80,7 @@ public class JWTFilter extends OncePerRequestFilter {
         if (SecurityContextHolder.getContext().getAuthentication() == null) {
             SecurityContextHolder.getContext().setAuthentication(authToken);
         }
+        System.out.println("New access token: " + accessToken);
     }
 
     private void refreshUser(String oldToken, HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -120,6 +122,8 @@ public class JWTFilter extends OncePerRequestFilter {
             response.addCookie(accessTokenCookie);
             response.addCookie(refreshTokenCookie);
             this.validateJWTAndAuthenticate(newAccessToken);
+            System.out.println("New access token: " + newAccessToken);
+            System.out.println("New refresh token: " + newRefreshToken.getToken());
         } else {
             AnonymousAuthenticationToken anonymousToken = new AnonymousAuthenticationToken(
                     "anonymous", "anonymousUser", AuthorityUtils.createAuthorityList("ROLE_ANONYMOUS"));
