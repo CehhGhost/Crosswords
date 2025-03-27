@@ -18,6 +18,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.firewall.RequestRejectedException;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.NoSuchElementException;
 
 // TODO сделать ручку для проверки владения подпиской
@@ -217,6 +218,12 @@ public class DocController {
         return ResponseEntity.ok(HttpStatus.OK);
     }
 
+    @Operation(summary = "Annotate doc by it's id", description = "This endpoint lets you annotate a certain document by it's id")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully annotated a document and you can get a new annotation's id"),
+            @ApiResponse(responseCode = "401", description = "You are trying to annotate a document while not authenticated"),
+            @ApiResponse(responseCode = "404", description = "There is no documents with such id")
+    })
     @PostMapping("/{id}/annotate")
     public ResponseEntity<?> annotateDocById(@PathVariable Long id, @RequestBody CreateUpdateAnnotationDTO createUpdateAnnotationDTO) {
         Long annotationId;
@@ -229,6 +236,13 @@ public class DocController {
         }
         return ResponseEntity.ok(annotationId);
     }
+    @Operation(summary = "Delete annotation from the document", description = "This endpoint lets you delete document's annotation by theirs ids")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully deleted a document's annotation"),
+            @ApiResponse(responseCode = "401", description = "You are trying to delete a document's annotation while not authenticated"),
+            @ApiResponse(responseCode = "404", description = "There is no documents or annotations with such id"),
+            @ApiResponse(responseCode = "400", description = "You are trying to delete an annotate for a wrong document or the annotation that isn't yours")
+    })
     @DeleteMapping("/{docId}/annotate/{annotationId}")
     public ResponseEntity<?> deleteAnnotationByIdFromDocById(@PathVariable Long docId, @PathVariable Long annotationId) {
         try {
@@ -242,6 +256,12 @@ public class DocController {
         }
         return ResponseEntity.ok(HttpStatus.OK);
     }
+    @Operation(summary = "Comment doc by it's id", description = "This endpoint lets you comment a certain document by it's id")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully commented a document"),
+            @ApiResponse(responseCode = "401", description = "You are trying to comment a document while not authenticated"),
+            @ApiResponse(responseCode = "404", description = "There is no documents with such id")
+    })
     @PostMapping("/{id}/comment")
     public ResponseEntity<?> commentDocById(@PathVariable Long id, @RequestBody CreateUpdateCommentDTO createUpdateCommentDTO) {
         try {
@@ -253,6 +273,13 @@ public class DocController {
         }
         return ResponseEntity.ok(HttpStatus.OK);
     }
+    @Operation(summary = "Delete comment from the document", description = "This endpoint lets you delete document's comment by theirs ids")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully deleted a document's comment"),
+            @ApiResponse(responseCode = "401", description = "You are trying to delete a document's comment while not authenticated"),
+            @ApiResponse(responseCode = "404", description = "There is no documents or annotations with such id"),
+            @ApiResponse(responseCode = "400", description = "You are trying to delete an annotate for a wrong document or the annotation that isn't yours")
+    })
     @DeleteMapping("/{docId}/comment/{commentId}")
     public ResponseEntity<?> deleteCommentByIdFromDocById(@PathVariable Long docId, @PathVariable Long commentId) {
         try {
@@ -265,5 +292,23 @@ public class DocController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
         return ResponseEntity.ok(HttpStatus.OK);
+    }
+    @Operation(summary = "Get packages for a document", description = "This endpoint lets get all packages from a user and check if a certain doc is included in them")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully get packages for a document", content = @Content(schema = @Schema(implementation = GetPackagesForDocDTO.class))),
+            @ApiResponse(responseCode = "401", description = "You are trying to get packages for a document while not authenticated"),
+            @ApiResponse(responseCode = "404", description = "There is no documents with such id")
+    })
+    @GetMapping("/{id}/packages")
+    public ResponseEntity<?> getPackagesForDocument(@PathVariable Long id) {
+        List<GetPackagesForDocDTO> docsPackages = null;
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+            docsPackages = docService.getPackagesForDoc(id, crosswordUserDetails.getUser());
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+        return ResponseEntity.ok(docsPackages);
     }
 }

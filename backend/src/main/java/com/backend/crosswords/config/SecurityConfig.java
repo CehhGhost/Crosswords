@@ -55,11 +55,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/users/check_auth").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/documents/{id}/edit").hasAuthority(AuthorityEnum.EDIT_DELETE_DOCS.name())
                         .requestMatchers(HttpMethod.DELETE, "/documents/{id}").hasAuthority(AuthorityEnum.EDIT_DELETE_DOCS.name())
-                        .requestMatchers(HttpMethod.GET, "/packages/**").permitAll()
                         .requestMatchers("/packages/**").authenticated()
                         .requestMatchers("/subscriptions/**").authenticated()
                         .requestMatchers("/documents/{id}/annotate/**").authenticated()
                         .requestMatchers("/documents/{id}/comment/**").authenticated()
+                        .requestMatchers("/documents/{id}/packages").authenticated()
                         .anyRequest().permitAll()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

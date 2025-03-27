@@ -1,19 +1,13 @@
 package com.backend.crosswords.corpus.services;
 
-import com.backend.crosswords.admin.models.CrosswordUserDetails;
 import com.backend.crosswords.admin.models.User;
 import com.backend.crosswords.corpus.models.DocMeta;
 import com.backend.crosswords.corpus.models.Package;
 import com.backend.crosswords.corpus.models.PackageId;
-import com.backend.crosswords.corpus.models.Tag;
 import com.backend.crosswords.corpus.repositories.jpa.PackageRepository;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-import java.util.Objects;
+import java.util.*;
 
 @Service
 public class PackageService {
@@ -93,5 +87,9 @@ public class PackageService {
         var pack = packageRepository.findById(new PackageId(Package.favouritesName, user.getId())).orElseThrow();
         pack.getDocs().remove(doc);
         packageRepository.save(pack);
+    }
+
+    public List<Package> getPackagesForUser(User user) {
+        return packageRepository.getAllByOwner(user);
     }
 }

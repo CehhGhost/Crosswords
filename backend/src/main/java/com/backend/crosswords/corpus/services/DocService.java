@@ -333,4 +333,16 @@ public class DocService {
         commentService.deleteCommentByIdFromDoc(user, docMeta, commentId);
         docMetaRepository.save(docMeta);
     }
+
+    public List<GetPackagesForDocDTO> getPackagesForDoc(Long id, User user) {
+        var docMeta = docMetaRepository.findById(id).orElseThrow(() -> new NoSuchElementException("There is no documents with such id!"));
+        List<GetPackagesForDocDTO> docsPackages = new ArrayList<>();
+        for (var usersPackage : packageService.getPackagesForUser(user)) {
+            GetPackagesForDocDTO getPackagesForDocDTO = new GetPackagesForDocDTO();
+            getPackagesForDocDTO.setName(usersPackage.getId().getName());
+            getPackagesForDocDTO.setIsIncluded(usersPackage.getDocs().contains(docMeta));
+            docsPackages.add(getPackagesForDocDTO);
+        }
+        return docsPackages;
+    }
 }

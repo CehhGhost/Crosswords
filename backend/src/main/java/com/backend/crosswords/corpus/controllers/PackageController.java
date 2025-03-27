@@ -2,11 +2,9 @@ package com.backend.crosswords.corpus.controllers;
 
 import com.backend.crosswords.admin.models.CrosswordUserDetails;
 import com.backend.crosswords.corpus.dto.CreatePackageDTO;
-import com.backend.crosswords.corpus.dto.DocDTO;
+import com.backend.crosswords.corpus.models.Package;
 import com.backend.crosswords.corpus.services.PackageService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -16,6 +14,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 @RestController
@@ -66,5 +66,22 @@ public class PackageController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
         return ResponseEntity.ok(HttpStatus.OK);
+    }
+
+    @Operation(summary = "Get user's packages", description = "This endpoint lets you get all packages, that a certain user have")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You have get all user's packages"),
+            @ApiResponse(responseCode = "401", description = "You are trying to get all user's packages while not authenticated"),
+    })
+    @GetMapping
+    public ResponseEntity<?> getPackagesForUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+        List<Package> usersPackages = packageService.getPackagesForUser(crosswordUserDetails.getUser());
+        List<String> usersPackagesNames = new ArrayList<>();
+        for (var usersPackage : usersPackages) {
+            usersPackagesNames.add(usersPackage.getId().getName());
+        }
+        return ResponseEntity.ok(usersPackagesNames);
     }
 }
