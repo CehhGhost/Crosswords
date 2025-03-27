@@ -345,11 +345,12 @@ public class DocService {
     }
 
     @Transactional
-    public void commentDocById(User user, Long id, CreateUpdateCommentDTO createUpdateCommentDTO) {
+    public Comment commentDocById(User user, Long id, CreateUpdateCommentDTO createUpdateCommentDTO) {
         var docMeta = docMetaRepository.findById(id).orElseThrow(() -> new NoSuchElementException("There is no documents with such id!"));
         Comment comment = commentService.commentDoc(user, docMeta, createUpdateCommentDTO);
         docMeta.getComments().add(comment);
         docMetaRepository.save(docMeta);
+        return comment;
     }
 
     @Transactional

@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -30,15 +31,25 @@ import java.util.NoSuchElementException;
 @Tag(name = "Doc controller", description = "Controller for all operations with documents")
 public class DocController {
     private final DocService docService;
+    private final ModelMapper modelMapper;
 
-    public DocController(DocService docService) {
+    public DocController(DocService docService, ModelMapper modelMapper) {
         this.docService = docService;
+        this.modelMapper = modelMapper;
     }
 
     @Operation(summary = "Create a document", description = "This is a simple creating document endpoint")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You have successfully created a document"),
+            @ApiResponse(responseCode = "400", description = "There is no sources with such id!")
+    })
     @PostMapping("/create")
     public ResponseEntity<?> createDoc(@RequestBody CreateDocDTO createDocDTO) {
-        docService.createDoc(createDocDTO);
+        try {
+            docService.createDoc(createDocDTO);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
         return ResponseEntity.ok(HttpStatus.OK);
     }
 
@@ -269,14 +280,16 @@ public class DocController {
     })
     @PostMapping("/{id}/comment")
     public ResponseEntity<?> commentDocById(@PathVariable Long id, @RequestBody CreateUpdateCommentDTO createUpdateCommentDTO) {
+        CommentDTO commentDTO = null;
         try {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
-            docService.commentDocById(crosswordUserDetails.getUser(), id, createUpdateCommentDTO);
+            var comment = docService.commentDocById(crosswordUserDetails.getUser(), id, createUpdateCommentDTO);
+            commentDTO = modelMapper.map(comment, CommentDTO.class);
         } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
-        return ResponseEntity.ok(HttpStatus.OK);
+        return ResponseEntity.ok(commentDTO);
     }
     @Operation(summary = "Delete comment from the document", description = "This endpoint lets you delete document's comment by theirs ids")
     @ApiResponses({
