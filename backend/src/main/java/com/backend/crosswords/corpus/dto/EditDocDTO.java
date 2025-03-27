@@ -31,8 +31,8 @@ public class EditDocDTO {
     private String text;
 
     @Schema(
-            description = "The date of creation in ISO format",
-            example = "2024-03-25"
+            description = "The date of creation in the ISO format",
+            example = "2024-02-26T14:20:00Z"
     )
     private Timestamp date;
 

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "DTO for getting packages for a document")
-public class GetPackagesForDocDTO {
+public class PackagesForDocDTO {
     @Schema(
             example = "Избранное"
     )

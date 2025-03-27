@@ -2,6 +2,7 @@ package com.backend.crosswords.corpus.controllers;
 
 import com.backend.crosswords.admin.models.CrosswordUserDetails;
 import com.backend.crosswords.corpus.dto.*;
+import com.backend.crosswords.corpus.models.Comment;
 import com.backend.crosswords.corpus.models.Package;
 import com.backend.crosswords.corpus.services.DocService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -19,6 +20,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.firewall.RequestRejectedException;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -98,6 +100,7 @@ public class DocController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No documents with such id!");
         }
     }
+
     @Operation(summary = "Delete doc by id", description = "This endpoint deletes document by id and destroys all connections with other models")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "You successfully deleted the document"),
@@ -114,6 +117,7 @@ public class DocController {
         }
         return ResponseEntity.ok(HttpStatus.OK);
     }
+
     @Operation(summary = "Rate doc by id", description = "This endpoint lets you rate a document, parameters can be null or numbers from 1 to 5, user must be authenticated")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "You successfully rated a document"),
@@ -132,6 +136,7 @@ public class DocController {
         }
         return ResponseEntity.ok(HttpStatus.OK);
     }
+
     @Operation(summary = "Edit doc by id", description = "This endpoint lets you edit a document")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "You successfully updated the document"),
@@ -148,6 +153,7 @@ public class DocController {
         }
         return ResponseEntity.ok(HttpStatus.OK);
     }
+
     // Очистка индекса документов из ES, если предварительно не почистить доки из Postgres, то дальше возникнут ошибки
     @Operation(summary = "Delete index from ES", description = "This endpoint lets clean the documents' index from ES, if you do not clean the docs from Postgres at the same time, then errors may occur")
     @ApiResponses({
@@ -166,6 +172,7 @@ public class DocController {
         }
         return ResponseEntity.ok(HttpStatus.OK);
     }
+
     @Operation(summary = "Add doc into the package", description = "This endpoint lets add document by its id into the user's package, specified by its name")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "You successfully added a document into the package"),
@@ -183,6 +190,7 @@ public class DocController {
         }
         return ResponseEntity.ok(HttpStatus.OK);
     }
+
     @Operation(summary = "Remove a doc from the package", description = "This endpoint lets remove a document by its id from the user's package, specified by its name")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "You successfully removed a doc from the package"),
@@ -200,6 +208,7 @@ public class DocController {
         }
         return ResponseEntity.ok(HttpStatus.OK);
     }
+
     @Operation(summary = "Add doc to favourites", description = "This endpoint lets you add doc to favourites, user must be authenticated")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "You successfully added a document to favourites"),
@@ -217,6 +226,7 @@ public class DocController {
         }
         return ResponseEntity.ok(HttpStatus.OK);
     }
+
     @Operation(summary = "Remove doc from favourites", description = "This endpoint lets you remove doc from favourites, user must be authenticated")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "You successfully removed a document from favourites"),
@@ -236,7 +246,7 @@ public class DocController {
 
     @Operation(summary = "Annotate doc by it's id", description = "This endpoint lets you annotate a certain document by it's id")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "You successfully annotated a document and you can get a new annotation's id"),
+            @ApiResponse(responseCode = "200", description = "You successfully annotated a document and you can get a new annotation's id", content = @Content(schema = @Schema(implementation = AnnotationsIdDTO.class))),
             @ApiResponse(responseCode = "401", description = "You are trying to annotate a document while not authenticated"),
             @ApiResponse(responseCode = "404", description = "There is no documents with such id")
     })
@@ -250,8 +260,9 @@ public class DocController {
         } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
-        return ResponseEntity.ok(annotationId);
+        return ResponseEntity.ok(new AnnotationsIdDTO(annotationId));
     }
+
     @Operation(summary = "Delete annotation from the document", description = "This endpoint lets you delete document's annotation by theirs ids")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "You successfully deleted a document's annotation"),
@@ -272,9 +283,31 @@ public class DocController {
         }
         return ResponseEntity.ok(HttpStatus.OK);
     }
+
+    @Operation(summary = "Update user's annotation for the document", description = "This endpoint lets you update user's annotation for the document")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully updated user's annotation for the document", content = @Content(schema = @Schema(implementation = AnnotationsIdDTO.class))),
+            @ApiResponse(responseCode = "401", description = "You are trying to update user's annotation for the document while not authenticated"),
+            @ApiResponse(responseCode = "404", description = "There is no documents or annotations with such id"),
+            @ApiResponse(responseCode = "400", description = "You are trying to delete an annotation for a wrong document or the annotation that isn't yours")
+    })
+    @PutMapping("/{docId}/annotate/{annotationId}")
+    public ResponseEntity<?> updateAnnotationByIdForDocById(@PathVariable Long docId, @PathVariable Long annotationId, @RequestBody CreateUpdateAnnotationDTO createUpdateAnnotationDTO) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+            docService.updateAnnotationByIdForDocById(crosswordUserDetails.getUser(), docId, annotationId, createUpdateAnnotationDTO);
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+        return ResponseEntity.ok(new AnnotationsIdDTO(annotationId));
+    }
+
     @Operation(summary = "Comment doc by it's id", description = "This endpoint lets you comment a certain document by it's id")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "You successfully commented a document"),
+            @ApiResponse(responseCode = "200", description = "You successfully commented a document", content = @Content(schema = @Schema(implementation = CommentDTO.class))),
             @ApiResponse(responseCode = "401", description = "You are trying to comment a document while not authenticated"),
             @ApiResponse(responseCode = "404", description = "There is no documents with such id")
     })
@@ -291,12 +324,13 @@ public class DocController {
         }
         return ResponseEntity.ok(commentDTO);
     }
+
     @Operation(summary = "Delete comment from the document", description = "This endpoint lets you delete document's comment by theirs ids")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "You successfully deleted a document's comment"),
             @ApiResponse(responseCode = "401", description = "You are trying to delete a document's comment while not authenticated"),
-            @ApiResponse(responseCode = "404", description = "There is no documents or annotations with such id"),
-            @ApiResponse(responseCode = "400", description = "You are trying to delete an annotate for a wrong document or the annotation that isn't yours")
+            @ApiResponse(responseCode = "404", description = "There is no documents or comments with such id"),
+            @ApiResponse(responseCode = "400", description = "You are trying to delete a comment for a wrong document or the comment that isn't yours")
     })
     @DeleteMapping("/{docId}/comment/{commentId}")
     public ResponseEntity<?> deleteCommentByIdFromDocById(@PathVariable Long docId, @PathVariable Long commentId) {
@@ -311,15 +345,62 @@ public class DocController {
         }
         return ResponseEntity.ok(HttpStatus.OK);
     }
+
+    @Operation(summary = "Get all user's comments from the document", description = "This endpoint lets you get all user's comments from the document")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully get all user's comments from the document", content = @Content(schema = @Schema(implementation = CommentsDTO.class))),
+            @ApiResponse(responseCode = "401", description = "You are trying to get all user's comments from the document while not authenticated"),
+            @ApiResponse(responseCode = "404", description = "There is no documents with such id")
+    })
+    @GetMapping("/{docId}/comment")
+    public ResponseEntity<?> getAllUsersCommentsFromDocById(@PathVariable Long docId) {
+        CommentsDTO commentsDTO = null;
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+            List<Comment> comments = docService.getAllUsersCommentsFromDocById(crosswordUserDetails.getUser(), docId);
+            commentsDTO = new CommentsDTO();
+            commentsDTO.setComments(new ArrayList<>());
+            for (var comment : comments) {
+                commentsDTO.getComments().add(modelMapper.map(comment, CommentDTO.class));
+            }
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+        return ResponseEntity.ok(commentsDTO);
+    }
+    @Operation(summary = "Update user's comment for the document", description = "This endpoint lets you update user's comment for the document")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully updated user's comment for the document", content = @Content(schema = @Schema(implementation = CommentDTO.class))),
+            @ApiResponse(responseCode = "401", description = "You are trying to update user's comment for the document while not authenticated"),
+            @ApiResponse(responseCode = "404", description = "There is no documents or comments with such id"),
+            @ApiResponse(responseCode = "400", description = "You are trying to delete a comment for a wrong document or the comment that isn't yours")
+    })
+    @PutMapping("/{docId}/comment/{commentId}")
+    public ResponseEntity<?> updateCommentByIdForDocById(@PathVariable Long docId, @PathVariable Long commentId, @RequestBody CreateUpdateCommentDTO createUpdateCommentDTO) {
+        CommentDTO commentDTO = null;
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+            Comment comment = docService.updateCommentByIdForDocById(crosswordUserDetails.getUser(), docId, commentId, createUpdateCommentDTO);
+            commentDTO = modelMapper.map(comment, CommentDTO.class);
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+        return ResponseEntity.ok(commentDTO);
+    }
+
     @Operation(summary = "Get packages for a document", description = "This endpoint lets get all packages from a user and check if a certain doc is included in them")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "You successfully get packages for a document", content = @Content(schema = @Schema(implementation = GetPackagesForDocDTO.class))),
+            @ApiResponse(responseCode = "200", description = "You successfully get packages for a document", content = @Content(schema = @Schema(implementation = FoldersForDocDTO.class))),
             @ApiResponse(responseCode = "401", description = "You are trying to get packages for a document while not authenticated"),
             @ApiResponse(responseCode = "404", description = "There is no documents with such id")
     })
     @GetMapping("/{id}/packages")
     public ResponseEntity<?> getPackagesForDoc(@PathVariable Long id) {
-        List<GetPackagesForDocDTO> docsPackages = null;
+        List<PackagesForDocDTO> docsPackages = null;
         try {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
@@ -327,6 +408,6 @@ public class DocController {
         } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
-        return ResponseEntity.ok(docsPackages);
+        return ResponseEntity.ok(new FoldersForDocDTO(docsPackages));
     }
 }

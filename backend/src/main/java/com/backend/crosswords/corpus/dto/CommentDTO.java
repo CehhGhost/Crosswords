@@ -7,12 +7,22 @@ import java.sql.Timestamp;
 
 @Schema(description = "DTO for getting a comment from all corresponded responses")
 public class CommentDTO {
+    @Schema(
+            example = "1"
+    )
     private Long id;
+    @Schema(
+            example = "Данный текст хорошо характеризует российский футбол 2024 года"
+    )
     private String text;
-    @JsonProperty("article_id")
-    private Long docId;
+    @Schema(
+            example = "2025-03-27T13:04:08.446+00:00"
+    )
     @JsonProperty("created_at")
     private Timestamp createdAt;
+    @Schema(
+            example = "2025-03-27T13:04:08.446+00:00"
+    )
     @JsonProperty("updated_at")
     private Timestamp updatedAt;
 
@@ -30,14 +40,6 @@ public class CommentDTO {
 
     public void setText(String text) {
         this.text = text;
-    }
-
-    public Long getDocId() {
-        return docId;
-    }
-
-    public void setDocId(Long docId) {
-        this.docId = docId;
     }
 
     public Timestamp getCreatedAt() {
@@ -61,7 +63,6 @@ public class CommentDTO {
         return "CommentDTO{" +
                 "id=" + id +
                 ", text='" + text + '\'' +
-                ", docId=" + docId +
                 ", createdAt=" + createdAt +
                 ", updatedAt=" + updatedAt +
                 '}';

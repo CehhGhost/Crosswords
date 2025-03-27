@@ -15,10 +15,9 @@ public class CreateDocDTO {
     private String summary;
 
     @Schema(
-            description = "The date of creation in format dd/MM/yyyy",
-            example = "25/03/2025"
+            description = "The date of creation in the ISO format",
+            example = "2025-02-26T14:20:00Z"
     )
-    @JsonFormat(pattern = "dd/MM/yyyy")
     private Timestamp date;
 
     @Schema(

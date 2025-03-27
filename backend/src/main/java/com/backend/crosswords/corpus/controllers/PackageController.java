@@ -1,10 +1,14 @@
 package com.backend.crosswords.corpus.controllers;
 
 import com.backend.crosswords.admin.models.CrosswordUserDetails;
+import com.backend.crosswords.corpus.dto.CommentsDTO;
 import com.backend.crosswords.corpus.dto.CreatePackageDTO;
+import com.backend.crosswords.corpus.dto.FoldersDTO;
 import com.backend.crosswords.corpus.models.Package;
 import com.backend.crosswords.corpus.services.PackageService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -70,7 +74,7 @@ public class PackageController {
 
     @Operation(summary = "Get user's packages", description = "This endpoint lets you get all packages, that a certain user have")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "You have get all user's packages"),
+            @ApiResponse(responseCode = "200", description = "You have get all user's packages", content = @Content(schema = @Schema(implementation = FoldersDTO.class))),
             @ApiResponse(responseCode = "401", description = "You are trying to get all user's packages while not authenticated"),
     })
     @GetMapping
@@ -82,6 +86,6 @@ public class PackageController {
         for (var usersPackage : usersPackages) {
             usersPackagesNames.add(usersPackage.getId().getName());
         }
-        return ResponseEntity.ok(usersPackagesNames);
+        return ResponseEntity.ok(new FoldersDTO(usersPackagesNames));
     }
 }
