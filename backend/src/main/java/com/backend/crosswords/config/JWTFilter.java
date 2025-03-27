@@ -56,17 +56,7 @@ public class JWTFilter extends OncePerRequestFilter {
 
         if (accessToken != null && !accessToken.isBlank()) {
             try {
-                String username = jwtUtil.validateTokenAndRetrieveClaim(accessToken);
-                UserDetails userDetails = crosswordUserDetailsService.loadUserByUsername(username);
-
-                UsernamePasswordAuthenticationToken authToken =
-                        new UsernamePasswordAuthenticationToken(userDetails,
-                                userDetails.getPassword(),
-                                userDetails.getAuthorities());
-
-                if (SecurityContextHolder.getContext().getAuthentication() == null) {
-                    SecurityContextHolder.getContext().setAuthentication(authToken);
-                }
+                this.validateJWTAndAuthenticate(accessToken);
             } catch (UsernameNotFoundException | JWTVerificationException exception) {
                 refreshUser(oldRefreshToken, request, response, filterChain);
             }
@@ -75,6 +65,20 @@ public class JWTFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private void validateJWTAndAuthenticate(String accessToken) {
+        String username = jwtUtil.validateTokenAndRetrieveClaim(accessToken);
+        UserDetails userDetails = crosswordUserDetailsService.loadUserByUsername(username);
+
+        UsernamePasswordAuthenticationToken authToken =
+                new UsernamePasswordAuthenticationToken(userDetails,
+                        userDetails.getPassword(),
+                        userDetails.getAuthorities());
+
+        if (SecurityContextHolder.getContext().getAuthentication() == null) {
+            SecurityContextHolder.getContext().setAuthentication(authToken);
+        }
     }
 
     private void refreshUser(String oldToken, HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -115,7 +119,7 @@ public class JWTFilter extends OncePerRequestFilter {
             refreshTokenCookie.setPath("/");
             response.addCookie(accessTokenCookie);
             response.addCookie(refreshTokenCookie);
-            filterChain.doFilter(request, response); // TODO Учесть, что при доходе до сюда, ответ получается дважды, либо исправить, либо убедится, что все работает корректно
+            this.validateJWTAndAuthenticate(newAccessToken);
         } else {
             AnonymousAuthenticationToken anonymousToken = new AnonymousAuthenticationToken(
                     "anonymous", "anonymousUser", AuthorityUtils.createAuthorityList("ROLE_ANONYMOUS"));
