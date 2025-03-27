@@ -77,6 +77,8 @@ public class UserService {
         List<String> jwt = new ArrayList<>();
         jwt.add(accessToken);
         jwt.add(refreshToken.getToken());
+        System.out.println("Generated access token: " + accessToken);
+        System.out.println("Generated refresh token: " + refreshToken.getToken());
         return jwt;
     }
 
