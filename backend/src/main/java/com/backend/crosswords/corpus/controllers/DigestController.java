@@ -46,4 +46,8 @@ public class DigestController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
+    @PostMapping("/create")
+    public ResponseEntity<?> createDigestsCore() {
+        return null;
+    }
 }

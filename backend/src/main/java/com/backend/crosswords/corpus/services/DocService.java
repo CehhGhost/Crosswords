@@ -137,7 +137,7 @@ public class DocService {
         float minScore = 0F;
         switch (searchDocDTO.getSearchMode()) {
             case "id" -> {
-                resultHits.add(this.getDocById(searchDocDTO.getId()));
+                resultHits.add(this.getDocById(Long.parseLong(searchDocDTO.getSearchTerm())));
                 return this.formSearchResultDTO(searchDocDTO.getPageNumber(), resultHits);
             }
             case "semantic" -> {
