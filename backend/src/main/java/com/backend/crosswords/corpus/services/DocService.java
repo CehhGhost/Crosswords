@@ -134,7 +134,7 @@ public class DocService {
     public SearchResultDTO searchDocs(SearchDocDTO searchDocDTO) {
         List<DocDTO> resultHits = new ArrayList<>();
         QueryBuilder queryBuilder = null;
-        float minScore = 0F;
+        float minScore = 1F;
         switch (searchDocDTO.getSearchMode()) {
             case "id" -> {
                 resultHits.add(this.getDocById(Long.parseLong(searchDocDTO.getSearchTerm())));
