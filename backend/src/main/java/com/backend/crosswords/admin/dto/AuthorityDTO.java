@@ -7,6 +7,7 @@ import java.util.List;
 
 @Schema(description = "DTO to return authorities from user")
 public class AuthorityDTO {
+    @Schema(example = "no_authorities")
     private List<String> authorities;
 
     public AuthorityDTO() {

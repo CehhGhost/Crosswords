@@ -5,7 +5,7 @@ FROM openjdk:17-jdk-alpine
 WORKDIR /app
 
 # Копируем собранный JAR-файл в контейнер
-COPY target/crosswords-0.1.4-SNAPSHOT.jar app.jar
+COPY target/crosswords-0.1.5-SNAPSHOT.jar app.jar
 
 # Открываем порт, на котором работает приложение
 EXPOSE 8081
