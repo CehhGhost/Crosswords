@@ -1,12 +1,9 @@
 package com.backend.crosswords.admin.controllers;
 
 import com.auth0.jwt.exceptions.TokenExpiredException;
-import com.backend.crosswords.admin.dto.AuthorityDTO;
-import com.backend.crosswords.admin.dto.LoginUserDTO;
-import com.backend.crosswords.admin.dto.RegisterUserDTO;
+import com.backend.crosswords.admin.dto.*;
 import com.backend.crosswords.admin.models.CrosswordUserDetails;
 import com.backend.crosswords.admin.services.UserService;
-import com.backend.crosswords.corpus.dto.AnnotationsIdDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -62,7 +59,6 @@ public class UserController {
             ipAddress = request.getRemoteAddr();
         }
         String userAgent = request.getHeader("User-Agent");
-        System.out.println("User agent: " + userAgent);
         List<String> jwt;
         try {
             jwt =  userService.registerUser(registerUserDTO, ipAddress, userAgent);
@@ -80,7 +76,7 @@ public class UserController {
 
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "You successfully registered the user by it's credentials"),
+            @ApiResponse(responseCode = "200", description = "You successfully login the user by it's credentials"),
             @ApiResponse(responseCode = "400", description = "The credentials are incorrect")
     })
     @PostMapping("/login")
@@ -152,7 +148,54 @@ public class UserController {
         List<String> authoritiesNames = userService.getAuthoritiesNamesByUser();
         return ResponseEntity.ok(new AuthorityDTO(authoritiesNames));
     }
-    // @PostMapping("")
+    @Operation(
+            summary = "Get user's email",
+            description = "This endpoint lets you get user's email"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully get user's email", content = @Content(schema = @Schema(implementation = EmailDTO.class))),
+            @ApiResponse(responseCode = "401", description = "You are trying to get user's email while not authenticated")
+    })
+    @GetMapping("/get_email")
+    public ResponseEntity<?> getUsersEmail() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+        String email = userService.getUsersEmail(crosswordUserDetails.getUser());
+        return ResponseEntity.ok(new EmailDTO(email));
+    }
+    @Operation(
+            summary = "Check user's subscription settings",
+            description = "This endpoint lets you check user's subscription settings by it's username/email"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully checked user's subscription settings", content = @Content(schema = @Schema(implementation = SubscriptionSettingsDTO.class))),
+            @ApiResponse(responseCode = "404", description = "There is no users with such username"),
+    })
+    @PostMapping("/subscription_settings/check")
+    public ResponseEntity<?> checkUsersSubscriptionSettings(@RequestBody UsernameDTO usernameDTO) {
+        SubscriptionSettingsDTO subscriptionSettingsDTO = null;
+        try {
+            subscriptionSettingsDTO = userService.checkUsersSubscriptionSettings(usernameDTO.getUsername());
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+        return ResponseEntity.ok(subscriptionSettingsDTO);
+    }
+    @Operation(
+            summary = "Set user's subscription settings",
+            description = "This endpoint lets you set user's subscription settings"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully set user's subscription settings"),
+            @ApiResponse(responseCode = "401", description = "You are trying to set user's subscription settings while not authenticated"),
+    })
+    @PutMapping("/subscription_settings/set")
+    public ResponseEntity<?> setUsersSubscriptionSettings(@RequestBody SubscriptionSettingsDTO subscriptionSettingsDTO) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+        userService.setUsersSubscriptionSettings(crosswordUserDetails.getUser(), subscriptionSettingsDTO.getSendToMail(), subscriptionSettingsDTO.getMobileNotifications());
+        return ResponseEntity.ok(HttpStatus.OK);
+    }
     // TODO добавить удаление пользователя, учтя тот факт, что перед удалением необходимо очистить связанные с ним данные
     /*@DeleteMapping("/{id}")
     public ResponseEntity<?> deleteUserById(@PathVariable Long id) {
