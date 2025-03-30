@@ -94,8 +94,10 @@ public class DocService {
 
         docMeta = docMetaRepository.save(docMeta);
         var docES = modelMapper.map(createDocDTO, DocES.class);
+        System.out.println("Количество символов принятого документа " + docES.getTitle() + ": " + docES.getText().length());
         docES.setId(docMeta.getId());
-        docSearchRepository.save(docES);
+        docES = docSearchRepository.save(docES);
+        System.out.println("Количество символов сохраненного документа: " + docES.getTitle() + ": " + docES.getText().length());
     }
 
     // TODO документы должны возвращаться в порядке устаревания дат
