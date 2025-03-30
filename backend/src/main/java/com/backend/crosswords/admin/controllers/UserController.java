@@ -62,6 +62,7 @@ public class UserController {
             ipAddress = request.getRemoteAddr();
         }
         String userAgent = request.getHeader("User-Agent");
+        System.out.println("User agent: " + userAgent);
         List<String> jwt;
         try {
             jwt =  userService.registerUser(registerUserDTO, ipAddress, userAgent);
@@ -151,6 +152,7 @@ public class UserController {
         List<String> authoritiesNames = userService.getAuthoritiesNamesByUser();
         return ResponseEntity.ok(new AuthorityDTO(authoritiesNames));
     }
+    // @PostMapping("")
     // TODO добавить удаление пользователя, учтя тот факт, что перед удалением необходимо очистить связанные с ним данные
     /*@DeleteMapping("/{id}")
     public ResponseEntity<?> deleteUserById(@PathVariable Long id) {
