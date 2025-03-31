@@ -225,7 +225,9 @@ export default {
     payload.tags = this.selected_tags.map(tag => tag.value)
     payload.date_from = this.formatToISO(this.date_from)
     payload.date_to = this.formatToISO(this.date_to)
-    payload.folders = this.selected_folder.map(folder => folder.value)
+    if (this.selected_folder) {
+      payload.folders = this.selected_folder.map(folder => folder.value)
+    }
   }
 
   if (this.search_mode === 'exact') {
