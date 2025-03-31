@@ -9,11 +9,6 @@ import java.util.List;
 
 @Schema(description = "DTO for searching document, if any filter's arguments are null, then their check automatically approves")
 public class SearchDocDTO {
-    @Schema(
-            description = "Documents' id for search by id (optional)",
-            example = "3"
-    )
-    private Long id;
 
     @Schema(
             example = "ставший лучшим спортом"
@@ -82,14 +77,6 @@ public class SearchDocDTO {
             example = "[\"Спорт\"]"
     )
     private List<String> tags;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public String getSearchTerm() {
         return searchTerm;
@@ -174,8 +161,7 @@ public class SearchDocDTO {
     @Override
     public String toString() {
         return "SearchDocDTO{" +
-                "id=" + id +
-                ", searchTerm='" + searchTerm + '\'' +
+                "searchTerm='" + searchTerm + '\'' +
                 ", searchMode='" + searchMode + '\'' +
                 ", dateFrom=" + dateFrom +
                 ", dateTo=" + dateTo +

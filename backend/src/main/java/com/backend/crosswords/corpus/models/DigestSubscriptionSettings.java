@@ -12,6 +12,8 @@ public class DigestSubscriptionSettings {
     private Boolean sendToMail;
     @Column(name = "mobile_Notifications")
     private Boolean mobileNotifications;
+    @Column(name = "edited")
+    private Boolean edited = false;
     @ManyToOne
     @MapsId("digestSubscriptionId")
     @JoinColumn(name = "digest_subscription_id")
@@ -70,5 +72,13 @@ public class DigestSubscriptionSettings {
 
     public void setMobileNotifications(Boolean mobileNotifications) {
         this.mobileNotifications = mobileNotifications;
+    }
+
+    public Boolean getEdited() {
+        return edited;
+    }
+
+    public void setEdited(Boolean edited) {
+        this.edited = edited;
     }
 }

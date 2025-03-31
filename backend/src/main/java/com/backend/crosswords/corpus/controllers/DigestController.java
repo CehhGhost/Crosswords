@@ -46,4 +46,6 @@ public class DigestController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
+    // TODO сделать scheduler для создания ядер дайджеста
+
 }

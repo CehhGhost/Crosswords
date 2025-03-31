@@ -9,6 +9,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Timestamp;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 
@@ -34,7 +35,7 @@ public class AnnotationService {
     public void deleteAnnotationByIdFromDoc(User user, DocMeta docMeta, Long annotationId) {
         var annotation = annotationRepository.findById(annotationId).orElseThrow(() -> new NoSuchElementException("There is no annotations with such id"));
         if (!Objects.equals(user.getId(), annotation.getOwner().getId())) {
-            throw new IllegalArgumentException("You are not an owner of this annotation");
+            throw new IllegalArgumentException("You are not the owner of this annotation");
         }
         if (!Objects.equals(docMeta.getId(), annotation.getDoc().getId())) {
             throw new IllegalArgumentException("This documents doesn't own this annotation");
@@ -43,5 +44,20 @@ public class AnnotationService {
         annotation.setOwner(null);
         docMeta.getAnnotations().remove(annotation);
         annotationRepository.delete(annotation);
+    }
+
+    @Transactional
+    public void updateAnnotationByIdForDoc(User user, DocMeta docMeta, Long annotationId, CreateUpdateAnnotationDTO createUpdateAnnotationDTO) {
+        var annotation = annotationRepository.findById(annotationId).orElseThrow(() -> new NoSuchElementException("There is no comments with such id"));
+        if (!Objects.equals(user.getId(), annotation.getOwner().getId())) {
+            throw new IllegalArgumentException("You are not the owner of this comment");
+        }
+        if (!Objects.equals(docMeta.getId(), annotation.getDoc().getId())) {
+            throw new IllegalArgumentException("This documents doesn't own this comment");
+        }
+        annotation.setComments(createUpdateAnnotationDTO.getComments());
+        annotation.setStartPos(createUpdateAnnotationDTO.getStartPos());
+        annotation.setEndPos(createUpdateAnnotationDTO.getEndPos());
+        annotationRepository.save(annotation);
     }
 }

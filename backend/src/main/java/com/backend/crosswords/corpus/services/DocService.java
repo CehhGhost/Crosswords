@@ -94,8 +94,10 @@ public class DocService {
 
         docMeta = docMetaRepository.save(docMeta);
         var docES = modelMapper.map(createDocDTO, DocES.class);
+        System.out.println("Количество символов принятого документа " + docES.getTitle() + ": " + docES.getText().length());
         docES.setId(docMeta.getId());
-        docSearchRepository.save(docES);
+        docES = docSearchRepository.save(docES);
+        System.out.println("Количество символов сохраненного документа: " + docES.getTitle() + ": " + docES.getText().length());
     }
 
     // TODO документы должны возвращаться в порядке устаревания дат
@@ -134,10 +136,10 @@ public class DocService {
     public SearchResultDTO searchDocs(SearchDocDTO searchDocDTO) {
         List<DocDTO> resultHits = new ArrayList<>();
         QueryBuilder queryBuilder = null;
-        float minScore = 0F;
+        float minScore = 1F;
         switch (searchDocDTO.getSearchMode()) {
             case "id" -> {
-                resultHits.add(this.getDocById(searchDocDTO.getId()));
+                resultHits.add(this.getDocById(Long.parseLong(searchDocDTO.getSearchTerm())));
                 return this.formSearchResultDTO(searchDocDTO.getPageNumber(), resultHits);
             }
             case "semantic" -> {
@@ -345,11 +347,12 @@ public class DocService {
     }
 
     @Transactional
-    public void commentDocById(User user, Long id, CreateUpdateCommentDTO createUpdateCommentDTO) {
+    public Comment commentDocById(User user, Long id, CreateUpdateCommentDTO createUpdateCommentDTO) {
         var docMeta = docMetaRepository.findById(id).orElseThrow(() -> new NoSuchElementException("There is no documents with such id!"));
         Comment comment = commentService.commentDoc(user, docMeta, createUpdateCommentDTO);
         docMeta.getComments().add(comment);
         docMetaRepository.save(docMeta);
+        return comment;
     }
 
     @Transactional
@@ -359,15 +362,35 @@ public class DocService {
         docMetaRepository.save(docMeta);
     }
 
-    public List<GetPackagesForDocDTO> getPackagesForDoc(Long id, User user) {
+    public List<PackagesForDocDTO> getPackagesForDoc(Long id, User user) {
         var docMeta = docMetaRepository.findById(id).orElseThrow(() -> new NoSuchElementException("There is no documents with such id!"));
-        List<GetPackagesForDocDTO> docsPackages = new ArrayList<>();
+        List<PackagesForDocDTO> docsPackages = new ArrayList<>();
         for (var usersPackage : packageService.getPackagesForUser(user)) {
-            GetPackagesForDocDTO getPackagesForDocDTO = new GetPackagesForDocDTO();
+            PackagesForDocDTO getPackagesForDocDTO = new PackagesForDocDTO();
             getPackagesForDocDTO.setName(usersPackage.getId().getName());
             getPackagesForDocDTO.setIsIncluded(usersPackage.getDocs().contains(docMeta));
             docsPackages.add(getPackagesForDocDTO);
         }
         return docsPackages;
+    }
+
+    public List<Comment> getAllUsersCommentsFromDocById(User user, Long docId) {
+        return commentService.getAllUsersCommentsFromDoc(user, docMetaRepository.findById(docId).orElseThrow(
+                () -> new NoSuchElementException("There is no documents with such id!")));
+    }
+
+    @Transactional
+    public Comment updateCommentByIdForDocById(User user, Long docId, Long commentId, CreateUpdateCommentDTO createUpdateCommentDTO) {
+        var docMeta = docMetaRepository.findById(docId).orElseThrow(() -> new NoSuchElementException("There is no documents with such id!"));
+        Comment comment = commentService.updateCommentByIdForDoc(user, docMeta, commentId, createUpdateCommentDTO);
+        docMetaRepository.save(docMeta);
+        return comment;
+    }
+
+    @Transactional
+    public void updateAnnotationByIdForDocById(User user, Long docId, Long annotationId, CreateUpdateAnnotationDTO createUpdateAnnotationDTO) {
+        var docMeta = docMetaRepository.findById(docId).orElseThrow(() -> new NoSuchElementException("There is no documents with such id!"));
+        annotationService.updateAnnotationByIdForDoc(user, docMeta, annotationId, createUpdateAnnotationDTO);
+        docMetaRepository.save(docMeta);
     }
 }

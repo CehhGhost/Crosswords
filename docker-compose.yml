@@ -23,7 +23,9 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
     networks:
-      - shared_network
+      shared_network:
+        aliases:
+          - backend-postgres
 
   opensearch:
     image: opensearchproject/opensearch:2.11.0  # Используем OpenSearch вместо Elasticsearch

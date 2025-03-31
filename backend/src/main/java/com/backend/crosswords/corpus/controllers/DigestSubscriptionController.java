@@ -2,6 +2,8 @@ package com.backend.crosswords.corpus.controllers;
 
 import com.backend.crosswords.admin.models.CrosswordUserDetails;
 import com.backend.crosswords.corpus.dto.CreateDigestSubscriptionDTO;
+import com.backend.crosswords.corpus.dto.DigestSubscriptionSettingsDTO;
+import com.backend.crosswords.corpus.dto.UpdateDigestSubscriptionDTO;
 import com.backend.crosswords.corpus.services.DigestSubscriptionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -11,11 +13,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.NoSuchElementException;
 
 @RestController
@@ -28,10 +28,10 @@ public class DigestSubscriptionController {
         this.digestSubscriptionService = digestSubscriptionService;
     }
 
-    @Operation(summary = "Create Digest Subscription", description = "This endpoint lets you create a new subscription, owner will be extracted from auth, he also will be added into subscribers")
+    @Operation(summary = "Create a digest subscription", description = "This endpoint lets you create a new subscription, owner will be extracted from auth, he also will be added into subscribers")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "You successfully created a new subscription and subscribed users on it"),
-            // TODO ошибка 401
+            @ApiResponse(responseCode = "401", description = "You are trying to create a digest subscription while not authenticated"),
             @ApiResponse(responseCode = "400", description = "At least one source has an incorrect name"),
             @ApiResponse(responseCode = "404", description = "At least one subscriber cant be found in the DB")
     })
@@ -47,5 +47,64 @@ public class DigestSubscriptionController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
         return ResponseEntity.ok(HttpStatus.OK);
+    }
+    @Operation(summary = "Update a digest subscription", description = "This endpoint lets you update a digest subscription, owner must be included in the followers")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully updated a digest subscription and managed subscribers on it"),
+            @ApiResponse(responseCode = "401", description = "You are trying to updated a digest subscription while not authenticated"),
+            @ApiResponse(responseCode = "400", description = "At least one source has an incorrect name"),
+            @ApiResponse(responseCode = "404", description = "At least one subscriber, one digest subscription or one subscription's settings, cant be found in the DB"),
+            @ApiResponse(responseCode = "403", description = "You are trying to updated a digest subscription while not owning it")
+    })
+    @PutMapping("/{id}/update")
+    public ResponseEntity<?> updateDigestSubscription(@PathVariable Long id, @RequestBody UpdateDigestSubscriptionDTO updateDigestSubscriptionDTO) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+        try {
+            digestSubscriptionService.updateDigestSubscription(crosswordUserDetails.getUser(), id, updateDigestSubscriptionDTO);
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (IllegalAccessException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        }
+        return ResponseEntity.ok(HttpStatus.OK);
+    }
+    @GetMapping
+    public ResponseEntity<?> getAllDigestSubscriptions() {
+        // TODO доделать
+        return ResponseEntity.ok(HttpStatus.OK);
+    }
+    @Operation(summary = "Update a digest subscription's settings", description = "This endpoint lets you update a digest subscription's settings")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully updated a digest subscription's settings"),
+            @ApiResponse(responseCode = "401", description = "You are trying to updated a digest subscription's settings while not authenticated"),
+            @ApiResponse(responseCode = "404", description = "At least one digest subscription or one subscription's settings, cant be found in the DB"),
+    })
+    @PutMapping("/{id}/settings/update")
+    public ResponseEntity<?> updateDigestSubscriptionSettingsForUser(@PathVariable Long id, @RequestBody DigestSubscriptionSettingsDTO subscriptionSettingsDTO) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+        try {
+            digestSubscriptionService.updateDigestSubscriptionSettingsForUser(id, subscriptionSettingsDTO, crosswordUserDetails.getUser());
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+        return ResponseEntity.ok(HttpStatus.OK);
+    }
+    @Operation(summary = "Get all users from the subscription", description = "This endpoint lets you get all users from the subscription")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully get all users from the subscription"),
+            @ApiResponse(responseCode = "401", description = "You are trying to updated a digest subscription's settings while not authenticated"), // TODO а нужна ли вообще аутентификация здесь?
+            @ApiResponse(responseCode = "404", description = "There is no subscriptions with such id"),
+    })
+    @GetMapping("/{id}/followers")
+    public ResponseEntity<?> getAllDigestSubscriptionsUsers(@PathVariable Long id) {
+        List<String> usersUsernames;
+        try {
+            usersUsernames = digestSubscriptionService.getAllDigestSubscriptionsUsers(id);
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+        return ResponseEntity.ok(usersUsernames);
     }
 }

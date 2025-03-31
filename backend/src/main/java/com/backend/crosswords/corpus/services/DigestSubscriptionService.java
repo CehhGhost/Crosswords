@@ -3,6 +3,8 @@ package com.backend.crosswords.corpus.services;
 import com.backend.crosswords.admin.models.User;
 import com.backend.crosswords.admin.services.UserService;
 import com.backend.crosswords.corpus.dto.CreateDigestSubscriptionDTO;
+import com.backend.crosswords.corpus.dto.DigestSubscriptionSettingsDTO;
+import com.backend.crosswords.corpus.dto.UpdateDigestSubscriptionDTO;
 import com.backend.crosswords.corpus.enums.Source;
 import com.backend.crosswords.corpus.models.DigestSubscription;
 import com.backend.crosswords.corpus.models.Tag;
@@ -11,9 +13,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
-import java.util.NoSuchElementException;
-import java.util.Set;
+import java.util.*;
 
 @Service
 public class DigestSubscriptionService {
@@ -45,15 +45,48 @@ public class DigestSubscriptionService {
 
         subscriptionSettingsService.setSubscribersForSubscription(createDigestSubscriptionDTO.getFollowers(), subscription);
 
-        Set<Tag> tags = tagService.getTagsInNames(createDigestSubscriptionDTO.getTags());
+        this.extractTagsAndSourcesAndCreateTemplate(createDigestSubscriptionDTO.getTags(), createDigestSubscriptionDTO.getSources());
+    }
+
+    public DigestSubscription getDigestSubscriptionById(Long id) {
+        return subscriptionRepository.findById(id).orElseThrow(() -> new NoSuchElementException("There is no subscriptions with such id!"));
+    }
+
+    @Transactional
+    public void updateDigestSubscription(User user, Long id, UpdateDigestSubscriptionDTO updateDigestSubscriptionDTO) throws IllegalAccessException {
+        var subscription = subscriptionRepository.findById(id).orElseThrow(() -> new NoSuchElementException("There is no subscriptions with such id!"));
+        if (!Objects.equals(user.getId(), subscription.getOwner().getId())) {
+            throw new IllegalAccessException("You are not an owner of this subscription!");
+        }
+        subscription.setOwner(userService.getUserByUsername(updateDigestSubscriptionDTO.getOwnersUsername()));
+        subscription.setDescription(updateDigestSubscriptionDTO.getDescription());
+        subscription.setPublic(updateDigestSubscriptionDTO.getPublic());
+        subscription.setTitle(updateDigestSubscriptionDTO.getTitle());
+        subscription.setSendToMail(updateDigestSubscriptionDTO.getSubscribeOptions().getSendToMail());
+        subscription.setMobileNotifications(updateDigestSubscriptionDTO.getSubscribeOptions().getMobileNotifications());
+        subscription = subscriptionRepository.save(subscription);
+
+        subscriptionSettingsService.setNewSubscribersForSubscription(updateDigestSubscriptionDTO.getFollowers(), subscription);
+
+        this.extractTagsAndSourcesAndCreateTemplate(updateDigestSubscriptionDTO.getTags(), updateDigestSubscriptionDTO.getSources());
+    }
+    @Transactional
+    public void extractTagsAndSourcesAndCreateTemplate(List<String> tagsNames, List<String> sourcesNames) {
+        Set<Tag> tags = tagService.getTagsInNames(tagsNames);
         Set<Source> sources = new HashSet<>();
-        for (var source : createDigestSubscriptionDTO.getSources()) {
+        for (var source : sourcesNames) {
             sources.add(Source.fromRussianName(source));
         }
         templateService.createTemplateBySourcesAndTags(sources, tags);
     }
 
-    public DigestSubscription getDigestSubscriptionById(Long id) {
-        return subscriptionRepository.findById(id).orElseThrow(() -> new NoSuchElementException("There is no subscriptions with such id!"));
+    public void updateDigestSubscriptionSettingsForUser(Long id, DigestSubscriptionSettingsDTO subscriptionSettingsDTO, User user) {
+        var subscription = subscriptionRepository.findById(id).orElseThrow(() -> new NoSuchElementException("There is no subscriptions with such id!"));
+        subscriptionSettingsService.updateDigestSubscriptionSettingsForUser(subscription, user, subscriptionSettingsDTO);
+    }
+
+    public List<String> getAllDigestSubscriptionsUsers(Long id) {
+        var subscription = subscriptionRepository.findById(id).orElseThrow(() -> new NoSuchElementException("There is no subscriptions with such id!"));
+        return subscriptionSettingsService.getAllDigestSubscriptionsUsers(subscription);
     }
 }
