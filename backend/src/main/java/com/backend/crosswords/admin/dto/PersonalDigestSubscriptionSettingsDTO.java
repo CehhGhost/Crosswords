@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "DTO for user's subscription settings")
-public class SubscriptionSettingsDTO {
+public class PersonalDigestSubscriptionSettingsDTO {
     @Schema(
             example = "true"
     )
@@ -16,10 +16,10 @@ public class SubscriptionSettingsDTO {
     @JsonProperty("mobile_notifications")
     private Boolean mobileNotifications;
 
-    public SubscriptionSettingsDTO() {
+    public PersonalDigestSubscriptionSettingsDTO() {
     }
 
-    public SubscriptionSettingsDTO(Boolean sendToMail, Boolean mobileNotifications) {
+    public PersonalDigestSubscriptionSettingsDTO(Boolean sendToMail, Boolean mobileNotifications) {
         this.sendToMail = sendToMail;
         this.mobileNotifications = mobileNotifications;
     }

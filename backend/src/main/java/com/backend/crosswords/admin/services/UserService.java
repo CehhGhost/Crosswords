@@ -2,7 +2,7 @@ package com.backend.crosswords.admin.services;
 
 import com.backend.crosswords.admin.dto.LoginUserDTO;
 import com.backend.crosswords.admin.dto.RegisterUserDTO;
-import com.backend.crosswords.admin.dto.SubscriptionSettingsDTO;
+import com.backend.crosswords.admin.dto.PersonalDigestSubscriptionSettingsDTO;
 import com.backend.crosswords.admin.enums.RoleEnum;
 import com.backend.crosswords.admin.models.CrosswordUserDetails;
 import com.backend.crosswords.admin.models.RefreshToken;
@@ -140,9 +140,9 @@ public class UserService {
         return user.getEmail();
     }
 
-    public SubscriptionSettingsDTO checkUsersSubscriptionSettings(String username) {
+    public PersonalDigestSubscriptionSettingsDTO checkUsersSubscriptionSettings(String username) {
         var user = userRepository.findByUsernameOrEmail(username, username).orElseThrow(() -> new NoSuchElementException("There is no users with such username/email!"));
-        return new SubscriptionSettingsDTO(user.getSendToMail(), user.getMobileNotifications());
+        return new PersonalDigestSubscriptionSettingsDTO(user.getSendToMail(), user.getMobileNotifications());
     }
 
     public void setUsersSubscriptionSettings(User user, Boolean sendToMail, Boolean mobileNotifications) {

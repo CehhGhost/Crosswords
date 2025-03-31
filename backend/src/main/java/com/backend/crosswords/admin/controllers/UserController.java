@@ -168,12 +168,12 @@ public class UserController {
             description = "This endpoint lets you check user's subscription settings by it's username/email"
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "You successfully checked user's subscription settings", content = @Content(schema = @Schema(implementation = SubscriptionSettingsDTO.class))),
+            @ApiResponse(responseCode = "200", description = "You successfully checked user's subscription settings", content = @Content(schema = @Schema(implementation = PersonalDigestSubscriptionSettingsDTO.class))),
             @ApiResponse(responseCode = "404", description = "There is no users with such username"),
     })
     @PostMapping("/subscription_settings/check")
     public ResponseEntity<?> checkUsersSubscriptionSettings(@RequestBody UsernameDTO usernameDTO) {
-        SubscriptionSettingsDTO subscriptionSettingsDTO = null;
+        PersonalDigestSubscriptionSettingsDTO subscriptionSettingsDTO = null;
         try {
             subscriptionSettingsDTO = userService.checkUsersSubscriptionSettings(usernameDTO.getUsername());
         } catch (NoSuchElementException e) {
@@ -190,7 +190,7 @@ public class UserController {
             @ApiResponse(responseCode = "401", description = "You are trying to set user's subscription settings while not authenticated"),
     })
     @PutMapping("/subscription_settings/set")
-    public ResponseEntity<?> setUsersSubscriptionSettings(@RequestBody SubscriptionSettingsDTO subscriptionSettingsDTO) {
+    public ResponseEntity<?> setUsersSubscriptionSettings(@RequestBody PersonalDigestSubscriptionSettingsDTO subscriptionSettingsDTO) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
         userService.setUsersSubscriptionSettings(crosswordUserDetails.getUser(), subscriptionSettingsDTO.getSendToMail(), subscriptionSettingsDTO.getMobileNotifications());
