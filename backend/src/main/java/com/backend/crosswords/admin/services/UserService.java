@@ -62,6 +62,13 @@ public class UserService {
                 }
             }
         }
+
+        user.setSubscribable(true);
+        user.setPersonalMobileNotifications(false);
+        user.setPersonalSendToMail(false);
+        user.setMobileNotifications(false);
+        user.setSendToMail(false);
+
         user = userRepository.save(user);
         packageService.createPackage(Package.favouritesName, user);
         return this.loginUser(new LoginUserDTO(registerUserDTO.getUsername(), registerUserDTO.getPassword()), ipAddress, userAgent);
@@ -142,12 +149,18 @@ public class UserService {
 
     public PersonalDigestSubscriptionSettingsDTO checkUsersSubscriptionSettings(String username) {
         var user = userRepository.findByUsernameOrEmail(username, username).orElseThrow(() -> new NoSuchElementException("There is no users with such username/email!"));
-        return new PersonalDigestSubscriptionSettingsDTO(user.getSendToMail(), user.getMobileNotifications());
+        if (!user.getSubscribable()) {
+            throw new IllegalArgumentException("This user can't be added into any subscriptions!");
+        }
+        return new PersonalDigestSubscriptionSettingsDTO(user.getSendToMail(), user.getMobileNotifications(), user.getPersonalSendToMail(), user.getPersonalMobileNotifications(), user.getSubscribable());
     }
 
-    public void setUsersSubscriptionSettings(User user, Boolean sendToMail, Boolean mobileNotifications) {
+    public void setUsersSubscriptionSettings(User user, Boolean sendToMail, Boolean mobileNotifications, Boolean personalSendToMail, Boolean personalMobileNotifications, Boolean subscribable) {
         user.setSendToMail(sendToMail);
         user.setMobileNotifications(mobileNotifications);
+        user.setPersonalSendToMail(personalSendToMail);
+        user.setPersonalMobileNotifications(personalMobileNotifications);
+        user.setSubscribable(subscribable);
         userRepository.save(user);
     }
 }

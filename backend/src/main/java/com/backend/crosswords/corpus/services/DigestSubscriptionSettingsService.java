@@ -4,6 +4,7 @@ import com.backend.crosswords.admin.models.User;
 import com.backend.crosswords.admin.services.UserService;
 import com.backend.crosswords.corpus.dto.DigestSubscriptionSettingsDTO;
 import com.backend.crosswords.corpus.dto.FollowerDTO;
+import com.backend.crosswords.corpus.dto.UpdateDigestSubscriptionDTO;
 import com.backend.crosswords.corpus.models.DigestSubscription;
 import com.backend.crosswords.corpus.models.DigestSubscriptionSettings;
 import com.backend.crosswords.corpus.models.DigestSubscriptionSettingsId;
@@ -41,7 +42,8 @@ public class DigestSubscriptionSettingsService {
     }
 
     @Transactional
-    public void setNewSubscribersForSubscription(List<FollowerDTO> followerDTOs, DigestSubscription subscription) {
+    public void setNewSubscribersForSubscription(UpdateDigestSubscriptionDTO updateDigestSubscriptionDTO, DigestSubscription subscription) {
+        List<FollowerDTO> followerDTOs = updateDigestSubscriptionDTO.getFollowers();
         var oldFollowers = subscriptionSettingsRepository.findAllByDigestSubscription(subscription);
         oldFollowers.sort(Comparator.comparing(a -> a.getSubscriber().getUsername()));
         List<User> followers = new ArrayList<>();
@@ -60,15 +62,16 @@ public class DigestSubscriptionSettingsService {
             if (compare == 0) {
                 var oldSettings = subscriptionSettingsRepository.findById(new DigestSubscriptionSettingsId(subscription.getId(), oldFollower.getId())).orElseThrow(
                         () ->  new NoSuchElementException("There is no settings between these user and subscription!"));
-                boolean newMobileNotifications = oldFollower.getMobileNotifications() != null ? oldFollower.getMobileNotifications() : subscription.getMobileNotifications();
-                boolean newSendToMail = oldFollower.getSendToMail() != null ? oldFollower.getSendToMail() : subscription.getSendToMail();
-                if ((newMobileNotifications != oldSettings.getMobileNotifications() || newSendToMail != oldSettings.getSendToMail())) {
+                var newSettings = updateDigestSubscriptionDTO.getSubscribeOptions();
+                boolean newMobileNotifications = oldFollower.getMobileNotifications() ? subscription.getMobileNotifications() : false;
+                boolean newSendToMail = oldFollower.getSendToMail() ? subscription.getSendToMail() : false;
+                if (newSettings.getMobileNotifications() != oldSettings.getMobileNotifications() || newSettings.getSendToMail() != oldSettings.getSendToMail()) {
                     boolean flag = false; // флаг, показывающий, что хотя бы что-то изменилось в настройках и это нужно сохранить
-                    if (!oldSettings.getEdited() || oldSettings.getMobileNotifications() == null) {
+                    if (!oldSettings.getEdited() || newSettings.getMobileNotifications() != oldSettings.getMobileNotifications()) {
                         oldSettings.setMobileNotifications(newMobileNotifications);
                         flag = true;
                     }
-                    if (!oldSettings.getEdited() || oldSettings.getSendToMail() == null) {
+                    if (!oldSettings.getEdited() || newSettings.getSendToMail() != oldSettings.getSendToMail()) {
                         oldSettings.setSendToMail(newSendToMail);
                         flag = true;
                     }
@@ -101,8 +104,8 @@ public class DigestSubscriptionSettingsService {
         userSettings.setId(new DigestSubscriptionSettingsId(subscription.getId(), user.getId()));
         userSettings.setSubscriber(user);
         userSettings.setDigestSubscription(subscription);
-        userSettings.setMobileNotifications(user.getMobileNotifications() != null ? user.getMobileNotifications() : subscription.getMobileNotifications()); // TODO нужно ли как-то выделять настройки подписки owner?
-        userSettings.setSendToMail(user.getSendToMail() != null ? user.getSendToMail() : subscription.getSendToMail()); // TODO нужно ли как-то выделять настройки подписки owner?
+        userSettings.setMobileNotifications(user.getMobileNotifications() ? subscription.getMobileNotifications() : false);
+        userSettings.setSendToMail(user.getSendToMail() ? subscription.getSendToMail() : false);
         return userSettings;
     }
 
@@ -110,8 +113,8 @@ public class DigestSubscriptionSettingsService {
         var subscriptionSettings = subscriptionSettingsRepository.findById(new DigestSubscriptionSettingsId(subscription.getId(), user.getId())).orElseThrow(
                 () -> new NoSuchElementException("There is no settings between these user and subscription!"));
         if (subscriptionSettingsDTO.getSubscribed()) {
-            subscriptionSettings.setSendToMail(subscriptionSettings.getSendToMail());
-            subscriptionSettings.setMobileNotifications(subscriptionSettings.getMobileNotifications());
+            subscriptionSettings.setSendToMail(subscriptionSettings.getSendToMail() == null ? user.getPersonalSendToMail() : subscriptionSettings.getSendToMail());
+            subscriptionSettings.setMobileNotifications(subscriptionSettings.getMobileNotifications() == null ? user.getPersonalMobileNotifications() : subscriptionSettings.getMobileNotifications());
             subscriptionSettings.setEdited(true);
             subscriptionSettingsRepository.save(subscriptionSettings);
         } else {
@@ -126,5 +129,9 @@ public class DigestSubscriptionSettingsService {
             subscribersUsernames.add(setting.getSubscriber().getUsername());
         }
         return subscribersUsernames;
+    }
+
+    public List<DigestSubscriptionSettings> getAllUsersDigestSubscriptions(User user) {
+        return subscriptionSettingsRepository.findAllBySubscriber(user);
     }
 }

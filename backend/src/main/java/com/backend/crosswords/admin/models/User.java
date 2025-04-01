@@ -36,6 +36,15 @@ public class User {
     @Column(name = "mobile_notifications")
     private Boolean mobileNotifications;
 
+    @Column(name = "personal_send_to_mail")
+    private Boolean personalSendToMail;
+
+    @Column(name = "personal_mobile_notifications")
+    private Boolean personalMobileNotifications;
+
+    @Column(name = "subscribable")
+    private Boolean subscribable;
+
     @Column(name = "role")
     @Enumerated(EnumType.ORDINAL)
     private RoleEnum role;
@@ -72,6 +81,12 @@ public class User {
         this.username = username;
         this.password = password;
         this.role = role;
+
+        this.sendToMail = false;
+        this.mobileNotifications = false;
+        this.personalSendToMail = false;
+        this.personalMobileNotifications = false;
+        this.subscribable = true;
     }
 
     public List<DocRating> getRatings() {
@@ -152,5 +167,29 @@ public class User {
 
     public void setMobileNotifications(Boolean mobileNotifications) {
         this.mobileNotifications = mobileNotifications;
+    }
+
+    public Boolean getPersonalSendToMail() {
+        return personalSendToMail;
+    }
+
+    public void setPersonalSendToMail(Boolean personalSendToMail) {
+        this.personalSendToMail = personalSendToMail;
+    }
+
+    public Boolean getPersonalMobileNotifications() {
+        return personalMobileNotifications;
+    }
+
+    public void setPersonalMobileNotifications(Boolean personalMobileNotifications) {
+        this.personalMobileNotifications = personalMobileNotifications;
+    }
+
+    public Boolean getSubscribable() {
+        return subscribable;
+    }
+
+    public void setSubscribable(Boolean subscribable) {
+        this.subscribable = subscribable;
     }
 }

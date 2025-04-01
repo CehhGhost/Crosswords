@@ -18,10 +18,12 @@ public class DigestTemplateService {
     }
 
     @Transactional
-    public void createTemplateBySourcesAndTags(Set<Source> sources, Set<Tag> tags) {
+    public DigestTemplate createTemplateBySourcesAndTags(Set<Source> sources, Set<Tag> tags) {
         var templateUuid = DigestTemplate.generateUuid(sources, tags);
-        if (!templateRepository.existsById(templateUuid)) {
-            templateRepository.save(new DigestTemplate(sources, tags));
+        var checkTemplate = templateRepository.findById(templateUuid);
+        if (checkTemplate.isEmpty()) {
+            return templateRepository.save(new DigestTemplate(sources, tags));
         }
+        return checkTemplate.get();
     }
 }

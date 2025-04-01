@@ -22,7 +22,7 @@ public class CreateDigestSubscriptionDTO {
 
     @JsonProperty("subscribe_options")
     @Schema(description = "Subscription options for the digest")
-    private SubscribeOptionsDTO subscribeOptions;
+    private SetSubscribeOptionsDTO subscribeOptions;
 
     @JsonProperty("public")
     @Schema(description = "Indicates if the digest is public", example = "true")
@@ -63,11 +63,11 @@ public class CreateDigestSubscriptionDTO {
         this.tags = tags;
     }
 
-    public SubscribeOptionsDTO getSubscribeOptions() {
+    public SetSubscribeOptionsDTO getSubscribeOptions() {
         return subscribeOptions;
     }
 
-    public void setSubscribeOptions(SubscribeOptionsDTO subscribeOptions) {
+    public void setSubscribeOptions(SetSubscribeOptionsDTO subscribeOptions) {
         this.subscribeOptions = subscribeOptions;
     }
 

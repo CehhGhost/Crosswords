@@ -11,4 +11,5 @@ import java.util.Set;
 
 public interface DigestSubscriptionSettingsRepository extends JpaRepository<DigestSubscriptionSettings, DigestSubscriptionSettingsId> {
     List<DigestSubscriptionSettings> findAllByDigestSubscription(DigestSubscription subscription);
+    List<DigestSubscriptionSettings> findAllBySubscriber(User user);
 }

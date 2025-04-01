@@ -170,6 +170,7 @@ public class UserController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "You successfully checked user's subscription settings", content = @Content(schema = @Schema(implementation = PersonalDigestSubscriptionSettingsDTO.class))),
             @ApiResponse(responseCode = "404", description = "There is no users with such username"),
+            @ApiResponse(responseCode = "403", description = "This user can't be added into any subscriptions!"),
     })
     @PostMapping("/subscription_settings/check")
     public ResponseEntity<?> checkUsersSubscriptionSettings(@RequestBody UsernameDTO usernameDTO) {
@@ -178,6 +179,8 @@ public class UserController {
             subscriptionSettingsDTO = userService.checkUsersSubscriptionSettings(usernameDTO.getUsername());
         } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         }
         return ResponseEntity.ok(subscriptionSettingsDTO);
     }
@@ -193,7 +196,7 @@ public class UserController {
     public ResponseEntity<?> setUsersSubscriptionSettings(@RequestBody PersonalDigestSubscriptionSettingsDTO subscriptionSettingsDTO) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
-        userService.setUsersSubscriptionSettings(crosswordUserDetails.getUser(), subscriptionSettingsDTO.getSendToMail(), subscriptionSettingsDTO.getMobileNotifications());
+        userService.setUsersSubscriptionSettings(crosswordUserDetails.getUser(), subscriptionSettingsDTO.getSendToMail(), subscriptionSettingsDTO.getMobileNotifications(), subscriptionSettingsDTO.getPersonalSendToMail(), subscriptionSettingsDTO.getPersonalMobileNotifications(), subscriptionSettingsDTO.getSubscribable());
         return ResponseEntity.ok(HttpStatus.OK);
     }
     // TODO добавить удаление пользователя, учтя тот факт, что перед удалением необходимо очистить связанные с ним данные

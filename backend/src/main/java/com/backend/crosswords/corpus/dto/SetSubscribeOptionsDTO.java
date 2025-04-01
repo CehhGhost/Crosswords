@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "DTO for getting subscribe options from requests and put into the corresponding digest's DTOs")
-public class SubscribeOptionsDTO {
+public class SetSubscribeOptionsDTO {
     @JsonProperty("send_to_mail")
     private Boolean sendToMail;
     @JsonProperty("mobile_notifications")

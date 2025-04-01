@@ -3,6 +3,7 @@ package com.backend.crosswords.corpus.models;
 import com.backend.crosswords.admin.models.User;
 import jakarta.persistence.*;
 
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.Set;
 
@@ -31,6 +32,13 @@ public class DigestSubscription {
             joinColumns = @JoinColumn(name = "digest_subscriptions_id"),
             inverseJoinColumns = @JoinColumn(name = "digest_core_id"))
     private List<DigestCore> core;
+
+    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinColumn(name = "template_id")
+    private DigestTemplate template;
+
+    @Column(name = "created_at")
+    private Timestamp createdAt;
 
     public Long getId() {
         return id;
@@ -94,5 +102,21 @@ public class DigestSubscription {
 
     public void setCore(List<DigestCore> core) {
         this.core = core;
+    }
+
+    public Timestamp getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Timestamp createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public DigestTemplate getTemplate() {
+        return template;
+    }
+
+    public void setTemplate(DigestTemplate template) {
+        this.template = template;
     }
 }

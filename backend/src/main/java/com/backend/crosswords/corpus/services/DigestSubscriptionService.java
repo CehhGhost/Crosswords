@@ -2,17 +2,18 @@ package com.backend.crosswords.corpus.services;
 
 import com.backend.crosswords.admin.models.User;
 import com.backend.crosswords.admin.services.UserService;
-import com.backend.crosswords.corpus.dto.CreateDigestSubscriptionDTO;
-import com.backend.crosswords.corpus.dto.DigestSubscriptionSettingsDTO;
-import com.backend.crosswords.corpus.dto.UpdateDigestSubscriptionDTO;
+import com.backend.crosswords.corpus.dto.*;
 import com.backend.crosswords.corpus.enums.Source;
 import com.backend.crosswords.corpus.models.DigestSubscription;
+import com.backend.crosswords.corpus.models.DigestSubscriptionSettings;
+import com.backend.crosswords.corpus.models.DigestTemplate;
 import com.backend.crosswords.corpus.models.Tag;
 import com.backend.crosswords.corpus.repositories.jpa.DigestSubscriptionRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Timestamp;
 import java.util.*;
 
 @Service
@@ -41,11 +42,14 @@ public class DigestSubscriptionService {
         subscription.setSendToMail(createDigestSubscriptionDTO.getSubscribeOptions().getSendToMail());
         subscription.setMobileNotifications(createDigestSubscriptionDTO.getSubscribeOptions().getMobileNotifications());
         subscription.setOwner(owner);
+        subscription.setCreatedAt(new Timestamp(System.currentTimeMillis()));
+
+        var template = this.extractTagsAndSourcesAndCreateTemplate(createDigestSubscriptionDTO.getTags(), createDigestSubscriptionDTO.getSources());
+        subscription.setTemplate(template);
+
         subscription = subscriptionRepository.save(subscription);
 
         subscriptionSettingsService.setSubscribersForSubscription(createDigestSubscriptionDTO.getFollowers(), subscription);
-
-        this.extractTagsAndSourcesAndCreateTemplate(createDigestSubscriptionDTO.getTags(), createDigestSubscriptionDTO.getSources());
     }
 
     public DigestSubscription getDigestSubscriptionById(Long id) {
@@ -64,20 +68,22 @@ public class DigestSubscriptionService {
         subscription.setTitle(updateDigestSubscriptionDTO.getTitle());
         subscription.setSendToMail(updateDigestSubscriptionDTO.getSubscribeOptions().getSendToMail());
         subscription.setMobileNotifications(updateDigestSubscriptionDTO.getSubscribeOptions().getMobileNotifications());
+
+        var template = this.extractTagsAndSourcesAndCreateTemplate(updateDigestSubscriptionDTO.getTags(), updateDigestSubscriptionDTO.getSources());
+        subscription.setTemplate(template);
+
         subscription = subscriptionRepository.save(subscription);
 
-        subscriptionSettingsService.setNewSubscribersForSubscription(updateDigestSubscriptionDTO.getFollowers(), subscription);
-
-        this.extractTagsAndSourcesAndCreateTemplate(updateDigestSubscriptionDTO.getTags(), updateDigestSubscriptionDTO.getSources());
+        subscriptionSettingsService.setNewSubscribersForSubscription(updateDigestSubscriptionDTO, subscription);
     }
     @Transactional
-    public void extractTagsAndSourcesAndCreateTemplate(List<String> tagsNames, List<String> sourcesNames) {
+    public DigestTemplate extractTagsAndSourcesAndCreateTemplate(List<String> tagsNames, List<String> sourcesNames) {
         Set<Tag> tags = tagService.getTagsInNames(tagsNames);
         Set<Source> sources = new HashSet<>();
         for (var source : sourcesNames) {
             sources.add(Source.fromRussianName(source));
         }
-        templateService.createTemplateBySourcesAndTags(sources, tags);
+        return templateService.createTemplateBySourcesAndTags(sources, tags);
     }
 
     public void updateDigestSubscriptionSettingsForUser(Long id, DigestSubscriptionSettingsDTO subscriptionSettingsDTO, User user) {
@@ -88,5 +94,38 @@ public class DigestSubscriptionService {
     public List<String> getAllDigestSubscriptionsUsers(Long id) {
         var subscription = subscriptionRepository.findById(id).orElseThrow(() -> new NoSuchElementException("There is no subscriptions with such id!"));
         return subscriptionSettingsService.getAllDigestSubscriptionsUsers(subscription);
+    }
+
+    public UsersDigestSubscriptionsDTO getAllUsersDigestSubscriptions(User user) {
+        UsersDigestSubscriptionsDTO usersDigestSubscriptionsDTO = new UsersDigestSubscriptionsDTO();
+        List<DigestSubscriptionSettings> usersSubscriptionsSettings = subscriptionSettingsService.getAllUsersDigestSubscriptions(user);
+        for (var usersSubscriptionSettings : usersSubscriptionsSettings) {
+            var usersSubscription = usersSubscriptionSettings.getDigestSubscription();
+            UsersDigestSubscriptionDTO usersDigestSubscriptionDTO = new UsersDigestSubscriptionDTO();
+            usersDigestSubscriptionDTO.setId(usersSubscription.getId());
+            usersDigestSubscriptionDTO.setCreationDate(usersSubscription.getCreatedAt());
+            usersDigestSubscriptionDTO.setDescription(usersSubscription.getDescription());
+            usersDigestSubscriptionDTO.setPublic(usersSubscription.getPublic());
+            usersDigestSubscriptionDTO.setTitle(usersSubscription.getTitle());
+
+            var sendToMail = usersSubscriptionSettings.getSendToMail() == null ? usersSubscription.getSendToMail() : usersSubscriptionSettings.getSendToMail();
+            var mobileNotifications = usersSubscriptionSettings.getMobileNotifications() == null ? usersSubscription.getMobileNotifications() : usersSubscriptionSettings.getMobileNotifications();
+            usersDigestSubscriptionDTO.setSubscribeOptions(new GetSubscribeOptionsDTO(sendToMail, mobileNotifications, true));
+
+            var ownersUsername = usersSubscription.getOwner().getUsername();
+            usersDigestSubscriptionDTO.setOwnersUsername(ownersUsername);
+            usersDigestSubscriptionDTO.setIsOwner(Objects.equals(user.getUsername(), ownersUsername));
+
+            usersDigestSubscriptionDTO.setSources(new ArrayList<>());
+            for (var source : usersSubscription.getTemplate().getSources()) {
+                usersDigestSubscriptionDTO.getSources().add(source.getRussianName());
+            }
+            usersDigestSubscriptionDTO.setTags(new ArrayList<>());
+            for (var tag : usersSubscription.getTemplate().getTags()) {
+                usersDigestSubscriptionDTO.getTags().add(tag.getName());
+            }
+            usersDigestSubscriptionsDTO.getUsersDigestSubscriptions().add(usersDigestSubscriptionDTO);
+        }
+        return usersDigestSubscriptionsDTO;
     }
 }

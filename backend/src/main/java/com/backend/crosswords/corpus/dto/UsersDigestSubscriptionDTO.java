@@ -4,13 +4,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.sql.Timestamp;
 import java.util.List;
 
-public class UpdateDigestSubscriptionDTO {
-    @Schema(description = "Title of the digest", example = "Главное о спорте")
+public class UsersDigestSubscriptionDTO {
+    private Long id;
     private String title;
-
-    @Schema(description = "Description of the digest", example = "самое важно о мире спорта")
     private String description;
 
     @ArraySchema(schema = @Schema(description = "List of sources for the digest", example = "Интерфакс"))
@@ -20,18 +19,29 @@ public class UpdateDigestSubscriptionDTO {
     private List<String> tags;
 
     @JsonProperty("subscribe_options")
-    @Schema(description = "Subscription options for the digest")
-    private SetSubscribeOptionsDTO subscribeOptions;
+    private GetSubscribeOptionsDTO subscribeOptions;
 
     @JsonProperty("public")
     @Schema(description = "Indicates if the digest is public", example = "true")
     private Boolean isPublic;
 
-    private List<FollowerDTO> followers;
-
     @Schema(example = "admin")
     @JsonProperty("owner")
     private String ownersUsername;
+
+    @JsonProperty("is_owner")
+    private Boolean isOwner;
+
+    @JsonProperty("creation_date")
+    private Timestamp creationDate;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public String getTitle() {
         return title;
@@ -65,11 +75,11 @@ public class UpdateDigestSubscriptionDTO {
         this.tags = tags;
     }
 
-    public SetSubscribeOptionsDTO getSubscribeOptions() {
+    public GetSubscribeOptionsDTO getSubscribeOptions() {
         return subscribeOptions;
     }
 
-    public void setSubscribeOptions(SetSubscribeOptionsDTO subscribeOptions) {
+    public void setSubscribeOptions(GetSubscribeOptionsDTO subscribeOptions) {
         this.subscribeOptions = subscribeOptions;
     }
 
@@ -81,14 +91,6 @@ public class UpdateDigestSubscriptionDTO {
         isPublic = aPublic;
     }
 
-    public List<FollowerDTO> getFollowers() {
-        return followers;
-    }
-
-    public void setFollowers(List<FollowerDTO> followers) {
-        this.followers = followers;
-    }
-
     public String getOwnersUsername() {
         return ownersUsername;
     }
@@ -97,17 +99,19 @@ public class UpdateDigestSubscriptionDTO {
         this.ownersUsername = ownersUsername;
     }
 
-    @Override
-    public String toString() {
-        return "UpdateDigestSubscriptionDTO{" +
-                "title='" + title + '\'' +
-                ", description='" + description + '\'' +
-                ", sources=" + sources +
-                ", tags=" + tags +
-                ", subscribeOptions=" + subscribeOptions +
-                ", isPublic=" + isPublic +
-                ", followers=" + followers +
-                ", owner='" + ownersUsername + '\'' +
-                '}';
+    public Boolean getIsOwner() {
+        return isOwner;
+    }
+
+    public void setIsOwner(Boolean owner) {
+        isOwner = owner;
+    }
+
+    public Timestamp getCreationDate() {
+        return creationDate;
+    }
+
+    public void setCreationDate(Timestamp creationDate) {
+        this.creationDate = creationDate;
     }
 }

@@ -15,13 +15,30 @@ public class PersonalDigestSubscriptionSettingsDTO {
     )
     @JsonProperty("mobile_notifications")
     private Boolean mobileNotifications;
+    @Schema(
+            example = "true"
+    )
+    @JsonProperty("personal_send_to_mail")
+    private Boolean personalSendToMail;
+    @Schema(
+            example = "true"
+    )
+    @JsonProperty("personal_mobile_notifications")
+    private Boolean personalMobileNotifications;
+    @Schema(
+            example = "true"
+    )
+    private Boolean subscribable;
 
     public PersonalDigestSubscriptionSettingsDTO() {
     }
 
-    public PersonalDigestSubscriptionSettingsDTO(Boolean sendToMail, Boolean mobileNotifications) {
+    public PersonalDigestSubscriptionSettingsDTO(Boolean sendToMail, Boolean mobileNotifications, Boolean personalSendToMail, Boolean personalMobileNotifications, Boolean subscribable) {
         this.sendToMail = sendToMail;
         this.mobileNotifications = mobileNotifications;
+        this.personalSendToMail = personalSendToMail;
+        this.personalMobileNotifications = personalMobileNotifications;
+        this.subscribable = subscribable;
     }
 
     public Boolean getSendToMail() {
@@ -40,11 +57,38 @@ public class PersonalDigestSubscriptionSettingsDTO {
         this.mobileNotifications = mobileNotifications;
     }
 
+    public Boolean getPersonalSendToMail() {
+        return personalSendToMail;
+    }
+
+    public void setPersonalSendToMail(Boolean personalSendToMail) {
+        this.personalSendToMail = personalSendToMail;
+    }
+
+    public Boolean getPersonalMobileNotifications() {
+        return personalMobileNotifications;
+    }
+
+    public void setPersonalMobileNotifications(Boolean personalMobileNotifications) {
+        this.personalMobileNotifications = personalMobileNotifications;
+    }
+
+    public Boolean getSubscribable() {
+        return subscribable;
+    }
+
+    public void setSubscribable(Boolean subscribable) {
+        this.subscribable = subscribable;
+    }
+
     @Override
     public String toString() {
-        return "SubscriptionSettingsDTO{" +
+        return "PersonalDigestSubscriptionSettingsDTO{" +
                 "sendToMail=" + sendToMail +
                 ", mobileNotifications=" + mobileNotifications +
+                ", personalSendToMail=" + personalSendToMail +
+                ", personalMobileNotifications=" + personalMobileNotifications +
+                ", subscribable=" + subscribable +
                 '}';
     }
 }
