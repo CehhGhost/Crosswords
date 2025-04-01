@@ -117,12 +117,14 @@ public class DigestSubscriptionService {
             usersDigestSubscriptionDTO.setIsOwner(Objects.equals(user.getUsername(), ownersUsername));
 
             usersDigestSubscriptionDTO.setSources(new ArrayList<>());
-            for (var source : usersSubscription.getTemplate().getSources()) {
-                usersDigestSubscriptionDTO.getSources().add(source.getRussianName());
-            }
             usersDigestSubscriptionDTO.setTags(new ArrayList<>());
-            for (var tag : usersSubscription.getTemplate().getTags()) {
-                usersDigestSubscriptionDTO.getTags().add(tag.getName());
+            if (usersSubscription.getTemplate() != null) {
+                for (var source : usersSubscription.getTemplate().getSources()) {
+                    usersDigestSubscriptionDTO.getSources().add(source.getRussianName());
+                }
+                for (var tag : usersSubscription.getTemplate().getTags()) {
+                    usersDigestSubscriptionDTO.getTags().add(tag.getName());
+                }
             }
             usersDigestSubscriptionsDTO.getUsersDigestSubscriptions().add(usersDigestSubscriptionDTO);
         }
