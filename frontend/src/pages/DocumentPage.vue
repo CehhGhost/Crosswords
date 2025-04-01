@@ -10,7 +10,7 @@
           </div>
 
           <div class="row items-center">
-            <FolderBookmark v-if="documentData.is_authed" :documentId="documentData.id" />
+            <FolderBookmark v-if="documentData.is_authed" :documentId="documentData?.id" />
           </div>
         </div>
         <div class="text-h5 q-my-sm">
@@ -108,7 +108,7 @@
         </div>
       </div>
 
-      <CommentsSection v-if="documentData.is_authed" :articleId="documentData?.id" />
+      <CommentsSection v-if="documentData.is_authed" :article_id="documentData?.id" />
       <LockedContent
         v-else
         description="Войдите в аккаунт, чтобы ставить рейтинги, оставлять персональные заметки, аннотировать текст и добавлять статьи в папки!"
@@ -150,6 +150,7 @@ import ServerResponseSpinner from 'src/components/ServerResponseSpinner.vue'
 import { Recogito } from '@recogito/recogito-js'
 import '@recogito/recogito-js/dist/recogito.min.css'
 import '../css/customRecogito.scss'
+import { backendURL } from 'src/data/lookups'
 
 const route = useRoute()
 const router = useRouter()
@@ -174,8 +175,10 @@ onMounted(async () => {
   try {
     // Заменить URL на реальный эндпоинт
     // const response = await fetch(`http://localhost:3000/documents/${id}`)
-    const response = await fetch(`https://a1561caa2fca4614bc614fc099f6af6e.api.mockbin.io/`)
-    console.log(id)
+    const response = await fetch(
+     //`https://a1561caa2fca4614bc614fc099f6af6e.api.mockbin.io/`
+     backendURL + `documents/${id}`, {credentials: 'include'}
+    )
 
     if (!response.ok) {
       if (response.status === 401) {
@@ -189,8 +192,7 @@ onMounted(async () => {
     }
 
     documentData.value = await response.json()
-    // documentData.value.is_authed = false; // для тестирования не зарегистрированного пользователя
-    console.log(documentData.value)
+    console.log('Документ загружен:', documentData.value)
   } catch (error) {
     console.error('Ошибка при загрузке документа:', error)
   } finally {
@@ -203,7 +205,7 @@ watch(
   async ([newDocument, loading]) => {
     // Ждем, пока DOM обновится (то есть элемент с ref появится)
     await nextTick()
-    console.log('Watcher triggered:', newDocument, loading, textContainer.value)
+    //console.log('Watcher triggered:', newDocument, loading, textContainer.value)
 
     if (newDocument && !loading && textContainer.value) {
       let widgets = []
@@ -261,11 +263,20 @@ watch(
       recogitoInstance.on('createAnnotation', async (annotation, overrideId) => {
         // Получаем текст из annotation.body, если он есть
         const note = annotation.body && annotation.body[0] ? annotation.body[0].value : ''
+        console.log("AAAAAAAAAAAAAAAAAAA")
 
         // Ищем селектор с типом 'TextPositionSelector'
         const posSelector = annotation.target.selector.find(
           (s) => s.type === 'TextPositionSelector',
         )
+        const quoteSelector = annotation.target.selector.find(
+          (s) => s.type === 'TextQuoteSelector',
+        )
+        console.log(quoteSelector)
+        if (!quoteSelector.exact) {
+          recogitoInstance.removeAnnotation(annotation)
+          return
+        }
 
         const payload = {
           start: posSelector ? posSelector.start : null,
@@ -278,15 +289,16 @@ watch(
 
         try {
           const response = await fetch(
-            //`http://your-backend/documents/${newDocument.id}/annotations`,
-            'https://55236949e4444103acfe1c01326c4084.api.mockbin.io/',
+            //'https://55236949e4444103acfe1c01326c4084.api.mockbin.io/',
+            backendURL + `documents/${newDocument.id}/annotate`,
             {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(payload),
+              credentials: 'include',
             },
           )
-
+          console.log(payload)
           if (response.ok) {
             const data = await response.json()
             overrideId(data.id)
@@ -308,9 +320,11 @@ watch(
         try {
           const response = await fetch(
             //`http://your-backend/documents/${documentData.value.id}/annotations/${annotation.id}`,
-            'https://8be73c6cb1434fa6a55467ff489377b5.api.mockbin.io/',
+            //'https://8be73c6cb1434fa6a55467ff489377b5.api.mockbin.io/',
+            backendURL + `documents/${newDocument.id}/annotate/${annotation.id}`,
             {
               method: 'DELETE',
+              credentials: 'include',
             },
           )
           if (response.ok) {
@@ -344,14 +358,15 @@ watch(
         try {
           const response = await fetch(
             //`http://your-backend/documents/${documentData.value.id}/annotations/${annotation.id}`,
-            'https://8be73c6cb1434fa6a55467ff489377b5.api.mockbin.io/',
+            // 'https://8be73c6cb1434fa6a55467ff489377b5.api.mockbin.io/',
+            backendURL + `documents/${newDocument.id}/annotate/${annotation.id}`,
             {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(updatedPayload),
+              credentials: 'include',
             },
           )
-
           if (response.ok) {
             console.log('Аннотация успешно обновлена')
           } else {
@@ -377,6 +392,7 @@ async function onRatingChange(newRating) {
     const id = route.params.id
     const postResponse = await fetch(`http://localhost:3000/documents/${id}/rating`, {
       method: 'POST',
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
       },
@@ -407,8 +423,9 @@ function onEditCancel() {
 async function onDeleteConfirm() {
   const currentId = route.params.id
   try {
-    const response = await fetch(`http://localhost:3000/documents/${currentId}`, {
+    const response = await fetch(backendURL + `documents/${currentId}`, {
       method: 'DELETE',
+      credentials: 'include',
     })
     if (!response.ok) {
       console.error('Ошибка при удалении документа:', response.status)

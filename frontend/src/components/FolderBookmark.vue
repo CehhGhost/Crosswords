@@ -64,6 +64,7 @@
 import { ref } from 'vue'
 import { useQuasar } from 'quasar'
 import { useRouter } from 'vue-router'
+import { backendURL } from 'src/data/lookups'
 
 const router = useRouter()
 
@@ -74,8 +75,8 @@ const props = defineProps({
   },
 })
 
-const $q = useQuasar()
 
+const $q = useQuasar()
 const folders = ref([])
 const loading = ref(false)
 const errorMsg = ref('')
@@ -92,7 +93,11 @@ async function fetchFolders() {
   loading.value = true
   errorMsg.value = ''
   try {
-    const response = await fetch('https://eb7e097b1cf3426985d690585bff64e0.api.mockbin.io/')
+    const response = await fetch(
+      // 'https://eb7e097b1cf3426985d690585bff64e0.api.mockbin.io/'
+      backendURL + `documents/${props.documentId}/packages`,
+      { credentials: 'include' },
+      )
     if (!response.ok) {
       if (response.status === 401) {
         router.replace('/login')
@@ -119,13 +124,13 @@ async function toggleFolder(folder) {
   try {
     if (folder.is_included) {
       // Удаление документа из папки
-      const response = await fetch('https://a8135a0ccf3549c2a69c7a1ea0203288.api.mockbin.io/', {
+      const response = await fetch(
+        // 'https://a8135a0ccf3549c2a69c7a1ea0203288.api.mockbin.io/',
+        backendURL + `documents/${props.documentId}/remove_from/${folder.name}`,
+         {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          folder_name: folder.name,
-          document_id: props.documentId,
-        }),
+        credentials: 'include',
       })
       if (!response.ok) {
         throw new Error('Ошибка при обновлении папки')
@@ -133,13 +138,13 @@ async function toggleFolder(folder) {
       folder.is_included = false
     } else {
       // Добавление документа в папку
-      const response = await fetch('https://a8135a0ccf3549c2a69c7a1ea0203288.api.mockbin.io/', {
+      const response = await fetch(
+        //'https://a8135a0ccf3549c2a69c7a1ea0203288.api.mockbin.io/',
+        backendURL + `documents/${props.documentId}/put_into/${folder.name}`,
+        {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          folder_name: folder.name,
-          document_id: props.documentId,
-        }),
+        credentials: 'include',
       })
       if (!response.ok) {
         throw new Error('Ошибка при обновлении папки')
@@ -185,11 +190,15 @@ async function createFolder() {
     return
   }
   try {
-    const response = await fetch('https://a8135a0ccf3549c2a69c7a1ea0203288.api.mockbin.io/', {
+    const response = await fetch(
+      backendURL + `packages/create`,
+      // 'https://a8135a0ccf3549c2a69c7a1ea0203288.api.mockbin.io/',
+       {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({
-        folder_name: trimmedName,
+        name: trimmedName,
       }),
     })
     if (!response.ok) {

@@ -73,10 +73,12 @@
 </template>
 
 <script>
+import { backendURL } from 'src/data/lookups'
+
 export default {
   name: 'CommentsSection',
   props: {
-    articleId: {
+    article_id: {
       type: [String, Number],
       required: true,
     },
@@ -97,10 +99,13 @@ export default {
   methods: {
     fetchComments() {
       this.isLoadingComments = true
-      // GET-запрос для получения комментариев по articleId.
+      // GET-запрос для получения комментариев по article_id.
       fetch(
-        //`https://example.com/api/comments?articleId=${this.articleId}`
-        'https://2d54fe2c64a94fe6ace1277926ab4b47.api.mockbin.io/',
+        // 'https://2d54fe2c64a94fe6ace1277926ab4b47.api.mockbin.io/',
+        backendURL + `documents/${this.article_id}/comment`,
+        {
+          credentials: 'include',
+        },
       )
         .then((response) => {
           if (!response.ok) {
@@ -109,7 +114,7 @@ export default {
           return response.json()
         })
         .then((data) => {
-          // Ожидается объект вида: { "comments": [ { id, text, createdAt, updatedAt }, ... ] }
+          // Ожидается объект вида: { "comments": [ { id, text, created_at, updated_at }, ... ] }
           this.comments = data.comments
         })
         .catch((error) => {
@@ -125,21 +130,24 @@ export default {
         })
     },
     submitComment() {
+      console.log('Start')
       if (!this.newCommentText.trim()) return
+      console.log('start2')
       this.isPosting = true
-      const now = new Date().toISOString()
       const newComment = {
         text: this.newCommentText,
-        articleId: String(this.articleId),
-        createdAt: now,
-        updatedAt: now,
       }
       // POST-запрос для создания нового комментария. В ответе должен прийти новый объект комментария.
-      fetch(`https://d9d09fc87da74a3088ee44ce681593c4.api.mockbin.io/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newComment),
-      })
+      fetch(
+        //`https://d9d09fc87da74a3088ee44ce681593c4.api.mockbin.io/`
+        backendURL + `documents/${this.article_id}/comment`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newComment),
+          credentials: 'include',
+        },
+      )
         .then((response) => {
           if (!response.ok) {
             if (response.status === 401) {
@@ -148,6 +156,9 @@ export default {
               throw new Error(`Ошибка отправки комментария: ${response.status}`)
             }
           }
+          console.log(JSON.stringify(newComment))
+          console.log('AAAAAA')
+          console.log(response)
           return response.json()
         })
         .then((postedComment) => {
@@ -176,63 +187,57 @@ export default {
       this.editCommentText = ''
     },
     updateComment(comment) {
-      if (!this.editCommentText.trim()) return
-      const now = new Date().toISOString()
-      const updatedComment = {
-        id: comment.id,
-        text: this.editCommentText,
-        articleId: comment.articleId,
-        createdAt: comment.createdAt,
-        updatedAt: now,
-      }
-      // PUT запрос для обновления комментария.
-      fetch(
-        //
-        // `https://example.com/api/comments/${comment.id}`
-        'https://9dfb689c9e154d47828042573d7dbd22.api.mockbin.io/',
-        {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updatedComment),
-        },
-      )
-        .then((response) => {
-          if (!response.ok) {
-            if (response.status === 401) {
-              this.$router.replace('/login')
-            } else {
-              throw new Error(`Ошибка обновления комментария: ${response.status}`)
-            }
-          }
-          // Если бекенд не возвращает тело, продолжаем
-          return response.text()
-        })
-        .then(() => {
-          // Обновляем локально комментарий, используя данные, которые отправили
-          const index = this.comments.findIndex((c) => c.id === comment.id)
-          if (index !== -1) {
-            // Обновляем комментарий в локальном массиве
-            this.comments.splice(index, 1, { ...comment, ...updatedComment })
-          }
-          this.cancelEdit()
-        })
-        .catch((error) => {
-          console.error(error)
-          this.$q.notify.create({
-            message: error.message,
-            color: 'negative',
-            position: 'top',
-          })
-        })
+  if (!this.editCommentText.trim()) return
+  const payload = {
+    text: this.editCommentText,
+  }
+  // PUT запрос для обновления комментария.
+  fetch(
+    backendURL + `documents/${this.article_id}/comment/${comment.id}`,
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      credentials: 'include',
     },
+  )
+    .then((response) => {
+      if (!response.ok) {
+        if (response.status === 401) {
+          this.$router.replace('/login')
+        } else {
+          throw new Error(`Ошибка обновления комментария: ${response.status}`)
+        }
+      }
+      return response.json()
+    })
+    .then((updatedComment) => {
+      // Обновляем комментарий в локальном массиве, перезаписывая старый объект новым
+      const index = this.comments.findIndex((c) => c.id === comment.id)
+      if (index !== -1) {
+        this.comments.splice(index, 1, updatedComment)
+      }
+      this.cancelEdit()
+    })
+    .catch((error) => {
+      console.error(error)
+      this.$q.notify.create({
+        message: error.message,
+        color: 'negative',
+        position: 'top',
+      })
+    })
+},
     deleteComment(comment) {
       // Отправляем delete запрос для удаления комментария
       fetch(
         //`https://example.com/api/comments/${comment.id}`
-        'https://f776e92186144f8e8cc6cfc807c771e8.api.mockbin.io/',
+        //'https://f776e92186144f8e8cc6cfc807c771e8.api.mockbin.io/',
+        backendURL + `documents/${this.article_id}/comment/${comment.id}`,
         {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
         },
       )
         .then((response) => {
@@ -267,10 +272,10 @@ export default {
     },
 
     formatCommentDate(comment) {
-      // Если updatedAt отличается от createdAt, показываем обе даты
-      const created = this.formatDate(comment.createdAt)
-      if (comment.updatedAt && comment.updatedAt !== comment.createdAt) {
-        const updated = this.formatDate(comment.updatedAt)
+      // Если updated_at отличается от created_at, показываем обе даты
+      const created = this.formatDate(comment.created_at)
+      if (comment.updated_at && comment.updated_at !== comment.created_at) {
+        const updated = this.formatDate(comment.updated_at)
         return `${created} (изм. ${updated})`
       }
       return created

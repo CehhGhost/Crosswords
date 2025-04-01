@@ -8,21 +8,35 @@
 
       <!-- Заголовок -->
       <div class="title text-center q-mt-sm">
-        <h4 class="caption">Добро пожаловать!</h4>
+        <h4 class="caption">Создайте аккаунт</h4>
       </div>
 
       <!-- Форма входа -->
-      <q-form @submit.prevent="login" class="q-mt-md">
+      <q-form @submit.prevent="register" class="q-mt-md">
         <!-- Поля для ввода -->
+        <q-input
+          filled
+          v-model="name"
+          label="Имя"
+          class="q-mb-md"
+          :color="$q.dark.isActive ? 'primary' : 'accent'"
+        />
+        <q-input
+          filled
+          v-model="surname"
+          label="Фамилия"
+          class="q-mb-md"
+          :color="$q.dark.isActive ? 'primary' : 'accent'"
+        />
         <q-input
           filled
           v-model="email"
           label="Email"
-          
+          type="email"
           class="q-mb-md"
           :color="$q.dark.isActive ? 'primary' : 'accent'"
         />
-        <!-- type="email" добавить выше-->
+
         <q-input
           filled
           v-model="password"
@@ -34,7 +48,7 @@
 
         <!-- Текст с предложением регистрации -->
         <div class="text-center q-mb-md">
-          <p>Нет аккаунта? <a href="/register">Зарегистрируйтесь - это быстро!</a></p>
+          <p>Уже есть зарегистрированный аккаунт? <a href="/login">Войти</a></p>
         </div>
 
         <!-- Кнопка входа -->
@@ -56,11 +70,13 @@ import lightLogo from '../assets/crosswords_mono.png'
 import darkLogo from '../assets/crosswords_mono_white.png'
 import { backendURL } from 'src/data/lookups'
 export default {
-  name: 'LoginPage',
+  name: 'RegisterPage',
   data() {
     return {
       email: '',
       password: '',
+      name: '',
+      surname: '',
     }
   },
   computed: {
@@ -69,24 +85,26 @@ export default {
     },
   },
   methods: {
-    login() {
+    register() {
       const payload = {
         username: this.email,
         password: this.password,
+        name: this.name,
+        surname: this.surname,
+        email: this.email,
       }
       fetch(
-        backendURL + 'users/login',
+        backendURL + 'users/register',
         //'https://60b277858b7d4dbc8347955c8dc89e8e.api.mockbin.io/',
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          credentials: 'include',
           body: JSON.stringify(payload),
         },
       )
-      .then((response) => {
+        .then((response) => {
           if (!response.ok) {
             throw new Error('Ошибка при входе')
           }

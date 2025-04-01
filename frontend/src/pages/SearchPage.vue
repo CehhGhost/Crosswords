@@ -6,7 +6,7 @@
       <document-card :is_authed="is_authed" v-for="doc in documents" :key="doc.id" :doc="doc" />
     </div>
 
-    <div class="q-mt-md q-mb-md flex flex-center" v-if="lastSentencePos !== -1">
+    <div class="q-mt-md q-mb-md flex flex-center" v-if="next_page !== -1">
       <q-btn label="Показать еще" color="primary" no-caps text-color="dark" @click="onLoadMore" />
     </div>
   </div>
@@ -15,6 +15,7 @@
 <script>
 import SearchSection from 'src/components/SearchSection.vue'
 import DocumentCard from 'src/components/DocumentCard.vue'
+import { backendURL } from 'src/data/lookups'
 
 export default {
   name: 'AllDocuments',
@@ -27,8 +28,8 @@ export default {
       // Массив полученных документов
       documents: [],
       // Параметры пагинации, приходящие с сервера и отправляемые ему
-      lastSentencePos: 0,
-      matchesPerPage: 20,
+      next_page: 0,
+      matches_per_page: 20,
       is_authed: false,
 
       // Текущие фильтры (передаём в запрос)
@@ -54,8 +55,8 @@ export default {
     // Обрабатываем событие @search от SearchSection
     onSearch(newPayload) {
       // При любом новом поиске сбрасываем пагинацию в дефолт
-      this.lastSentencePos = 0
-      this.matchesPerPage = 20
+      this.next_page = 0
+      this.matches_per_page = 20
 
       // Сохраняем переданные фильтры
       // (newPayload — это searchMode, searchBody, sources, tags, etc.)
@@ -67,9 +68,9 @@ export default {
 
     // Кнопка "Show more"
     onLoadMore() {
-      // Если lastSentencePos уже -1, то кнопка не должна была показаться,
+      // Если next_page уже -1, то кнопка не должна была показаться,
       // но на всякий случай проверим
-      if (this.lastSentencePos === -1) return
+      if (this.next_page === -1) return
 
       // Загружаем следующую страницу
       this.fetchDocuments({ reset: false })
@@ -82,17 +83,19 @@ export default {
       // Готовим поля, которые всегда нужны на бэкенде
       const payload = {
         ...this.currentSearchPayload, // копируем все фильтры, режимы и т.п.
-        lastSentencePos: this.lastSentencePos,
-        matchesPerPage: this.matchesPerPage,
+        next_page: this.next_page,
+        matches_per_page: this.matches_per_page,
       }
 
       fetch(
-        'https://60b277858b7d4dbc8347955c8dc89e8e.api.mockbin.io/',
+        backendURL + 'documents/search',
+        //'https://60b277858b7d4dbc8347955c8dc89e8e.api.mockbin.io/',
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
+          credentials: 'include',
           body: JSON.stringify(payload),
         },
       )
@@ -109,10 +112,10 @@ export default {
           // Ожидаем формат:
           // {
           //   "documents": [...],
-          //   "lastSentencePos": число,
-          //   "matchesPerPage": число
+          //   "next_page": число,
+          //   "matches_per_page": число
           // }
-          const { documents, lastSentencePos, matchesPerPage, is_authed } = data
+          const { documents, next_page, is_authed } = data
 
           if (reset) {
             // При новом поиске полностью заменяем массив
@@ -122,14 +125,13 @@ export default {
             this.documents = [...this.documents, ...documents]
           }
 
-          // Обновляем lastSentencePos/matchesPerPage
-          this.lastSentencePos = lastSentencePos
-          this.matchesPerPage = matchesPerPage
+          // Обновляем next_page/matches_per_page
+          this.next_page = next_page
           this.is_authed = is_authed
           // this.is_authed = false
 
-          // Если lastSentencePos === -1, значит больше ничего не грузим
-          // (кнопка "Show more" спрячется по v-if="lastSentencePos !== -1")
+          // Если next_page === -1, значит больше ничего не грузим
+          // (кнопка "Show more" спрячется по v-if="next_page !== -1")
         })
         .catch((error) => {
           console.error('Ошибка поиска:', error)
