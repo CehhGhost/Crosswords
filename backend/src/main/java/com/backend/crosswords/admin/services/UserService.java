@@ -163,4 +163,12 @@ public class UserService {
         user.setSubscribable(subscribable);
         userRepository.save(user);
     }
+
+    public void logoutUser(User user, String ipAddress, String userAgent) {
+        refreshTokenService.deleteRefreshForUser(user, ipAddress, userAgent);
+    }
+
+    public void logoutUserFull(User user) {
+        refreshTokenService.deleteAllRefreshesForUser(user);
+    }
 }

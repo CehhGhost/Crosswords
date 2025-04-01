@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.ZonedDateTime;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -45,5 +46,15 @@ public class RefreshTokenService {
 
     public Optional<RefreshToken> checkExistingRefreshToken(String ipAddress, String userAgent, User user) {
         return refreshTokenRepository.findByUserAndUserAgentAndIp(user, userAgent, ipAddress);
+    }
+
+    public void deleteRefreshForUser(User user, String ipAddress, String userAgent) {
+        var refresh = refreshTokenRepository.findByUserAndUserAgentAndIp(user, userAgent, ipAddress).orElseThrow(() -> new NoSuchElementException("There is no such authorized users!"));
+        refreshTokenRepository.delete(refresh);
+    }
+
+    public void deleteAllRefreshesForUser(User user) {
+        var refreshes = refreshTokenRepository.findAllByUser(user);
+        refreshTokenRepository.deleteAll(refreshes);
     }
 }

@@ -199,6 +199,46 @@ public class UserController {
         userService.setUsersSubscriptionSettings(crosswordUserDetails.getUser(), subscriptionSettingsDTO.getSendToMail(), subscriptionSettingsDTO.getMobileNotifications(), subscriptionSettingsDTO.getPersonalSendToMail(), subscriptionSettingsDTO.getPersonalMobileNotifications(), subscriptionSettingsDTO.getSubscribable());
         return ResponseEntity.ok(HttpStatus.OK);
     }
+    @Operation(
+            summary = "Logout user",
+            description = "This endpoint lets you logout user and erase cookies for him, remember that all tries of requests will automatically erase cookies, if the refresh token from cookies doesn't exist"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully logout user"),
+            @ApiResponse(responseCode = "401", description = "You are trying to logout user while not authenticated"),
+            @ApiResponse(responseCode = "404", description = "You are trying to logout user that hasn't been authenticated yet, this error will occur really rare and exist for just in case")
+    })
+    @PostMapping("/logout")
+    public ResponseEntity<?> logoutUser(HttpServletRequest request, HttpServletResponse response) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+        String ipAddress = request.getHeader("X-Forwarded-For");
+        if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
+            ipAddress = request.getRemoteAddr();
+        }
+        String userAgent = request.getHeader("User-Agent");
+        try {
+            userService.logoutUser(crosswordUserDetails.getUser(), ipAddress, userAgent);
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+        return this.setCookies(response, List.of("", ""));
+    }
+    @Operation(
+            summary = "Fully logout user",
+            description = "This endpoint lets you fully logout user, deleting all his refreshes and erase cookies for him, remember that all tries of requests will automatically erase cookies, if the refresh token from cookies doesn't exist"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully fully logout user"),
+            @ApiResponse(responseCode = "401", description = "You are trying to fully logout user while not authenticated")
+    })
+    @PostMapping("/logout/full")
+    public ResponseEntity<?> logoutUserFull(HttpServletRequest request, HttpServletResponse response) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+        userService.logoutUserFull(crosswordUserDetails.getUser());
+        return this.setCookies(response, List.of("", ""));
+    }
     // TODO добавить удаление пользователя, учтя тот факт, что перед удалением необходимо очистить связанные с ним данные
     /*@DeleteMapping("/{id}")
     public ResponseEntity<?> deleteUserById(@PathVariable Long id) {
