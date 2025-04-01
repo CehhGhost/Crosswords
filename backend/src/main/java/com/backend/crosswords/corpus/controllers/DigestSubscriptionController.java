@@ -2,6 +2,7 @@ package com.backend.crosswords.corpus.controllers;
 
 import com.backend.crosswords.admin.models.CrosswordUserDetails;
 import com.backend.crosswords.corpus.dto.*;
+import com.backend.crosswords.corpus.models.DigestSubscription;
 import com.backend.crosswords.corpus.services.DigestSubscriptionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -9,6 +10,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -74,7 +76,7 @@ public class DigestSubscriptionController {
             @ApiResponse(responseCode = "401", description = "You are trying to updated a digest subscription's settings while not authenticated"),
             @ApiResponse(responseCode = "404", description = "At least one digest subscription or one subscription's settings, cant be found in the DB"),
     })
-    @PutMapping("/{id}/settings/update")
+    @PutMapping("/{id}/settings/update") // TODO тоже самое для дайджестов сделать
     public ResponseEntity<?> updateDigestSubscriptionSettingsForUser(@PathVariable Long id, @RequestBody DigestSubscriptionSettingsDTO subscriptionSettingsDTO) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
@@ -91,7 +93,7 @@ public class DigestSubscriptionController {
             @ApiResponse(responseCode = "401", description = "You are trying to updated a digest subscription's settings while not authenticated"), // TODO а нужна ли вообще аутентификация здесь?
             @ApiResponse(responseCode = "404", description = "There is no subscriptions with such id"),
     })
-    @GetMapping("/{id}/followers")
+    @GetMapping("/{id}/followers") // TODO тоже самое для дайджестов сделать
     public ResponseEntity<?> getAllDigestSubscriptionsUsers(@PathVariable Long id) {
         FollowersUsernamesDTO usersUsernames = new FollowersUsernamesDTO();
         try {
@@ -112,5 +114,19 @@ public class DigestSubscriptionController {
         CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
         UsersDigestSubscriptionsDTO usersDigestSubscriptionsDTO = digestSubscriptionService.getAllUsersDigestSubscriptions(crosswordUserDetails.getUser());
         return ResponseEntity.ok(usersDigestSubscriptionsDTO);
+    }
+    @GetMapping("/available")
+    public ResponseEntity<?> getAllUsersAvailableDigestSubscriptions() {
+        return ResponseEntity.ok(HttpStatus.OK);
+    }
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getDigestSubscriptionById(@PathVariable Long id) {
+        DigestSubscriptionDTO subscription;
+        try {
+            subscription = digestSubscriptionService.getDigestSubscriptionByIdAndTransformIntoDTO(id);
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+        return ResponseEntity.ok(subscription);
     }
 }

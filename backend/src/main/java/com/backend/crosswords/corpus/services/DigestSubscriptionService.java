@@ -93,7 +93,7 @@ public class DigestSubscriptionService {
 
     public List<String> getAllDigestSubscriptionsUsers(Long id) {
         var subscription = subscriptionRepository.findById(id).orElseThrow(() -> new NoSuchElementException("There is no subscriptions with such id!"));
-        return subscriptionSettingsService.getAllDigestSubscriptionsUsers(subscription);
+        return subscriptionSettingsService.getAllDigestSubscriptionsUsersUsernames(subscription);
     }
 
     public UsersDigestSubscriptionsDTO getAllUsersDigestSubscriptions(User user) {
@@ -129,5 +129,35 @@ public class DigestSubscriptionService {
             usersDigestSubscriptionsDTO.getUsersDigestSubscriptions().add(usersDigestSubscriptionDTO);
         }
         return usersDigestSubscriptionsDTO;
+    }
+
+    public DigestSubscriptionDTO getDigestSubscriptionByIdAndTransformIntoDTO(Long id) {
+        var subscription = this.getDigestSubscriptionById(id);
+        var subscriptionDTO = modelMapper.map(subscription, DigestSubscriptionDTO.class);
+        subscriptionDTO.setOwnersUsername(subscription.getOwner().getUsername());
+
+        subscriptionDTO.setSources(new ArrayList<>());
+        subscriptionDTO.setTags(new ArrayList<>());
+        if (subscription.getTemplate() != null) {
+            for (var source : subscription.getTemplate().getSources()) {
+                subscriptionDTO.getSources().add(source.getRussianName());
+            }
+            for (var tag : subscription.getTemplate().getTags()) {
+                subscriptionDTO.getTags().add(tag.getName());
+            }
+        }
+
+        subscriptionDTO.setFollowers(new ArrayList<>());
+        var subscriptionSettings = subscriptionSettingsService.getAllDigestSubscriptionSettingsByDigestSubscription(subscription);
+        for (var subscriptionSetting : subscriptionSettings) {
+            DigestSubscriptionFollowerDTO digestSubscriptionFollowerDTO = new DigestSubscriptionFollowerDTO();
+            digestSubscriptionFollowerDTO.setEmail(subscriptionSetting.getSubscriber().getEmail());
+            digestSubscriptionFollowerDTO.setMobileNotifications(subscriptionSetting.getMobileNotifications());
+            digestSubscriptionFollowerDTO.setSendToMail(subscriptionSetting.getSendToMail());
+            subscriptionDTO.getFollowers().add(digestSubscriptionFollowerDTO);
+        }
+
+        subscriptionDTO.setSubscribeOptions(new SetSubscribeOptionsDTO(subscription.getSendToMail(), subscription.getMobileNotifications()));
+        return subscriptionDTO;
     }
 }

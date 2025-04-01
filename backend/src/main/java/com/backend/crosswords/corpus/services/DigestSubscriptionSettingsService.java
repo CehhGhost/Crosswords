@@ -122,7 +122,7 @@ public class DigestSubscriptionSettingsService {
         }
     }
 
-    public List<String> getAllDigestSubscriptionsUsers(DigestSubscription subscription) {
+    public List<String> getAllDigestSubscriptionsUsersUsernames(DigestSubscription subscription) {
         var settings = subscriptionSettingsRepository.findAllByDigestSubscription(subscription);
         List<String> subscribersUsernames = new ArrayList<>();
         for (var setting : settings) {
@@ -133,5 +133,9 @@ public class DigestSubscriptionSettingsService {
 
     public List<DigestSubscriptionSettings> getAllUsersDigestSubscriptions(User user) {
         return subscriptionSettingsRepository.findAllBySubscriber(user);
+    }
+
+    public List<DigestSubscriptionSettings> getAllDigestSubscriptionSettingsByDigestSubscription(DigestSubscription subscription) {
+        return subscriptionSettingsRepository.findAllByDigestSubscription(subscription);
     }
 }

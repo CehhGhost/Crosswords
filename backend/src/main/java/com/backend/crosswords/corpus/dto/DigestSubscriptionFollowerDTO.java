@@ -1,21 +1,20 @@
 package com.backend.crosswords.corpus.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.v3.oas.annotations.media.Schema;
 
-@Schema(description = "DTO for getting subscribe options from requests and put into the corresponding digest's DTOs")
-public class SetSubscribeOptionsDTO {
+public class DigestSubscriptionFollowerDTO {
+    private String email;
     @JsonProperty("send_to_mail")
     private Boolean sendToMail;
     @JsonProperty("mobile_notifications")
     private Boolean mobileNotifications;
 
-    public SetSubscribeOptionsDTO() {
+    public String getEmail() {
+        return email;
     }
 
-    public SetSubscribeOptionsDTO(Boolean sendToMail, Boolean mobileNotifications) {
-        this.sendToMail = sendToMail;
-        this.mobileNotifications = mobileNotifications;
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public Boolean getSendToMail() {
@@ -32,5 +31,14 @@ public class SetSubscribeOptionsDTO {
 
     public void setMobileNotifications(Boolean mobileNotifications) {
         this.mobileNotifications = mobileNotifications;
+    }
+
+    @Override
+    public String toString() {
+        return "DigestSubscriptionFollowersDTO{" +
+                "email='" + email + '\'' +
+                ", sendToMail=" + sendToMail +
+                ", mobileNotifications=" + mobileNotifications +
+                '}';
     }
 }
