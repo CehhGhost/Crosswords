@@ -32,7 +32,7 @@ const routes = [
         path: 'documents/:id/edit',
         name: 'document-edit',
         component: () => import('../pages/DocumentEditPage.vue'),
-        // meta: { requiresAuth: true, moderatorOnly: true }
+        meta: { requiresAuth: true, moderatorOnly: true }
       },
       {
         path: 'subscriptions/create',
@@ -58,7 +58,7 @@ const routes = [
       {
         path: 'stats',
         name: 'stats',
-        component: () => import('../pages/IndexPage.vue'),
+        component: () => import('../pages/StatisticsPage.vue'),
       },
       {
         path: 'profile',

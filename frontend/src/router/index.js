@@ -1,6 +1,7 @@
 import { defineRouter } from '#q-app/wrappers'
 import { createRouter, createMemoryHistory, createWebHistory, createWebHashHistory } from 'vue-router'
 import routes from './routes'
+import { backendURL } from 'src/data/lookups'
 
 export default defineRouter(function (/* { store, ssrContext } */) {
   const createHistory = process.env.SERVER
@@ -21,7 +22,7 @@ export default defineRouter(function (/* { store, ssrContext } */) {
     }
 
     // Запрашиваем данные о пользователе. HttpOnly cookie отправляются автоматически
-    fetch('/api/auth/me', { credentials: 'include' })
+    fetch(backendURL + "users/check_auth", { credentials: 'include' })
       .then(response => {
         if (!response.ok) {
           throw new Error('Not authenticated')
@@ -51,7 +52,7 @@ export default defineRouter(function (/* { store, ssrContext } */) {
             .catch(() => next({ name: 'home' }))
           return // Выходим, т.к. next() будет вызван внутри fetch
         }
-        // Если дополнительных проверок нет, разрешаем переход
+        //  разрешаем переход
         return next()
       })
       .catch(() => next({ name: 'login' }))

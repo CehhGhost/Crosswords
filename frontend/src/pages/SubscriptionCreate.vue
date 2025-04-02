@@ -127,7 +127,7 @@
 </template>
 
 <script>
-import { availableSources, availableTags } from '../data/lookups.js'
+import { availableSources, availableTags, backendURL } from '../data/lookups.js'
 import { fasCrown } from '@quasar/extras/fontawesome-v6'
 import FilterSelector from '../components/FilterSelector.vue'
 import BackButton from 'src/components/BackButton.vue'
@@ -172,7 +172,14 @@ export default {
       try {
         const response = await fetch(
           // '/api/get-owner-email'
-          'https://f52a38db04bb4e4ab4c5b6b0bd1f9285.api.mockbin.io/',
+          // 'https://f52a38db04bb4e4ab4c5b6b0bd1f9285.api.mockbin.io/'
+          backendURL + `users/get_email`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+          }
         )
         if (!response.ok) {
           throw new Error('Не удалось получить email владельца')
@@ -197,12 +204,14 @@ export default {
 
       if (this.email) {
         fetch(
-          'https://a37743da82a54b24895ba26ea5cbc277.api.mockbin.io/', {
+          //`https://a37743da82a54b24895ba26ea5cbc277.api.mockbin.io/`
+          backendURL + `users/subscription_settings/check`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ credentials: this.email }),
+          credentials: 'include',
+          body: JSON.stringify({ username: this.email }),
         })
           .then((response) => {
             if (response.status === 401) {
@@ -211,6 +220,7 @@ export default {
             return response.json()
           })
           .then((data) => {
+            console.log(data)
             const { has_email, has_mobile } = data
             if (has_email !== undefined || has_mobile !== undefined) {
               this.emailError = false
@@ -247,16 +257,18 @@ export default {
       console.log(JSON.stringify(requestData))
 
       // Отправляем данные на сервер
-      fetch('/api/create-digest', {
+      fetch(backendURL + 'subscriptions/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify(requestData),
       })
         .then((response) => response.json())
         .then((data) => {
-          console.log('Дайджест успешно создан:', data)
+          console.log(data)
+          this.$router.replace('/digests')
         })
         .catch((error) => {
           console.error('Ошибка при создании дайджеста:', error)

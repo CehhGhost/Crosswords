@@ -37,7 +37,7 @@
         <subscription-button
           :digest="digest"
           :ownerChangeBackendUrl="ownerChangeBackendUrl"
-          :is_digest=false
+          triggeredFrom="subscriptions"
         />
       </div>
   

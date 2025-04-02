@@ -21,7 +21,7 @@
             v-if="digestData?.is_authed"
             :digest="digestData"
             :ownerChangeBackendUrl="ownerChangeBackendUrl"
-            :is_digest=true
+            triggeredFrom="digests"
           />
         </div>
 
