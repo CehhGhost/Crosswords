@@ -138,4 +138,8 @@ public class DigestSubscriptionSettingsService {
     public List<DigestSubscriptionSettings> getAllDigestSubscriptionSettingsByDigestSubscription(DigestSubscription subscription) {
         return subscriptionSettingsRepository.findAllByDigestSubscription(subscription);
     }
+
+    public List<DigestSubscriptionSettings> getAllUsersAvailableDigestSubscriptions(User user) {
+        return subscriptionSettingsRepository.findAllBySubscriberOrDigestSubscription_IsPublic(user, true);
+    }
 }

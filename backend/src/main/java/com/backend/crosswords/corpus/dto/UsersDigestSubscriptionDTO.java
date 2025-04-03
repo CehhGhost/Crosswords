@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 
 public class UsersDigestSubscriptionDTO {
@@ -36,6 +37,15 @@ public class UsersDigestSubscriptionDTO {
     @JsonProperty("creation_date")
     @JsonFormat(pattern = "dd/MM/yyyy")
     private Timestamp creationDate;
+
+    @ArraySchema(schema = @Schema(description = "List of followers of the digest", example = "admin"))
+    private List<String> followers;
+
+    public UsersDigestSubscriptionDTO() {
+        followers = new ArrayList<>();
+        sources = new ArrayList<>();
+        tags = new ArrayList<>();
+    }
 
     public Long getId() {
         return id;
@@ -115,5 +125,30 @@ public class UsersDigestSubscriptionDTO {
 
     public void setCreationDate(Timestamp creationDate) {
         this.creationDate = creationDate;
+    }
+
+    public List<String> getFollowers() {
+        return followers;
+    }
+
+    public void setFollowers(List<String> followers) {
+        this.followers = followers;
+    }
+
+    @Override
+    public String toString() {
+        return "UsersDigestSubscriptionDTO{" +
+                "id=" + id +
+                ", title='" + title + '\'' +
+                ", description='" + description + '\'' +
+                ", sources=" + sources +
+                ", tags=" + tags +
+                ", subscribeOptions=" + subscribeOptions +
+                ", isPublic=" + isPublic +
+                ", ownersUsername='" + ownersUsername + '\'' +
+                ", isOwner=" + isOwner +
+                ", creationDate=" + creationDate +
+                ", followers=" + followers +
+                '}';
     }
 }

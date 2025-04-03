@@ -96,9 +96,8 @@ public class DigestSubscriptionService {
         return subscriptionSettingsService.getAllDigestSubscriptionsUsersUsernames(subscription);
     }
 
-    public UsersDigestSubscriptionsDTO getAllUsersDigestSubscriptions(User user) {
+    private UsersDigestSubscriptionsDTO transformSubscriptionSettingsIntoUsersDigestSubscriptionsDTO(User user, List<DigestSubscriptionSettings> usersSubscriptionsSettings, boolean allAvailable) {
         UsersDigestSubscriptionsDTO usersDigestSubscriptionsDTO = new UsersDigestSubscriptionsDTO();
-        List<DigestSubscriptionSettings> usersSubscriptionsSettings = subscriptionSettingsService.getAllUsersDigestSubscriptions(user);
         for (var usersSubscriptionSettings : usersSubscriptionsSettings) {
             var usersSubscription = usersSubscriptionSettings.getDigestSubscription();
             UsersDigestSubscriptionDTO usersDigestSubscriptionDTO = new UsersDigestSubscriptionDTO();
@@ -108,6 +107,13 @@ public class DigestSubscriptionService {
             usersDigestSubscriptionDTO.setPublic(usersSubscription.getPublic());
             usersDigestSubscriptionDTO.setTitle(usersSubscription.getTitle());
 
+            if (allAvailable) {
+                var subscriptionSettings = subscriptionSettingsService.getAllDigestSubscriptionSettingsByDigestSubscription(usersSubscription);
+                for (var subscriptionSetting : subscriptionSettings) {
+                    usersDigestSubscriptionDTO.getFollowers().add(subscriptionSetting.getSubscriber().getUsername());
+                }
+            }
+
             var sendToMail = usersSubscriptionSettings.getSendToMail() == null ? usersSubscription.getSendToMail() : usersSubscriptionSettings.getSendToMail();
             var mobileNotifications = usersSubscriptionSettings.getMobileNotifications() == null ? usersSubscription.getMobileNotifications() : usersSubscriptionSettings.getMobileNotifications();
             usersDigestSubscriptionDTO.setSubscribeOptions(new GetSubscribeOptionsDTO(sendToMail, mobileNotifications, true));
@@ -116,8 +122,6 @@ public class DigestSubscriptionService {
             usersDigestSubscriptionDTO.setOwnersUsername(ownersUsername);
             usersDigestSubscriptionDTO.setIsOwner(Objects.equals(user.getUsername(), ownersUsername));
 
-            usersDigestSubscriptionDTO.setSources(new ArrayList<>());
-            usersDigestSubscriptionDTO.setTags(new ArrayList<>());
             if (usersSubscription.getTemplate() != null) {
                 for (var source : usersSubscription.getTemplate().getSources()) {
                     usersDigestSubscriptionDTO.getSources().add(source.getRussianName());
@@ -129,6 +133,11 @@ public class DigestSubscriptionService {
             usersDigestSubscriptionsDTO.getUsersDigestSubscriptions().add(usersDigestSubscriptionDTO);
         }
         return usersDigestSubscriptionsDTO;
+    }
+
+    public UsersDigestSubscriptionsDTO getAllUsersDigestSubscriptionsAndTransformIntoUsersDigestSubscriptionsDTO(User user) {
+        List<DigestSubscriptionSettings> usersSubscriptionsSettings = subscriptionSettingsService.getAllUsersDigestSubscriptions(user);
+        return this.transformSubscriptionSettingsIntoUsersDigestSubscriptionsDTO(user, usersSubscriptionsSettings, false);
     }
 
     public DigestSubscriptionDTO getDigestSubscriptionByIdAndTransformIntoDTO(Long id) {
@@ -159,5 +168,10 @@ public class DigestSubscriptionService {
 
         subscriptionDTO.setSubscribeOptions(new SetSubscribeOptionsDTO(subscription.getSendToMail(), subscription.getMobileNotifications()));
         return subscriptionDTO;
+    }
+
+    public UsersDigestSubscriptionsDTO getAllUsersAvailableDigestSubscriptionsAndTransformIntoUsersDigestSubscriptionsDTO(User user) {
+        List<DigestSubscriptionSettings> usersSubscriptionsSettings = subscriptionSettingsService.getAllUsersAvailableDigestSubscriptions(user);
+        return this.transformSubscriptionSettingsIntoUsersDigestSubscriptionsDTO(user, usersSubscriptionsSettings, true);
     }
 }

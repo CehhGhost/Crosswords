@@ -2,7 +2,6 @@ package com.backend.crosswords.corpus.controllers;
 
 import com.backend.crosswords.admin.models.CrosswordUserDetails;
 import com.backend.crosswords.corpus.dto.*;
-import com.backend.crosswords.corpus.models.DigestSubscription;
 import com.backend.crosswords.corpus.services.DigestSubscriptionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -10,7 +9,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -112,13 +110,28 @@ public class DigestSubscriptionController {
     public ResponseEntity<?> getAllUsersDigestSubscriptions() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
-        UsersDigestSubscriptionsDTO usersDigestSubscriptionsDTO = digestSubscriptionService.getAllUsersDigestSubscriptions(crosswordUserDetails.getUser());
+        UsersDigestSubscriptionsDTO usersDigestSubscriptionsDTO = digestSubscriptionService.getAllUsersDigestSubscriptionsAndTransformIntoUsersDigestSubscriptionsDTO(crosswordUserDetails.getUser());
         return ResponseEntity.ok(usersDigestSubscriptionsDTO);
     }
+    @Operation(summary = "Get all available user's subscriptions", description = "This endpoint lets you get all available user's subscriptions (public or those on which he is subscribed)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully get all available user's subscriptions", content = @Content(schema = @Schema(implementation = UsersDigestSubscriptionsDTO.class))),
+            @ApiResponse(responseCode = "401", description = "You are trying to get all available user's subscriptions while not authenticated"),
+    })
     @GetMapping("/available")
     public ResponseEntity<?> getAllUsersAvailableDigestSubscriptions() {
-        return ResponseEntity.ok(HttpStatus.OK);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+        UsersDigestSubscriptionsDTO usersDigestSubscriptionsDTO = digestSubscriptionService.getAllUsersAvailableDigestSubscriptionsAndTransformIntoUsersDigestSubscriptionsDTO(crosswordUserDetails.getUser());
+        return ResponseEntity.ok(usersDigestSubscriptionsDTO);
     }
+
+    @Operation(summary = "Get digest subscription by id", description = "This endpoint lets you get digest subscription by id")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully get digest subscription by id", content = @Content(schema = @Schema(implementation = DigestSubscriptionDTO.class))),
+            @ApiResponse(responseCode = "401", description = "You are trying to get digest subscription by id while not authenticated"),
+            @ApiResponse(responseCode = "404", description = "There is no subscriptions with such id")
+    })
     @GetMapping("/{id}")
     public ResponseEntity<?> getDigestSubscriptionById(@PathVariable Long id) {
         DigestSubscriptionDTO subscription;
