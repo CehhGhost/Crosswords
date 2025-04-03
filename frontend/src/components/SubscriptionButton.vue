@@ -29,10 +29,10 @@
       :disable="loadingDropdown"
     >
       <q-list>
-        <q-item clickable @click="toggleCheckbox('sendToMail')">
+        <q-item clickable @click="toggleCheckbox('send_to_mail')">
           <q-item-section>
             <q-checkbox
-              v-model="sendToMail"
+              v-model="send_to_mail"
               class="custom-checkbox"
               label="На почту"
               @update:model-value="sendSubscriptionUpdate"
@@ -44,10 +44,10 @@
           </q-item-section>
         </q-item>
 
-        <q-item clickable @click="toggleCheckbox('mobileNotifications')">
+        <q-item clickable @click="toggleCheckbox('mobile_notifications')">
           <q-item-section>
             <q-checkbox
-              v-model="mobileNotifications"
+              v-model="mobile_notifications"
               keep-color
               label="Мобильные уведомления"
               @update:model-value="sendSubscriptionUpdate"
@@ -80,6 +80,7 @@
 </template>
 
 <script>
+import { backendURL } from 'src/data/lookups'
 import OwnerTransferDialog from './OwnerTransferDialog.vue'
 
 export default {
@@ -96,7 +97,7 @@ export default {
       type: String,
       required: true,
     },
-    is_digest: {
+    triggeredFrom: {
       type: Boolean,
       required: true,
     },
@@ -108,22 +109,20 @@ export default {
       loadingDropdown: false,
       // начальное состояние берём из digest.subscribe_options
       subscribed: this.digest.subscribe_options.subscribed,
-      sendToMail: this.digest.subscribe_options.send_to_mail,
-      mobileNotifications: this.digest.subscribe_options.mobile_notifications,
+      send_to_mail: this.digest.subscribe_options.send_to_mail,
+      mobile_notifications: this.digest.subscribe_options.mobile_notifications,
       // данные для диалога передачи прав
       subscriberEmails: [],
       showOwnerTransferDialog: false,
       transferLoading: false,
       transferError: '',
+      backendURL
     }
   },
   methods: {
     async onSubscribeClick() {
       if (this.loadingSubscription) return
       this.loadingSubscription = true
-      // Сохраняем исходное состояние
-
-      // Обновляем локальное состояние для формирования payload
 
       const success = await this.sendSubscriptionUpdate()
       if (!success) {
@@ -146,8 +145,8 @@ export default {
 
     onDropdownShow() {
       this.backup = {
-        sendToMail: this.sendToMail,
-        mobileNotifications: this.mobileNotifications,
+        send_to_mail: this.send_to_mail,
+        mobile_notifications: this.mobile_notifications,
       }
     },
     async onUnsubscribeClick() {
@@ -156,7 +155,9 @@ export default {
       // Если пользователь является владельцем, проверяем список подписчиков
       if (this.digest.is_owner) {
         try {
-          const response = await fetch('https://3faa0d5a1c344675acdf7cae9c36a1f8.api.mockbin.io/')
+          const response = await fetch(
+            // "https://3faa0d5a1c344675acdf7cae9c36a1f8.api.mockbin.io/"
+            this.backendURL + this.triggeredFrom + `/${this.digest.id}/followers`, {credentials: 'include',})
           const result = await response.json()
           if (result && result.length) {
             this.subscriberEmails = result
@@ -176,18 +177,18 @@ export default {
     async executeUnsubscribe() {
       // Сохраняем исходное состояние
       const originalSubscribed = this.subscribed
-      const originalSendToMail = this.sendToMail
-      const originalMobileNotifications = this.mobileNotifications
+      const originalsend_to_mail = this.send_to_mail
+      const originalmobile_notifications = this.mobile_notifications
       // Обновляем локальное состояние для формирования payload
-      this.sendToMail = null
-      this.mobileNotifications = null
+      this.send_to_mail = null
+      this.mobile_notifications = null
       const success = await this.sendSubscriptionUpdate()
       if (success) {
         this.subscribed = false
       } else {
         // Если запрос не удался – откатываем состояние
-        this.sendToMail = originalSendToMail
-        this.mobileNotifications = originalMobileNotifications
+        this.send_to_mail = originalsend_to_mail
+        this.mobile_notifications = originalmobile_notifications
         this.subscribed = originalSubscribed
       }
       this.loadingDropdown = false
@@ -229,17 +230,18 @@ export default {
 
     async sendSubscriptionUpdate() {
       const payload = {
-        id: this.digest.id,
         subscribed: this.subscribed,
-        send_to_mail: this.sendToMail,
-        mobile_notifications: this.mobileNotifications,
-        is_digest: this.is_digest,
+        send_to_mail: this.send_to_mail,
+        mobile_notifications: this.mobile_notifications,
       }
 
       try {
-        const response = await fetch('https://d41ad2c28576472aacba47ad07e4bf5b.api.mockbin.io/', {
+        const response = await fetch(
+          //'https://d41ad2c28576472aacba47ad07e4bf5b.api.mockbin.io/'
+          this.backendURL + this.triggeredFrom + `/${this.digest.id}/settings/update`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify(payload),
         })
         if (!response.ok) {
@@ -253,8 +255,8 @@ export default {
         // Если запрос успешен – обновляем значения из ответа
         const data = await response.json()
         console.log('Payload:', JSON.stringify(payload))
-        this.sendToMail = data.send_to_mail
-        this.mobileNotifications = data.mobile_notifications
+        this.send_to_mail = data.send_to_mail
+        this.mobile_notifications = data.mobile_notifications
         return true
       } catch (error) {
         console.error('Ошибка запроса:', error)

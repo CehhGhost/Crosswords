@@ -134,7 +134,7 @@
   </template>
   
   <script>
-  import { availableSources, availableTags } from '../data/lookups.js'
+  import { availableSources, availableTags, backendURL } from '../data/lookups.js'
   import { fasCrown } from '@quasar/extras/fontawesome-v6'
   import FilterSelector from '../components/FilterSelector.vue'
   import ConfirmationPopup from '../components/ConfirmDialog.vue'
@@ -172,10 +172,11 @@
     }
   },
   mounted() {
-    // const digestId = this.$route.params.id; // Получаем ID из URL
+    const digestId = this.$route.params.id;
     fetch(
         //`/api/get-digest/${digestId}`
-        'https://cd38f834d72d4f5abd4105ca6807a70f.api.mockbin.io/'
+        //'https://cd38f834d72d4f5abd4105ca6807a70f.api.mockbin.io/'
+        backendURL +  `/subscriptions/${digestId}`
     )
       .then(response => response.json())
       .then(data => {
@@ -210,12 +211,14 @@
 
       if (this.email) {
         fetch(
-          'https://a37743da82a54b24895ba26ea5cbc277.api.mockbin.io/',
+          // 'https://a37743da82a54b24895ba26ea5cbc277.api.mockbin.io/'
+          backendURL + `users/subscription_settings/check`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
+          credentials: 'include',
           body: JSON.stringify({ credentials: this.email }),
         })
         .then((response) => {
@@ -283,7 +286,7 @@
 
       // Отправка данных на сервер
       const digestId = this.$route.params.id;
-      fetch(`/api/update-digest/${digestId}`, {
+      fetch(backendURL + `/subscriptions/${digestId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
