@@ -27,12 +27,6 @@ public class DigestSubscription {
     @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "owner_id")
     private User owner;
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "_digest_cores_subscriptions",
-            joinColumns = @JoinColumn(name = "digest_subscriptions_id"),
-            inverseJoinColumns = @JoinColumn(name = "digest_core_id"))
-    private List<DigestCore> core;
-
     @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "template_id")
     private DigestTemplate template;
@@ -94,14 +88,6 @@ public class DigestSubscription {
 
     public void setOwner(User owner) {
         this.owner = owner;
-    }
-
-    public List<DigestCore> getCore() {
-        return core;
-    }
-
-    public void setCore(List<DigestCore> core) {
-        this.core = core;
     }
 
     public Timestamp getCreatedAt() {

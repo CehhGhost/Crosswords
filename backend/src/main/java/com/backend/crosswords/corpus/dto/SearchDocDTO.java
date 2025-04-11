@@ -78,6 +78,14 @@ public class SearchDocDTO {
     )
     private List<String> tags;
 
+    public SearchDocDTO() {
+    }
+
+    public SearchDocDTO(List<String> sources, List<String> tags) {
+        this.sources = sources;
+        this.tags = tags;
+    }
+
     public String getSearchTerm() {
         return searchTerm;
     }

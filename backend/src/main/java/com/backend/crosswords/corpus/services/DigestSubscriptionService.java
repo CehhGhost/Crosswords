@@ -174,4 +174,8 @@ public class DigestSubscriptionService {
         List<DigestSubscriptionSettings> usersSubscriptionsSettings = subscriptionSettingsService.getAllUsersAvailableDigestSubscriptions(user);
         return this.transformSubscriptionSettingsIntoUsersDigestSubscriptionsDTO(user, usersSubscriptionsSettings, true);
     }
+
+    public List<DigestSubscription> getAllDigestSubscriptionsByTemplate(DigestTemplate template) {
+        return subscriptionRepository.findAllByTemplate(template);
+    }
 }

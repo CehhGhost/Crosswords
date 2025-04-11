@@ -16,6 +16,15 @@ public class Digest {
     @JoinColumn(name = "digest_subscription_id")
     private DigestSubscription subscription;
 
+    public Digest() {
+    }
+
+    public Digest(DigestId id, DigestCore core, DigestSubscription subscription) {
+        this.id = id;
+        this.core = core;
+        this.subscription = subscription;
+    }
+
     public DigestId getId() {
         return id;
     }

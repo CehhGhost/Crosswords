@@ -16,11 +16,9 @@ public class DigestCore {
     private String text;
     @Column(name = "date")
     private Timestamp date;
-    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @ManyToOne(cascade = {CascadeType.MERGE})
     @JoinColumn(name = "digest_template_id")
     private DigestTemplate template;
-    @ManyToMany(mappedBy = "core")
-    private List<DigestSubscription> subscriptions;
     @ManyToMany(mappedBy = "digestCores")
     private List<DocMeta> docs;
     @OneToMany(mappedBy = "core", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -56,14 +54,6 @@ public class DigestCore {
 
     public void setTemplate(DigestTemplate template) {
         this.template = template;
-    }
-
-    public List<DigestSubscription> getSubscriptions() {
-        return subscriptions;
-    }
-
-    public void setSubscriptions(List<DigestSubscription> subscriptions) {
-        this.subscriptions = subscriptions;
     }
 
     public List<DocMeta> getDocs() {

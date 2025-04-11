@@ -35,6 +35,10 @@ public class Tag {
         this.docs = docs;
     }
 
+    public Tag(String name) {
+        this.name = name;
+    }
+
     public Long getId() {
         return id;
     }

@@ -393,4 +393,18 @@ public class DocService {
         annotationService.updateAnnotationByIdForDoc(user, docMeta, annotationId, createUpdateAnnotationDTO);
         docMetaRepository.save(docMeta);
     }
+
+    public List<DocMeta> getAllDocsByTemplate(DigestTemplate template) {
+        List<DocMeta> docs = new ArrayList<>();
+        for (var doc : docMetaRepository.findAll()) {
+            if (new HashSet<>(doc.getTags()).containsAll(template.getTags()) && template.getSources().contains(doc.getSource())) {
+                docs.add(doc);
+            }
+        }
+        return docs;
+    }
+
+    public String getDocTextByDocId(Long id) {
+        return docSearchRepository.findById(id).orElseThrow(() -> new NoSuchElementException("There is no documents with such id!")).getText();
+    }
 }
