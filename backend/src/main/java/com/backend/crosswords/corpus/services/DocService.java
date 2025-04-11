@@ -396,7 +396,7 @@ public class DocService {
 
     public List<DocMeta> getAllDocsByTemplate(DigestTemplate template) {
         List<DocMeta> docs = new ArrayList<>();
-        for (var doc : docMetaRepository.findAll()) {
+        for (var doc : docMetaRepository.findAllWithTagsAndSource()) {
             if (new HashSet<>(doc.getTags()).containsAll(template.getTags()) && template.getSources().contains(doc.getSource())) {
                 docs.add(doc);
             }
