@@ -5,7 +5,7 @@ import com.backend.crosswords.admin.services.UserService;
 import com.backend.crosswords.corpus.models.DocMeta;
 import com.backend.crosswords.corpus.models.DocRating;
 import com.backend.crosswords.corpus.models.DocRatingId;
-import com.backend.crosswords.corpus.repositories.jpa.RatingRepository;
+import com.backend.crosswords.corpus.repositories.jpa.DocRatingRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,11 +14,11 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-public class RatingService {
-    private final RatingRepository ratingRepository;
+public class DocRatingService {
+    private final DocRatingRepository ratingRepository;
     private final UserService userService;
 
-    public RatingService(RatingRepository ratingRepository, UserService userService) {
+    public DocRatingService(DocRatingRepository ratingRepository, UserService userService) {
         this.ratingRepository = ratingRepository;
         this.userService = userService;
     }

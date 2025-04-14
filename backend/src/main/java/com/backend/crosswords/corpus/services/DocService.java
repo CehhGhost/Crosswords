@@ -36,13 +36,13 @@ public class DocService {
     private final DocMetaRepository docMetaRepository;
     private final ElasticsearchOperations elasticsearchOperations;
     private final TagService tagService;
-    private final RatingService ratingService;
+    private final DocRatingService ratingService;
     private final UserService userService;
     private final PackageService packageService;
     private final AnnotationService annotationService;
     private final CommentService commentService;
 
-    public DocService(ModelMapper modelMapper, DocSearchRepository docSearchRepository, DocMetaRepository docMetaRepository, ElasticsearchOperations elasticsearchOperations, TagService tagService, RatingService ratingService, UserService userService, PackageService packageService, AnnotationService annotationService, CommentService commentService) {
+    public DocService(ModelMapper modelMapper, DocSearchRepository docSearchRepository, DocMetaRepository docMetaRepository, ElasticsearchOperations elasticsearchOperations, TagService tagService, DocRatingService ratingService, UserService userService, PackageService packageService, AnnotationService annotationService, CommentService commentService) {
         this.modelMapper = modelMapper;
         this.docSearchRepository = docSearchRepository;
         this.docMetaRepository = docMetaRepository;
@@ -396,8 +396,8 @@ public class DocService {
 
     public List<DocMeta> getAllDocsByTemplate(DigestTemplate template) {
         List<DocMeta> docs = new ArrayList<>();
-        for (var doc : docMetaRepository.findAllWithTagsAndSource()) {
-            if (new HashSet<>(doc.getTags()).containsAll(template.getTags()) && template.getSources().contains(doc.getSource())) {
+        for (var doc : docMetaRepository.findAllWithTags()) {
+            if ((template.getTags().isEmpty() || new HashSet<>(doc.getTags()).containsAll(template.getTags())) && (template.getSources().isEmpty() || template.getSources().contains(doc.getSource()))) {
                 docs.add(doc);
             }
         }

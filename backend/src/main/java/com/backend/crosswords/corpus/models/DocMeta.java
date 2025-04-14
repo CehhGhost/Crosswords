@@ -51,10 +51,7 @@ public class DocMeta {
     @OneToMany(mappedBy = "doc", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments;
 
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "_digest_cores_docs",
-            joinColumns = @JoinColumn(name = "doc_id"),
-            inverseJoinColumns = @JoinColumn(name = "digest_core_id"))
+    @ManyToMany(mappedBy = "docs")
     private List<DigestCore> digestCores;
 
     // TODO добавить модель дайджестов

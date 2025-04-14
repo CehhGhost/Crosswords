@@ -3,16 +3,16 @@ package com.backend.crosswords.corpus.models;
 import java.io.Serializable;
 import java.util.Objects;
 
-public class DigestRatingId implements Serializable {
+public class DigestCoreRatingId implements Serializable {
     private Long digestCoreId;
     private Long userId;
 
-    public DigestRatingId(Long digestCoreId, Long userId) {
+    public DigestCoreRatingId(Long digestCoreId, Long userId) {
         this.digestCoreId = digestCoreId;
         this.userId = userId;
     }
 
-    public DigestRatingId() {
+    public DigestCoreRatingId() {
     }
     @Override
     public boolean equals(Object obj) {
@@ -22,7 +22,7 @@ public class DigestRatingId implements Serializable {
         if (obj == null || getClass() != obj.getClass()) {
             return false;
         }
-        DigestRatingId that = (DigestRatingId) obj;
+        DigestCoreRatingId that = (DigestCoreRatingId) obj;
         return Objects.equals(digestCoreId, that.digestCoreId) && Objects.equals(userId, that.userId);
     }
 

@@ -12,17 +12,18 @@ public class DigestCore {
     @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(name = "text", columnDefinition = "TEXT")
-    private String text;
     @Column(name = "date")
     private Timestamp date;
     @ManyToOne(cascade = {CascadeType.MERGE})
     @JoinColumn(name = "digest_template_id")
     private DigestTemplate template;
-    @ManyToMany(mappedBy = "digestCores")
+    @ManyToMany(cascade = {CascadeType.MERGE})
+    @JoinTable(name = "_digest_cores_docs",
+            joinColumns = @JoinColumn(name = "digest_core_id"),
+            inverseJoinColumns = @JoinColumn(name = "doc_id"))
     private List<DocMeta> docs;
     @OneToMany(mappedBy = "core", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<DigestRating> ratings;
+    private List<DigestCoreRating> ratings;
 
     public Long getId() {
         return id;
@@ -32,13 +33,6 @@ public class DigestCore {
         this.id = id;
     }
 
-    public String getText() {
-        return text;
-    }
-
-    public void setText(String text) {
-        this.text = text;
-    }
 
     public Timestamp getDate() {
         return date;
@@ -64,11 +58,11 @@ public class DigestCore {
         this.docs = docs;
     }
 
-    public List<DigestRating> getRatings() {
+    public List<DigestCoreRating> getRatings() {
         return ratings;
     }
 
-    public void setRatings(List<DigestRating> ratings) {
+    public void setRatings(List<DigestCoreRating> ratings) {
         this.ratings = ratings;
     }
 }

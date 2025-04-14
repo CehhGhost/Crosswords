@@ -1,12 +1,17 @@
 package com.backend.crosswords.corpus.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
+@Schema(description = "DTO to get subscribe options")
 public class GetSubscribeOptionsDTO {
+    @Schema(example = "true")
     @JsonProperty("send_to_mail")
     private Boolean sendToMail;
+    @Schema(example = "true")
     @JsonProperty("mobile_notifications")
     private Boolean mobileNotifications;
+    @Schema(example = "true")
     private Boolean subscribed;
 
     public GetSubscribeOptionsDTO() {

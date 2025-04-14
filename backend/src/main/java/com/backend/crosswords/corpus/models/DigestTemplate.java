@@ -18,7 +18,10 @@ public class DigestTemplate {
     @Enumerated(EnumType.ORDINAL)
     @CollectionTable(name = "_digest_templates_sources", joinColumns = @JoinColumn(name = "digest_template_id"))
     private Set<Source> sources = new HashSet<>();
-    @ManyToMany(mappedBy = "digestTemplates")
+    @ManyToMany(cascade = {CascadeType.MERGE})
+    @JoinTable(name = "_digest_templates_tags",
+            joinColumns = @JoinColumn(name = "digest_template_id"),
+            inverseJoinColumns = @JoinColumn(name = "tag_id"))
     private Set<Tag> tags;
     @OneToMany(mappedBy = "template", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private List<DigestCore> cores;
@@ -43,7 +46,7 @@ public class DigestTemplate {
                 .collect(Collectors.joining("-"));
 
         String tagsHash = tags.stream()
-                .map(Tag::getId) // Предполагаем, что Tag имеет уникальный id
+                .map(Tag::getId)
                 .sorted()
                 .map(Object::toString)
                 .collect(Collectors.joining("-"));

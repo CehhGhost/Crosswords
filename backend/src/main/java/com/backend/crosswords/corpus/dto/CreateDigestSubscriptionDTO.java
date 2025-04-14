@@ -71,11 +71,11 @@ public class CreateDigestSubscriptionDTO {
         this.subscribeOptions = subscribeOptions;
     }
 
-    public Boolean getPublic() {
+    public Boolean getIsPublic() {
         return isPublic;
     }
 
-    public void setPublic(Boolean aPublic) {
+    public void setIsPublic(Boolean aPublic) {
         isPublic = aPublic;
     }
 

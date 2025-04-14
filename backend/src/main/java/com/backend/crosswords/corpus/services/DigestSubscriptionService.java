@@ -43,6 +43,7 @@ public class DigestSubscriptionService {
         subscription.setMobileNotifications(createDigestSubscriptionDTO.getSubscribeOptions().getMobileNotifications());
         subscription.setOwner(owner);
         subscription.setCreatedAt(new Timestamp(System.currentTimeMillis()));
+        subscription.setIsPublic(createDigestSubscriptionDTO.getIsPublic());
 
         var template = this.extractTagsAndSourcesAndCreateTemplate(createDigestSubscriptionDTO.getTags(), createDigestSubscriptionDTO.getSources());
         subscription.setTemplate(template);
@@ -64,7 +65,7 @@ public class DigestSubscriptionService {
         }
         subscription.setOwner(userService.getUserByUsername(updateDigestSubscriptionDTO.getOwnersUsername()));
         subscription.setDescription(updateDigestSubscriptionDTO.getDescription());
-        subscription.setPublic(updateDigestSubscriptionDTO.getPublic());
+        subscription.setIsPublic(updateDigestSubscriptionDTO.getPublic());
         subscription.setTitle(updateDigestSubscriptionDTO.getTitle());
         subscription.setSendToMail(updateDigestSubscriptionDTO.getSubscribeOptions().getSendToMail());
         subscription.setMobileNotifications(updateDigestSubscriptionDTO.getSubscribeOptions().getMobileNotifications());
@@ -78,6 +79,9 @@ public class DigestSubscriptionService {
     }
     @Transactional
     public DigestTemplate extractTagsAndSourcesAndCreateTemplate(List<String> tagsNames, List<String> sourcesNames) {
+        if (tagsNames != null && !tagsNames.isEmpty()) {
+            tagsNames.replaceAll(String::toLowerCase);
+        }
         Set<Tag> tags = tagService.getTagsInNames(tagsNames);
         Set<Source> sources = new HashSet<>();
         for (var source : sourcesNames) {
@@ -104,7 +108,7 @@ public class DigestSubscriptionService {
             usersDigestSubscriptionDTO.setId(usersSubscription.getId());
             usersDigestSubscriptionDTO.setCreationDate(usersSubscription.getCreatedAt());
             usersDigestSubscriptionDTO.setDescription(usersSubscription.getDescription());
-            usersDigestSubscriptionDTO.setPublic(usersSubscription.getPublic());
+            usersDigestSubscriptionDTO.setPublic(usersSubscription.getIsPublic());
             usersDigestSubscriptionDTO.setTitle(usersSubscription.getTitle());
 
             if (allAvailable) {

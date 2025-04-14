@@ -4,8 +4,6 @@ import com.backend.crosswords.admin.models.User;
 import jakarta.persistence.*;
 
 import java.sql.Timestamp;
-import java.util.List;
-import java.util.Set;
 
 @Table(name = "_digest_subscriptions")
 @Entity
@@ -58,12 +56,13 @@ public class DigestSubscription {
         this.description = description;
     }
 
-    public Boolean getPublic() {
+    public Boolean getIsPublic() {
         return isPublic;
     }
 
-    public void setPublic(Boolean aPublic) {
-        isPublic = aPublic;
+    public void setIsPublic(Boolean isPublic) {
+        this.isPublic = isPublic;
+        System.out.println(this.isPublic);
     }
 
     public Boolean getSendToMail() {

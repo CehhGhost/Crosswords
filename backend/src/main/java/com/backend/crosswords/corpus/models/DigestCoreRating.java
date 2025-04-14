@@ -3,11 +3,11 @@ package com.backend.crosswords.corpus.models;
 import com.backend.crosswords.admin.models.User;
 import jakarta.persistence.*;
 
-@Table(name = "_digest_ratings")
+@Table(name = "_digest_core_ratings")
 @Entity
-public class DigestRating {
+public class DigestCoreRating {
     @EmbeddedId
-    private DigestRatingId id;
+    private DigestCoreRatingId id;
     @Column(name = "digest_rating")
     private Integer digestRating;
     @ManyToOne
@@ -18,21 +18,21 @@ public class DigestRating {
     @MapsId("userId")
     @JoinColumn(name = "user_id")
     private User user;
-    public DigestRating(DigestRatingId id, DigestCore core, User user, Integer digestRating) {
+    public DigestCoreRating(DigestCoreRatingId id, DigestCore core, User user, Integer digestRating) {
         this.id = id;
         this.core = core;
         this.user = user;
         this.digestRating = digestRating;
     }
 
-    public DigestRating() {
+    public DigestCoreRating() {
     }
 
-    public DigestRatingId getId() {
+    public DigestCoreRatingId getId() {
         return id;
     }
 
-    public void setId(DigestRatingId id) {
+    public void setId(DigestCoreRatingId id) {
         this.id = id;
     }
 

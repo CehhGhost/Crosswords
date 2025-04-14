@@ -20,10 +20,7 @@ public class Tag {
             joinColumns = @JoinColumn(name = "tag_id"),
             inverseJoinColumns = @JoinColumn(name = "doc_id"))
     private List<DocMeta> docs;
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "_digest_templates_tags",
-            joinColumns = @JoinColumn(name = "tag_id"),
-            inverseJoinColumns = @JoinColumn(name = "digest_template_id"))
+    @ManyToMany(mappedBy = "tags")
     private List<DigestTemplate> digestTemplates;
 
     public Tag() {

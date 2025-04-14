@@ -30,6 +30,7 @@ public class TagService {
         tagRepository.save(tag);
     }
 
+    // TODO переделать с четом новых ссылок на теги (например шаблонов дайджестов)
     public void deleteTagById(Long id) {
         var tag = tagRepository.findById(id);
         if (tag.isEmpty()) {

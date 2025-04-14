@@ -3,6 +3,7 @@ package com.backend.crosswords.corpus.controllers;
 import com.backend.crosswords.admin.models.CrosswordUserDetails;
 import com.backend.crosswords.admin.models.User;
 import com.backend.crosswords.corpus.dto.CreateDigestSubscriptionDTO;
+import com.backend.crosswords.corpus.dto.DigestsDTO;
 import com.backend.crosswords.corpus.dto.DocDTO;
 import com.backend.crosswords.corpus.services.DigestService;
 import com.backend.crosswords.corpus.services.TagService;
@@ -46,6 +47,16 @@ public class DigestController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
-    // TODO сделать scheduler для создания ядер дайджеста
-
+    @Operation(summary = "Get all digests", description = "This endpoint lets get all digests")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully get all digests", content = @Content(schema = @Schema(implementation = DigestsDTO.class))),
+            @ApiResponse(responseCode = "401", description = "You are trying to get all digests while not authenticated")
+    })
+    @GetMapping
+    public ResponseEntity<?> getAllDigests() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+        var digests = digestService.getAllDigests(crosswordUserDetails.getUser());
+        return ResponseEntity.ok(digests);
+    }
 }
