@@ -9,7 +9,7 @@ public class DigestCoreRating {
     @EmbeddedId
     private DigestCoreRatingId id;
     @Column(name = "digest_rating")
-    private Integer digestRating;
+    private Integer digestCoreRating;
     @ManyToOne
     @MapsId("digestCoreId")
     @JoinColumn(name = "digest_core_id")
@@ -22,7 +22,7 @@ public class DigestCoreRating {
         this.id = id;
         this.core = core;
         this.user = user;
-        this.digestRating = digestRating;
+        this.digestCoreRating = digestRating;
     }
 
     public DigestCoreRating() {
@@ -52,11 +52,11 @@ public class DigestCoreRating {
         this.user = user;
     }
 
-    public Integer getDigestRating() {
-        return digestRating;
+    public Integer getDigestCoreRating() {
+        return digestCoreRating;
     }
 
-    public void setDigestRating(Integer digestRating) {
-        this.digestRating = digestRating;
+    public void setDigestCoreRating(Integer digestRating) {
+        this.digestCoreRating = digestRating;
     }
 }

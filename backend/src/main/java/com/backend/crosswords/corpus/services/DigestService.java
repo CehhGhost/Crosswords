@@ -1,6 +1,7 @@
 package com.backend.crosswords.corpus.services;
 
 import com.backend.crosswords.admin.models.User;
+import com.backend.crosswords.admin.services.UserService;
 import com.backend.crosswords.corpus.dto.*;
 import com.backend.crosswords.corpus.models.*;
 import com.backend.crosswords.corpus.repositories.elasticsearch.DigestCoreSearchRepository;
@@ -23,9 +24,11 @@ public class DigestService {
     private final DocService docService;
     private final DigestCoreSearchRepository coreSearchRepository;
     private final DigestRatingService ratingService;
+
+    private final UserService userService;
     private final RestTemplate restTemplate;
     private final Queue<DigestTemplate> templates = new LinkedList<>();
-    public DigestService(DigestCoreRepository digestCoreRepository, DigestSubscriptionService subscriptionService, DigestSubscriptionSettingsService subscriptionSettingsService, DigestTemplateService templateService, DigestRepository digestRepository, DocService docService, DigestCoreSearchRepository coreSearchRepository, DigestRatingService ratingService, RestTemplate restTemplate) {
+    public DigestService(DigestCoreRepository digestCoreRepository, DigestSubscriptionService subscriptionService, DigestSubscriptionSettingsService subscriptionSettingsService, DigestTemplateService templateService, DigestRepository digestRepository, DocService docService, DigestCoreSearchRepository coreSearchRepository, DigestRatingService ratingService, UserService userService, RestTemplate restTemplate) {
         this.coreRepository = digestCoreRepository;
         this.subscriptionService = subscriptionService;
         this.subscriptionSettingsService = subscriptionSettingsService;
@@ -34,6 +37,7 @@ public class DigestService {
         this.docService = docService;
         this.coreSearchRepository = coreSearchRepository;
         this.ratingService = ratingService;
+        this.userService = userService;
         this.restTemplate = restTemplate;
     }
     private DigestCore createNewDigestCore(DigestTemplate template) {
@@ -76,10 +80,14 @@ public class DigestService {
         System.out.println("The end of creating digests");
     }
 
+    private Digest getDigestById(String digestId) {
+        var ids = digestId.split("#");
+        return digestRepository.findById(new DigestId(Long.valueOf(ids[0]), Long.valueOf(ids[1]))).orElseThrow(() -> new NoSuchElementException("There is no digests with such id!"));
+    }
+
     public CertainDigestDTO getDigestById(String digestId, User user) {
         CertainDigestDTO certainDigestDTO = new CertainDigestDTO();
-        var ids = digestId.split("#");
-        var digest = digestRepository.findById(new DigestId(Long.valueOf(ids[0]), Long.valueOf(ids[1]))).orElseThrow(() -> new NoSuchElementException("There is no digests with such id!"));
+        var digest = this.getDigestById(digestId);
         var core = digest.getCore();
         var coreES = coreSearchRepository.findById(core.getId()).orElseThrow(() -> new NoSuchElementException("There is no digest cores with such id!"));
         var subscription = digest.getSubscription();
@@ -190,5 +198,16 @@ public class DigestService {
             digestsDTO.getDigests().add(digestDTO);
         }
         return digestsDTO;
+    }
+
+    public void rateDigestCoreByDigestId(String id, Integer digestCoreRating, User user) {
+        if (digestCoreRating != null && (digestCoreRating < 1 || digestCoreRating > 5)) {
+            throw new IllegalArgumentException("Rating's arguments must be in range of 1 to 5!");
+        }
+        var digest = this.getDigestById(id);
+        var core = digest.getCore();
+        user = userService.loadUserById(user.getId());
+
+        ratingService.createRating(core, user, digestCoreRating);
     }
 }

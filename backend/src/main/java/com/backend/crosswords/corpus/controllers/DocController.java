@@ -26,7 +26,6 @@ import java.util.NoSuchElementException;
 
 // TODO сделать ручку для проверки владения подпиской
 // TODO сделать ручку для получения всех папок пользователя, включая отображение присутствия выбранного документа в папках
-// TODO просто проверка настройки CI/CD
 
 @RestController
 @RequestMapping("/documents")

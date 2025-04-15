@@ -2,10 +2,7 @@ package com.backend.crosswords.corpus.controllers;
 
 import com.backend.crosswords.admin.models.CrosswordUserDetails;
 import com.backend.crosswords.admin.models.User;
-import com.backend.crosswords.corpus.dto.CertainDigestDTO;
-import com.backend.crosswords.corpus.dto.CreateDigestSubscriptionDTO;
-import com.backend.crosswords.corpus.dto.DigestsDTO;
-import com.backend.crosswords.corpus.dto.DocDTO;
+import com.backend.crosswords.corpus.dto.*;
 import com.backend.crosswords.corpus.services.DigestService;
 import com.backend.crosswords.corpus.services.TagService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -65,5 +62,25 @@ public class DigestController {
         CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
         var digests = digestService.getAllDigests(crosswordUserDetails.getUser());
         return ResponseEntity.ok(digests);
+    }
+    @Operation(summary = "Rate digest core by id", description = "This endpoint lets you rate a digest core, parameters can be null or numbers from 1 to 5, user must be authenticated")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully ratted digest core by id"),
+            @ApiResponse(responseCode = "401", description = "You are trying to rate the digest core by id while unauthorized"),
+            @ApiResponse(responseCode = "400", description = "Rating's arguments must be in range of 1 to 5"),
+            @ApiResponse(responseCode = "404", description = "There is no digest cores with such id")
+    })
+    @PatchMapping("/{id}/rate")
+    public ResponseEntity<?> rateDigestCoreByDigestId(@PathVariable String id, @RequestBody RateDigestCoreDTO rateDigestCoreDTO) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+            digestService.rateDigestCoreByDigestId(id, rateDigestCoreDTO.getDigestCoreRating(), crosswordUserDetails.getUser());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+        return ResponseEntity.ok(HttpStatus.OK);
     }
 }
