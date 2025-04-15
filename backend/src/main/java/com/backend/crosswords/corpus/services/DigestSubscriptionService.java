@@ -182,4 +182,8 @@ public class DigestSubscriptionService {
     public List<DigestSubscription> getAllDigestSubscriptionsByTemplate(DigestTemplate template) {
         return subscriptionRepository.findAllByTemplate(template);
     }
+
+    public List<DigestSubscription> getAllDigestSubscriptionsBySearchTerm(String searchTerm) {
+        return subscriptionRepository.findAllByTitleContains(searchTerm);
+    }
 }

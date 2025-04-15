@@ -8,4 +8,5 @@ import java.util.List;
 
 public interface DigestSubscriptionRepository extends JpaRepository<DigestSubscription, Long> {
     List<DigestSubscription> findAllByTemplate(DigestTemplate template);
+    List<DigestSubscription> findAllByTitleContains(String title);
 }

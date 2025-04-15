@@ -7,6 +7,7 @@ import java.util.List;
 
 @Schema(description = "DTO to wrap a list of digests")
 public class DigestsDTO {
+    private Boolean isAuthed;
     private List<DigestDTO> digests;
 
     public DigestsDTO() {
@@ -21,10 +22,19 @@ public class DigestsDTO {
         this.digests = digests;
     }
 
+    public Boolean getIsAuthed() {
+        return isAuthed;
+    }
+
+    public void setIsAuthed(Boolean isAuthed) {
+        this.isAuthed = isAuthed;
+    }
+
     @Override
     public String toString() {
         return "DigestsDTO{" +
-                "digests=" + digests +
+                "isAuthed=" + isAuthed +
+                ", digests=" + digests +
                 '}';
     }
 }

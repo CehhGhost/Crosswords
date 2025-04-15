@@ -7,6 +7,11 @@ import com.backend.crosswords.corpus.models.*;
 import com.backend.crosswords.corpus.repositories.elasticsearch.DigestCoreSearchRepository;
 import com.backend.crosswords.corpus.repositories.jpa.DigestCoreRepository;
 import com.backend.crosswords.corpus.repositories.jpa.DigestRepository;
+import org.opensearch.data.client.orhlc.NativeSearchQueryBuilder;
+import org.opensearch.index.query.QueryBuilder;
+import org.opensearch.index.query.QueryBuilders;
+import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -27,8 +32,10 @@ public class DigestService {
 
     private final UserService userService;
     private final RestTemplate restTemplate;
+    private final TagService tagService;
+    private final ElasticsearchOperations elasticsearchOperations;
     private final Queue<DigestTemplate> templates = new LinkedList<>();
-    public DigestService(DigestCoreRepository digestCoreRepository, DigestSubscriptionService subscriptionService, DigestSubscriptionSettingsService subscriptionSettingsService, DigestTemplateService templateService, DigestRepository digestRepository, DocService docService, DigestCoreSearchRepository coreSearchRepository, DigestRatingService ratingService, UserService userService, RestTemplate restTemplate) {
+    public DigestService(DigestCoreRepository digestCoreRepository, DigestSubscriptionService subscriptionService, DigestSubscriptionSettingsService subscriptionSettingsService, DigestTemplateService templateService, DigestRepository digestRepository, DocService docService, DigestCoreSearchRepository coreSearchRepository, DigestRatingService ratingService, UserService userService, RestTemplate restTemplate, TagService tagService, ElasticsearchOperations elasticsearchOperations) {
         this.coreRepository = digestCoreRepository;
         this.subscriptionService = subscriptionService;
         this.subscriptionSettingsService = subscriptionSettingsService;
@@ -39,6 +46,8 @@ public class DigestService {
         this.ratingService = ratingService;
         this.userService = userService;
         this.restTemplate = restTemplate;
+        this.tagService = tagService;
+        this.elasticsearchOperations = elasticsearchOperations;
     }
     private DigestCore createNewDigestCore(DigestTemplate template) {
         template = templateService.getTemplateFromId(template.getUuid()); // необходимо, чтобы сделать полную загрузку данных, избегаю ленивую
@@ -147,16 +156,60 @@ public class DigestService {
 
     public DigestsDTO getAllDigests(User user) {
         var digests = digestRepository.findAll();
+        return this.transformDigestsIntoDigestsDTO(digests, user);
+    }
+
+    public void rateDigestCoreByDigestId(String id, Integer digestCoreRating, User user) {
+        if (digestCoreRating != null && (digestCoreRating < 1 || digestCoreRating > 5)) {
+            throw new IllegalArgumentException("Rating's arguments must be in range of 1 to 5!");
+        }
+        var digest = this.getDigestById(id);
+        var core = digest.getCore();
+        user = userService.loadUserById(user.getId());
+
+        ratingService.createRating(core, user, digestCoreRating);
+    }
+
+    public DigestsDTO getDigestsBySearch(String searchBody, Timestamp dateFrom, Timestamp dateTo, List<String> tags, List<String> sources, Boolean subscribe_only, User user) {
+        if (dateFrom != null && dateTo != null && dateFrom.after(dateTo)) {
+            var nothing = dateFrom;
+            dateFrom = dateTo;
+            dateTo = nothing;
+        }
+        List<Digest> digests = new ArrayList<>();
+        if (searchBody != null) {
+            List<DigestSubscription> subscriptions = subscriptionService.getAllDigestSubscriptionsBySearchTerm(searchBody);
+            for (var digest : digestRepository.findAllBySubscriptionIn(subscriptions)) {
+                if (this.equalsMetaData(dateFrom, dateTo, tags, sources, subscribe_only, digest, user)) {
+                    digests.add(digest);
+                }
+            }
+        } else {
+            for (var digest : digestRepository.findAll()) {
+                if (this.equalsMetaData(dateFrom, dateTo, tags, sources, subscribe_only, digest, user)) {
+                    digests.add(digest);
+                }
+            }
+        }
+        return this.transformDigestsIntoDigestsDTO(digests, user);
+    }
+    private DigestsDTO transformDigestsIntoDigestsDTO(List<Digest> digests, User user) {
         DigestsDTO digestsDTO = new DigestsDTO();
+        digestsDTO.setIsAuthed(user != null); // TODO может ли незарегистрированный пользователь поиск по дайджестам?
         for (var digest : digests) {
             var core = digest.getCore();
             var coreES = coreSearchRepository.findById(core.getId()).orElseThrow(() -> new NoSuchElementException("There is no digest cores with such id!"));
             var subscription = digest.getSubscription();
             var template = templateService.getTemplateFromId(core.getTemplate().getUuid());
+
             DigestSubscriptionSettings subscriptionSettings;
-            try {
-                subscriptionSettings = subscriptionSettingsService.getSubscriptionSettingsBySubscriptionAndUser(subscription, user);
-            } catch (NoSuchElementException e) {
+            if (user != null) {
+                try {
+                    subscriptionSettings = subscriptionSettingsService.getSubscriptionSettingsBySubscriptionAndUser(subscription, user);
+                } catch (NoSuchElementException e) {
+                    subscriptionSettings = null;
+                }
+            } else {
                 subscriptionSettings = null;
             }
 
@@ -199,15 +252,43 @@ public class DigestService {
         }
         return digestsDTO;
     }
-
-    public void rateDigestCoreByDigestId(String id, Integer digestCoreRating, User user) {
-        if (digestCoreRating != null && (digestCoreRating < 1 || digestCoreRating > 5)) {
-            throw new IllegalArgumentException("Rating's arguments must be in range of 1 to 5!");
-        }
-        var digest = this.getDigestById(id);
+    private boolean equalsMetaData(Timestamp dateFrom, Timestamp dateTo, List<String> tags, List<String> sources, Boolean subscribe_only, Digest digest, User user) {
         var core = digest.getCore();
-        user = userService.loadUserById(user.getId());
+        var subscription = digest.getSubscription();
+        var template = templateService.getTemplateFromId(core.getTemplate().getUuid());
+        var digestDate = core.getDate();
+        Set<String> digestSources = new HashSet<>();
+        for (var source : template.getSources()) {
+            digestSources.add(source.getRussianName());
+        }
+        boolean first = ((dateFrom == null || dateFrom.before(digestDate)) &&
+                (dateTo == null || dateTo.after(digestDate)) &&
+                (sources == null || sources.isEmpty() || digestSources.containsAll(sources)) &&
+                (tags == null || tags.isEmpty() || tagService.getSetOfTagsNames(template.getTags()).containsAll(tags)));
 
-        ratingService.createRating(core, user, digestCoreRating);
+        DigestSubscriptionSettings subscriptionSettings;
+        if (user != null) {
+            try {
+                subscriptionSettings = subscriptionSettingsService.getSubscriptionSettingsBySubscriptionAndUser(subscription, user);
+            } catch (NoSuchElementException e) {
+                subscriptionSettings = null;
+            }
+        } else {
+            subscriptionSettings = null;
+        }
+
+        boolean second = false;
+        if (subscription.getIsPublic()) {
+            if (subscribe_only) {
+                second = subscriptionSettings != null;
+            } else {
+                second = true;
+            }
+        } else {
+            if (subscribe_only) {
+                second = subscriptionSettings != null;
+            }
+        }
+        return first && second;
     }
 }

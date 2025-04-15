@@ -11,12 +11,17 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 @RestController
@@ -51,6 +56,7 @@ public class DigestController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
+
     @Operation(summary = "Get all digests", description = "This endpoint lets get all digests.\n P.S. this method is for mobile, also, Mathew, remind me to remind you about snake_case)))")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "You successfully get all digests", content = @Content(schema = @Schema(implementation = DigestsDTO.class))),
@@ -63,6 +69,7 @@ public class DigestController {
         var digests = digestService.getAllDigests(crosswordUserDetails.getUser());
         return ResponseEntity.ok(digests);
     }
+
     @Operation(summary = "Rate digest core by id", description = "This endpoint lets you rate a digest core, parameters can be null or numbers from 1 to 5, user must be authenticated")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "You successfully ratted digest core by id"),
@@ -82,5 +89,40 @@ public class DigestController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
         return ResponseEntity.ok(HttpStatus.OK);
+    }
+
+    @Operation(summary = "Get digests by search", description = "This endpoint gets you all digests by your filtration's and by a certain search with title")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Searched digests", content = @Content(schema = @Schema(implementation = DigestsDTO.class))),
+            @ApiResponse(responseCode = "401", description = "You are trying to get digests by search while unauthorized"),
+            @ApiResponse(responseCode = "400", description = "Invalid date format. Expected: dd/MM/yyyy")
+    })
+    @GetMapping("/search")
+    public ResponseEntity<?> getDigestsBySearch(
+            @RequestParam(required = false) String searchBody,
+            @RequestParam(required = false) String dateFrom,
+            @RequestParam(required = false) String dateTo,
+            @RequestParam(required = false) List<String> tags,
+            @RequestParam(required = false) List<String> sources,
+            @RequestParam(required = false, defaultValue = "false") Boolean subscribe_only) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+        SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy");
+        Timestamp timestampFrom = null;
+        Timestamp timestampTo = null;
+        try {
+            if (dateFrom != null) {
+                Date parsedDateFrom = format.parse(dateFrom);
+                timestampFrom = new Timestamp(parsedDateFrom.getTime());
+            }
+
+            if (dateTo != null) {
+                Date parsedDateTo = format.parse(dateTo);
+                timestampTo = new Timestamp(parsedDateTo.getTime());
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid date format. Expected: dd/MM/yyyy");
+        }
+        return ResponseEntity.ok(digestService.getDigestsBySearch(searchBody, timestampFrom, timestampTo, tags, sources, subscribe_only, crosswordUserDetails.getUser()));
     }
 }
