@@ -8,8 +8,8 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
-@Schema(description = "DTO to get digest")
-public class DigestDTO {
+@Schema(description = "DTO for getting info about a certain digest by its id")
+public class CertainDigestDTO {
     @Schema(example = "1#1")
     private String id;
     @Schema(example = "Нечто страшное")
@@ -18,7 +18,8 @@ public class DigestDTO {
     @JsonProperty("average_rating")
     private Double averageRating;
     @Schema(example = "5")
-    private Integer userRating; // TODO напомнить Матвею про snake_case
+    @JsonProperty("user_rating")
+    private Integer userRating;
     @Schema(example = "[\n" +
             "            \"Спорт\",\n" +
             "            \"РБК\"\n" +
@@ -40,21 +41,24 @@ public class DigestDTO {
     @JsonProperty("public")
     private Boolean isPublic;
     @Schema(example = "true")
-    private Boolean isOwner; // TODO напомнить Матвею про snake_case
+    @JsonProperty("is_owner")
+    private Boolean isOwner;
     @Schema(example = "admin")
     private String owner;
-    @Schema(example = "[\n" +
-            "            \"https://www.interfax.ru/russia/1020840\",\n" +
-            "            \"https://www.interfax.ru/photo/6996\"\n" +
-            "        ]")
-    private List<String> urls;
     @JsonProperty("subscribe_options")
     private GetSubscribeOptionsDTO subscribeOptions;
 
-    public DigestDTO() {
+    @JsonProperty("based_on")
+    private List<BasedOnDTO> basedOn;
+
+    @Schema(example = "true")
+    @JsonProperty("is_authed")
+    private Boolean isAuthed;
+
+    public CertainDigestDTO() {
         sources = new ArrayList<>();
         tags = new ArrayList<>();
-        urls = new ArrayList<>();
+        basedOn = new ArrayList<>();
     }
 
     public String getId() {
@@ -145,14 +149,6 @@ public class DigestDTO {
         this.isOwner = owner;
     }
 
-    public List<String> getUrls() {
-        return urls;
-    }
-
-    public void setUrls(List<String> urls) {
-        this.urls = urls;
-    }
-
     public GetSubscribeOptionsDTO getSubscribeOptions() {
         return subscribeOptions;
     }
@@ -167,5 +163,42 @@ public class DigestDTO {
 
     public void setOwner(String owner) {
         this.owner = owner;
+    }
+
+    public List<BasedOnDTO> getBasedOn() {
+        return basedOn;
+    }
+
+    public void setBasedOn(List<BasedOnDTO> basedOn) {
+        this.basedOn = basedOn;
+    }
+
+    public Boolean getIsAuthed() {
+        return isAuthed;
+    }
+
+    public void setIsAuthed(Boolean authed) {
+        isAuthed = authed;
+    }
+
+    @Override
+    public String toString() {
+        return "GetDigestByIdDTO{" +
+                "id='" + id + '\'' +
+                ", title='" + title + '\'' +
+                ", averageRating=" + averageRating +
+                ", userRating=" + userRating +
+                ", sources=" + sources +
+                ", description='" + description + '\'' +
+                ", text='" + text + '\'' +
+                ", tags=" + tags +
+                ", date=" + date +
+                ", isPublic=" + isPublic +
+                ", isOwner=" + isOwner +
+                ", owner='" + owner + '\'' +
+                ", subscribeOptions=" + subscribeOptions +
+                ", basedOn=" + basedOn +
+                ", isAuthed=" + isAuthed +
+                '}';
     }
 }

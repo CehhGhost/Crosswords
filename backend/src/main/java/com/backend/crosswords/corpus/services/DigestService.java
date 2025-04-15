@@ -1,9 +1,7 @@
 package com.backend.crosswords.corpus.services;
 
 import com.backend.crosswords.admin.models.User;
-import com.backend.crosswords.corpus.dto.DigestDTO;
-import com.backend.crosswords.corpus.dto.DigestsDTO;
-import com.backend.crosswords.corpus.dto.GetSubscribeOptionsDTO;
+import com.backend.crosswords.corpus.dto.*;
 import com.backend.crosswords.corpus.models.*;
 import com.backend.crosswords.corpus.repositories.elasticsearch.DigestCoreSearchRepository;
 import com.backend.crosswords.corpus.repositories.jpa.DigestCoreRepository;
@@ -78,15 +76,65 @@ public class DigestService {
         System.out.println("The end of creating digests");
     }
 
-    // TODO доделать
-    public Object getDigestById(String digestId, User user) {
+    public CertainDigestDTO getDigestById(String digestId, User user) {
+        CertainDigestDTO certainDigestDTO = new CertainDigestDTO();
         var ids = digestId.split("#");
-        var core = coreRepository.findById(Long.valueOf(ids[0])).orElseThrow(() -> new NoSuchElementException("There is no digests with such id!"));
-        var template = core.getTemplate();
-        var subscription = subscriptionService.getDigestSubscriptionById(Long.valueOf(ids[1]));
-        var rating = core.getRatings();
-        var subscriptionSettings = subscriptionSettingsService.getSubscriptionSettingsBySubscriptionAndUser(subscription, user);
-        return null;
+        var digest = digestRepository.findById(new DigestId(Long.valueOf(ids[0]), Long.valueOf(ids[1]))).orElseThrow(() -> new NoSuchElementException("There is no digests with such id!"));
+        var core = digest.getCore();
+        var coreES = coreSearchRepository.findById(core.getId()).orElseThrow(() -> new NoSuchElementException("There is no digest cores with such id!"));
+        var subscription = digest.getSubscription();
+        var template = templateService.getTemplateFromId(core.getTemplate().getUuid());
+        DigestSubscriptionSettings subscriptionSettings;
+
+        if (user != null) {
+            try {
+                subscriptionSettings = subscriptionSettingsService.getSubscriptionSettingsBySubscriptionAndUser(subscription, user);
+            } catch (NoSuchElementException e) {
+                subscriptionSettings = null;
+            }
+            certainDigestDTO.setIsAuthed(true);
+        } else {
+            subscriptionSettings = null;
+            certainDigestDTO.setIsAuthed(null);
+        }
+
+
+        certainDigestDTO.setId(digestId);
+
+        certainDigestDTO.setTitle(subscription.getTitle());
+
+        certainDigestDTO.setAverageRating(ratingService.getCoresAverageRating(core));
+        certainDigestDTO.setUserRating(ratingService.getCoresUsersRating(core, user));
+
+        for (var source : template.getSources()) {
+            certainDigestDTO.getSources().add(source.getRussianName());
+        }
+        for (var tag : template.getTags()) {
+            certainDigestDTO.getTags().add(tag.getName());
+        }
+
+        certainDigestDTO.setDescription(subscription.getDescription());
+        certainDigestDTO.setText(coreES.getText());
+
+        certainDigestDTO.setDate(core.getDate());
+
+        certainDigestDTO.setIsPublic(subscription.getIsPublic());
+
+        String ownersUsername = subscription.getOwner().getUsername();
+        certainDigestDTO.setIsOwner(user == null || Objects.equals(user.getUsername(), ownersUsername));
+        certainDigestDTO.setOwner(ownersUsername);
+
+        for (var doc : core.getDocs()) {
+            BasedOnDTO basedOnDTO = new BasedOnDTO(doc.getId(), docService.getDocTitleByDocId(doc.getId()), doc.getUrl());
+            certainDigestDTO.getBasedOn().add(basedOnDTO);
+        }
+        if (subscriptionSettings == null) {
+            certainDigestDTO.setSubscribeOptions(new GetSubscribeOptionsDTO(false, false, false));
+        } else {
+            certainDigestDTO.setSubscribeOptions(new GetSubscribeOptionsDTO(subscriptionSettings.getSendToMail(), subscriptionSettings.getMobileNotifications(), true));
+        }
+
+        return certainDigestDTO;
     }
 
     public DigestsDTO getAllDigests(User user) {
@@ -94,7 +142,7 @@ public class DigestService {
         DigestsDTO digestsDTO = new DigestsDTO();
         for (var digest : digests) {
             var core = digest.getCore();
-            var coreES = coreSearchRepository.findById(core.getId()).orElseThrow(() -> new NoSuchElementException("There is no digests with such id!"));
+            var coreES = coreSearchRepository.findById(core.getId()).orElseThrow(() -> new NoSuchElementException("There is no digest cores with such id!"));
             var subscription = digest.getSubscription();
             var template = templateService.getTemplateFromId(core.getTemplate().getUuid());
             DigestSubscriptionSettings subscriptionSettings;
@@ -106,7 +154,7 @@ public class DigestService {
 
             DigestDTO digestDTO = new DigestDTO();
 
-            digestDTO.setId(digest.getCore().getId().toString() + digest.getSubscription().getId().toString());
+            digestDTO.setId(digest.getCore().getId().toString() + "#" + digest.getSubscription().getId().toString());
 
             digestDTO.setTitle(subscription.getTitle());
 

@@ -397,7 +397,9 @@ public class DocService {
     public List<DocMeta> getAllDocsByTemplate(DigestTemplate template) {
         List<DocMeta> docs = new ArrayList<>();
         for (var doc : docMetaRepository.findAllWithTags()) {
-            if ((template.getTags().isEmpty() || new HashSet<>(doc.getTags()).containsAll(template.getTags())) && (template.getSources().isEmpty() || template.getSources().contains(doc.getSource()))) {
+            Boolean first = (template.getTags().isEmpty() || tagService.getSetOfTagsNames(doc.getTags()).containsAll(tagService.getSetOfTagsNames(template.getTags())));
+            Boolean second = (template.getSources().isEmpty() || template.getSources().contains(doc.getSource()));
+            if (first && second) {
                 docs.add(doc);
             }
         }
@@ -406,5 +408,9 @@ public class DocService {
 
     public String getDocTextByDocId(Long id) {
         return docSearchRepository.findById(id).orElseThrow(() -> new NoSuchElementException("There is no documents with such id!")).getText();
+    }
+
+    public String getDocTitleByDocId(Long id) {
+        return docSearchRepository.findById(id).orElseThrow(() -> new NoSuchElementException("There is no documents with such id!")).getTitle();
     }
 }

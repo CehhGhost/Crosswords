@@ -3,15 +3,15 @@ package com.backend.crosswords.corpus.services;
 import com.backend.crosswords.admin.models.User;
 import com.backend.crosswords.admin.services.UserService;
 import com.backend.crosswords.corpus.models.DigestCore;
-import com.backend.crosswords.corpus.repositories.jpa.DigestRatingRepository;
+import com.backend.crosswords.corpus.repositories.jpa.DigestCoreRatingRepository;
 import org.springframework.stereotype.Service;
 
 @Service
 public class DigestRatingService {
-    private final DigestRatingRepository ratingRepository;
+    private final DigestCoreRatingRepository ratingRepository;
     private final UserService userService;
 
-    public DigestRatingService(DigestRatingRepository ratingRepository, UserService userService) {
+    public DigestRatingService(DigestCoreRatingRepository ratingRepository, UserService userService) {
         this.ratingRepository = ratingRepository;
         this.userService = userService;
     }

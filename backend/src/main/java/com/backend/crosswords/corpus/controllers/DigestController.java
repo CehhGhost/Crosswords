@@ -2,6 +2,7 @@ package com.backend.crosswords.corpus.controllers;
 
 import com.backend.crosswords.admin.models.CrosswordUserDetails;
 import com.backend.crosswords.admin.models.User;
+import com.backend.crosswords.corpus.dto.CertainDigestDTO;
 import com.backend.crosswords.corpus.dto.CreateDigestSubscriptionDTO;
 import com.backend.crosswords.corpus.dto.DigestsDTO;
 import com.backend.crosswords.corpus.dto.DocDTO;
@@ -31,6 +32,12 @@ public class DigestController {
         this.digestService = digestService;
     }
 
+    @Operation(summary = "Get the digest by id", description = "This endpoint lets get the digest by id")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully get the digest by id", content = @Content(schema = @Schema(implementation = CertainDigestDTO.class))),
+            @ApiResponse(responseCode = "401", description = "You are trying to get the digest by id while not authenticated"),
+            @ApiResponse(responseCode = "404", description = "There is no digests with such id")
+    })
     @GetMapping("/{id}")
     public ResponseEntity<?> getDigestById(@PathVariable String id) {
         User user;
@@ -47,7 +54,7 @@ public class DigestController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
-    @Operation(summary = "Get all digests", description = "This endpoint lets get all digests")
+    @Operation(summary = "Get all digests", description = "This endpoint lets get all digests.\n P.S. this method is for mobile, also, Mathew, remind me to remind you about snake_case)))")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "You successfully get all digests", content = @Content(schema = @Schema(implementation = DigestsDTO.class))),
             @ApiResponse(responseCode = "401", description = "You are trying to get all digests while not authenticated")

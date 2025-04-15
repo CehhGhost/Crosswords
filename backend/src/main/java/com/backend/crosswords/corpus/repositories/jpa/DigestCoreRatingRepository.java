@@ -9,7 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.Optional;
 
-public interface DigestRatingRepository extends JpaRepository<DigestCoreRating, DigestCoreRatingId> {
+public interface DigestCoreRatingRepository extends JpaRepository<DigestCoreRating, DigestCoreRatingId> {
     Optional<DigestCoreRating> findByCoreAndUser(DigestCore core, User user);
     List<DigestCoreRating> findAllByCore(DigestCore core);
 }

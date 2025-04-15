@@ -62,7 +62,7 @@ public class TagService {
         }
     }
 
-    public Set<String> getSetOfTagsNames(List<Tag> tags) {
+    public Set<String> getSetOfTagsNames(Collection<Tag> tags) {
         Set<String> tagsNames = new HashSet<>();
         for (var tag : tags) {
             tagsNames.add(tag.getName());
