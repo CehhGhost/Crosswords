@@ -110,8 +110,17 @@ public class DigestSubscriptionSettingsService {
     }
 
     public void updateDigestSubscriptionSettingsForUser(DigestSubscription subscription, User user, DigestSubscriptionSettingsDTO subscriptionSettingsDTO) {
-        var subscriptionSettings = subscriptionSettingsRepository.findById(new DigestSubscriptionSettingsId(subscription.getId(), user.getId())).orElseThrow(
-                () -> new NoSuchElementException("There is no settings between these user and subscription!"));
+        DigestSubscriptionSettings subscriptionSettings;
+        var checkSubscriptionSettings = subscriptionSettingsRepository.findById(new DigestSubscriptionSettingsId(subscription.getId(), user.getId()));
+        if (checkSubscriptionSettings.isEmpty()) {
+            if (subscription.getIsPublic()) {
+                subscriptionSettings = subscriptionSettingsRepository.save(this.setParametersForSubscriptionSettingsAndReturn(subscription, user));
+            } else {
+                throw new NoSuchElementException("There is no settings between these user and subscription which is not public!");
+            }
+        } else {
+            subscriptionSettings = checkSubscriptionSettings.get();
+        }
         if (subscriptionSettingsDTO.getSubscribed()) {
             subscriptionSettings.setSendToMail(subscriptionSettings.getSendToMail() == null ? user.getPersonalSendToMail() : subscriptionSettings.getSendToMail());
             subscriptionSettings.setMobileNotifications(subscriptionSettings.getMobileNotifications() == null ? user.getPersonalMobileNotifications() : subscriptionSettings.getMobileNotifications());
@@ -131,7 +140,7 @@ public class DigestSubscriptionSettingsService {
         return subscribersUsernames;
     }
 
-    public List<DigestSubscriptionSettings> getAllUsersDigestSubscriptions(User user) {
+    public List<DigestSubscriptionSettings> getAllUsersDigestSubscriptionsSettings(User user) {
         return subscriptionSettingsRepository.findAllBySubscriber(user);
     }
 
@@ -139,7 +148,7 @@ public class DigestSubscriptionSettingsService {
         return subscriptionSettingsRepository.findAllByDigestSubscription(subscription);
     }
 
-    public List<DigestSubscriptionSettings> getAllUsersAvailableDigestSubscriptions(User user) {
-        return subscriptionSettingsRepository.findAllBySubscriberOrDigestSubscription_IsPublic(user, true);
+    public Set<DigestSubscription> getAllUsersDigestSubscriptions(User user) {
+        return subscriptionSettingsRepository.findDigestSubscriptionsByUser(user);
     }
 }

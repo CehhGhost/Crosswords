@@ -72,9 +72,9 @@ public class DigestSubscriptionController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "You successfully updated a digest subscription's settings"),
             @ApiResponse(responseCode = "401", description = "You are trying to updated a digest subscription's settings while not authenticated"),
-            @ApiResponse(responseCode = "404", description = "At least one digest subscription or one subscription's settings, cant be found in the DB"),
+            @ApiResponse(responseCode = "404", description = "There is no such digest subscription or you are trying to edit private subscription while not its follower"),
     })
-    @PutMapping("/{id}/settings/update") // TODO тоже самое для дайджестов сделать
+    @PutMapping("/{id}/settings/update")
     public ResponseEntity<?> updateDigestSubscriptionSettingsForUser(@PathVariable Long id, @RequestBody DigestSubscriptionSettingsDTO subscriptionSettingsDTO) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
@@ -101,7 +101,7 @@ public class DigestSubscriptionController {
         }
         return ResponseEntity.ok(usersUsernames);
     }
-    @Operation(summary = "Get all user's subscriptions", description = "This endpoint lets you get all user's subscriptions")
+    @Operation(summary = "Get all user's subscriptions", description = "This endpoint lets you get all user's subscriptions, followers are not included in response")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "You successfully get all user's subscriptions", content = @Content(schema = @Schema(implementation = UsersDigestSubscriptionsDTO.class))),
             @ApiResponse(responseCode = "401", description = "You are trying to get all user's subscriptions while not authenticated"),

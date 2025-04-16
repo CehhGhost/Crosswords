@@ -291,4 +291,10 @@ public class DigestService {
         }
         return first && second;
     }
+
+    public void updateDigestSubscriptionSettingsForUserByDigestId(String id, DigestSubscriptionSettingsDTO subscriptionSettingsDTO, User user) {
+        var digest = this.getDigestById(id);
+        var subscription = digest.getSubscription();
+        subscriptionSettingsService.updateDigestSubscriptionSettingsForUser(subscription, user, subscriptionSettingsDTO);
+    }
 }

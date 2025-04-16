@@ -125,4 +125,21 @@ public class DigestController {
         }
         return ResponseEntity.ok(digestService.getDigestsBySearch(searchBody, timestampFrom, timestampTo, tags, sources, subscribe_only, crosswordUserDetails.getUser()));
     }
+    @Operation(summary = "Update a digest subscription's settings", description = "This endpoint lets you update a digest subscription's settings by digest itself")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully updated a digest subscription's settings"),
+            @ApiResponse(responseCode = "401", description = "You are trying to updated a digest subscription's settings while not authenticated"),
+            @ApiResponse(responseCode = "404", description = "There is no digests with such id, there is no such digest subscription or you are trying to edit private subscription while not its follower"),
+    })
+    @PutMapping("/{id}/subscription/settings")
+    public ResponseEntity<?> updateDigestSubscriptionSettingsForUserByDigestId(@PathVariable String id, @RequestBody DigestSubscriptionSettingsDTO subscriptionSettingsDTO) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+        try {
+            digestService.updateDigestSubscriptionSettingsForUserByDigestId(id, subscriptionSettingsDTO, crosswordUserDetails.getUser());
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+        return ResponseEntity.ok(HttpStatus.OK);
+    }
 }

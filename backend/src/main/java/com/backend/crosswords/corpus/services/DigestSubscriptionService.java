@@ -100,10 +100,9 @@ public class DigestSubscriptionService {
         return subscriptionSettingsService.getAllDigestSubscriptionsUsersUsernames(subscription);
     }
 
-    private UsersDigestSubscriptionsDTO transformSubscriptionSettingsIntoUsersDigestSubscriptionsDTO(User user, List<DigestSubscriptionSettings> usersSubscriptionsSettings, boolean allAvailable) {
+    private UsersDigestSubscriptionsDTO transformSubscriptionSettingsIntoUsersDigestSubscriptionsDTO(User user, Collection<DigestSubscription> usersSubscriptions, boolean allAvailable) {
         UsersDigestSubscriptionsDTO usersDigestSubscriptionsDTO = new UsersDigestSubscriptionsDTO();
-        for (var usersSubscriptionSettings : usersSubscriptionsSettings) {
-            var usersSubscription = usersSubscriptionSettings.getDigestSubscription();
+        for (var usersSubscription : usersSubscriptions) {
             UsersDigestSubscriptionDTO usersDigestSubscriptionDTO = new UsersDigestSubscriptionDTO();
             usersDigestSubscriptionDTO.setId(usersSubscription.getId());
             usersDigestSubscriptionDTO.setCreationDate(usersSubscription.getCreatedAt());
@@ -118,9 +117,14 @@ public class DigestSubscriptionService {
                 }
             }
 
-            var sendToMail = usersSubscriptionSettings.getSendToMail() == null ? usersSubscription.getSendToMail() : usersSubscriptionSettings.getSendToMail();
-            var mobileNotifications = usersSubscriptionSettings.getMobileNotifications() == null ? usersSubscription.getMobileNotifications() : usersSubscriptionSettings.getMobileNotifications();
-            usersDigestSubscriptionDTO.setSubscribeOptions(new GetSubscribeOptionsDTO(sendToMail, mobileNotifications, true));
+            try {
+                var usersSubscriptionSettings = subscriptionSettingsService.getSubscriptionSettingsBySubscriptionAndUser(usersSubscription, user);
+                var sendToMail = usersSubscriptionSettings.getSendToMail() == null ? usersSubscription.getSendToMail() : usersSubscriptionSettings.getSendToMail();
+                var mobileNotifications = usersSubscriptionSettings.getMobileNotifications() == null ? usersSubscription.getMobileNotifications() : usersSubscriptionSettings.getMobileNotifications();
+                usersDigestSubscriptionDTO.setSubscribeOptions(new GetSubscribeOptionsDTO(sendToMail, mobileNotifications, true));
+            } catch (NoSuchElementException e) {
+                usersDigestSubscriptionDTO.setSubscribeOptions(new GetSubscribeOptionsDTO(false, false, false));
+            }
 
             var ownersUsername = usersSubscription.getOwner().getUsername();
             usersDigestSubscriptionDTO.setOwnersUsername(ownersUsername);
@@ -140,8 +144,8 @@ public class DigestSubscriptionService {
     }
 
     public UsersDigestSubscriptionsDTO getAllUsersDigestSubscriptionsAndTransformIntoUsersDigestSubscriptionsDTO(User user) {
-        List<DigestSubscriptionSettings> usersSubscriptionsSettings = subscriptionSettingsService.getAllUsersDigestSubscriptions(user);
-        return this.transformSubscriptionSettingsIntoUsersDigestSubscriptionsDTO(user, usersSubscriptionsSettings, false);
+        var usersSubscriptions = subscriptionSettingsService.getAllUsersDigestSubscriptions(user);
+        return this.transformSubscriptionSettingsIntoUsersDigestSubscriptionsDTO(user, usersSubscriptions, false);
     }
 
     public DigestSubscriptionDTO getDigestSubscriptionByIdAndTransformIntoDTO(Long id) {
@@ -175,8 +179,11 @@ public class DigestSubscriptionService {
     }
 
     public UsersDigestSubscriptionsDTO getAllUsersAvailableDigestSubscriptionsAndTransformIntoUsersDigestSubscriptionsDTO(User user) {
-        List<DigestSubscriptionSettings> usersSubscriptionsSettings = subscriptionSettingsService.getAllUsersAvailableDigestSubscriptions(user);
-        return this.transformSubscriptionSettingsIntoUsersDigestSubscriptionsDTO(user, usersSubscriptionsSettings, true);
+        var usersSubscriptions = subscriptionSettingsService.getAllUsersDigestSubscriptions(user);
+        var publicSubscriptions = subscriptionRepository.findAllByIsPublic(true);
+        usersSubscriptions.addAll(publicSubscriptions);
+
+        return this.transformSubscriptionSettingsIntoUsersDigestSubscriptionsDTO(user, usersSubscriptions, true);
     }
 
     public List<DigestSubscription> getAllDigestSubscriptionsByTemplate(DigestTemplate template) {
