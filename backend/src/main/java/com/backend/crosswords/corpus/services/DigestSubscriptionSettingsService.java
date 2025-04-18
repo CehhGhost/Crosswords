@@ -109,7 +109,7 @@ public class DigestSubscriptionSettingsService {
         return userSettings;
     }
 
-    public void updateDigestSubscriptionSettingsForUser(DigestSubscription subscription, User user, DigestSubscriptionSettingsDTO subscriptionSettingsDTO) {
+    public boolean updateDigestSubscriptionSettingsForUser(DigestSubscription subscription, User user, DigestSubscriptionSettingsDTO subscriptionSettingsDTO) {
         DigestSubscriptionSettings subscriptionSettings;
         var checkSubscriptionSettings = subscriptionSettingsRepository.findById(new DigestSubscriptionSettingsId(subscription.getId(), user.getId()));
         if (checkSubscriptionSettings.isEmpty()) {
@@ -126,8 +126,10 @@ public class DigestSubscriptionSettingsService {
             subscriptionSettings.setMobileNotifications(subscriptionSettings.getMobileNotifications() == null ? user.getPersonalMobileNotifications() : subscriptionSettings.getMobileNotifications());
             subscriptionSettings.setEdited(true);
             subscriptionSettingsRepository.save(subscriptionSettings);
+            return false;
         } else {
             subscriptionSettingsRepository.delete(subscriptionSettings);
+            return true;
         }
     }
 

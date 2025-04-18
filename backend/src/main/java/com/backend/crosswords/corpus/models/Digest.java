@@ -1,6 +1,8 @@
 package com.backend.crosswords.corpus.models;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @Table(name = "_digests")
 @Entity
@@ -14,6 +16,7 @@ public class Digest {
     @ManyToOne
     @MapsId("subscriptionId")
     @JoinColumn(name = "digest_subscription_id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private DigestSubscription subscription;
 
     public Digest() {

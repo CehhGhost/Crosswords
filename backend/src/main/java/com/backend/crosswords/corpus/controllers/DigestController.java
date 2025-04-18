@@ -125,7 +125,7 @@ public class DigestController {
         }
         return ResponseEntity.ok(digestService.getDigestsBySearch(searchBody, timestampFrom, timestampTo, tags, sources, subscribe_only, crosswordUserDetails.getUser()));
     }
-    @Operation(summary = "Update a digest subscription's settings", description = "This endpoint lets you update a digest subscription's settings by digest itself")
+    @Operation(summary = "Update a digest subscription's settings", description = "This endpoint lets you update a digest subscription's settings by digest itself, remember that after no followers remains the subscription is being deleted")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "You successfully updated a digest subscription's settings"),
             @ApiResponse(responseCode = "401", description = "You are trying to updated a digest subscription's settings while not authenticated"),

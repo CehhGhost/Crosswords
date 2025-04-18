@@ -68,7 +68,7 @@ public class DigestSubscriptionController {
         }
         return ResponseEntity.ok(HttpStatus.OK);
     }
-    @Operation(summary = "Update a digest subscription's settings", description = "This endpoint lets you update a digest subscription's settings")
+    @Operation(summary = "Update a digest subscription's settings", description = "This endpoint lets you update a digest subscription's settings, remember that after no followers remains the subscription is being deleted")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "You successfully updated a digest subscription's settings"),
             @ApiResponse(responseCode = "401", description = "You are trying to updated a digest subscription's settings while not authenticated"),

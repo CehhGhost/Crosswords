@@ -295,6 +295,7 @@ public class DigestService {
     public void updateDigestSubscriptionSettingsForUserByDigestId(String id, DigestSubscriptionSettingsDTO subscriptionSettingsDTO, User user) {
         var digest = this.getDigestById(id);
         var subscription = digest.getSubscription();
-        subscriptionSettingsService.updateDigestSubscriptionSettingsForUser(subscription, user, subscriptionSettingsDTO);
+        var delete = subscriptionSettingsService.updateDigestSubscriptionSettingsForUser(subscription, user, subscriptionSettingsDTO);
+        subscriptionService.checkDigestSubscriptionDeletion(delete, subscription, user);
     }
 }

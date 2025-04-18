@@ -5,7 +5,6 @@ import com.backend.crosswords.admin.services.UserService;
 import com.backend.crosswords.corpus.dto.*;
 import com.backend.crosswords.corpus.enums.Source;
 import com.backend.crosswords.corpus.models.DigestSubscription;
-import com.backend.crosswords.corpus.models.DigestSubscriptionSettings;
 import com.backend.crosswords.corpus.models.DigestTemplate;
 import com.backend.crosswords.corpus.models.Tag;
 import com.backend.crosswords.corpus.repositories.jpa.DigestSubscriptionRepository;
@@ -90,9 +89,22 @@ public class DigestSubscriptionService {
         return templateService.createTemplateBySourcesAndTags(sources, tags);
     }
 
+    public void checkDigestSubscriptionDeletion(boolean deleted, DigestSubscription subscription, User user) {
+        if (deleted) {
+            if (Objects.equals(subscription.getOwner().getId(), user.getId())) {
+                subscription.setOwner(null);
+                subscriptionRepository.save(subscription);
+            }
+            if (subscriptionSettingsService.getAllDigestSubscriptionSettingsByDigestSubscription(subscription).isEmpty()) {
+                subscriptionRepository.delete(subscription);
+            }
+        }
+    }
+
     public void updateDigestSubscriptionSettingsForUser(Long id, DigestSubscriptionSettingsDTO subscriptionSettingsDTO, User user) {
         var subscription = subscriptionRepository.findById(id).orElseThrow(() -> new NoSuchElementException("There is no subscriptions with such id!"));
-        subscriptionSettingsService.updateDigestSubscriptionSettingsForUser(subscription, user, subscriptionSettingsDTO);
+        var deleted = subscriptionSettingsService.updateDigestSubscriptionSettingsForUser(subscription, user, subscriptionSettingsDTO);
+        this.checkDigestSubscriptionDeletion(deleted, subscription, user);
     }
 
     public List<String> getAllDigestSubscriptionsUsers(Long id) {
