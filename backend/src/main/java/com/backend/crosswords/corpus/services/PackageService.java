@@ -92,4 +92,10 @@ public class PackageService {
     public List<Package> getPackagesForUser(User user) {
         return packageRepository.getAllByOwner(user);
     }
+
+    public Set<DocMeta> getDocsFromPackage(String name, User user) {
+        var packageId = new PackageId(name, user.getId());
+        Package pack = packageRepository.findById(packageId).orElseThrow(() -> new NoSuchElementException("This user doesn't have packages with such name!"));
+        return pack.getDocs();
+    }
 }

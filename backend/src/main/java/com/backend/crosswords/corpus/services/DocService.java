@@ -413,4 +413,12 @@ public class DocService {
     public String getDocTitleByDocId(Long id) {
         return docSearchRepository.findById(id).orElseThrow(() -> new NoSuchElementException("There is no documents with such id!")).getTitle();
     }
+
+    public List<DocDTO> transformDocsIntoDTO(Set<DocMeta> docs) {
+        List<DocDTO> docDTOs = new ArrayList<>();
+        for (var doc : docs) {
+            docDTOs.add(this.transformDocIntoDocDTO(doc));
+        }
+        return docDTOs;
+    }
 }

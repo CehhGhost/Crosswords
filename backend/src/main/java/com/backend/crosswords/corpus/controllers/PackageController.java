@@ -1,18 +1,22 @@
 package com.backend.crosswords.corpus.controllers;
 
 import com.backend.crosswords.admin.models.CrosswordUserDetails;
-import com.backend.crosswords.corpus.dto.CommentsDTO;
 import com.backend.crosswords.corpus.dto.CreatePackageDTO;
+import com.backend.crosswords.corpus.dto.DocDTO;
 import com.backend.crosswords.corpus.dto.FoldersDTO;
 import com.backend.crosswords.corpus.models.Package;
+import com.backend.crosswords.corpus.services.DocService;
 import com.backend.crosswords.corpus.services.PackageService;
+import com.backend.crosswords.corpus.services.PdfService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -28,9 +32,13 @@ import java.util.NoSuchElementException;
 public class PackageController {
 
     private final PackageService packageService;
+    private final DocService docService;
+    private final PdfService pdfService;
 
-    public PackageController(PackageService packageService) {
+    public PackageController(PackageService packageService, DocService docService, PdfService pdfService) {
         this.packageService = packageService;
+        this.docService = docService;
+        this.pdfService = pdfService;
     }
 
     @Operation(summary = "Create a package", description = "This is a simple creating package endpoint")
@@ -87,5 +95,22 @@ public class PackageController {
             usersPackagesNames.add(usersPackage.getId().getName());
         }
         return ResponseEntity.ok(new FoldersDTO(usersPackagesNames));
+    }
+    @GetMapping("/{name}/pdf")
+    public ResponseEntity<?> getPackagePDF(@PathVariable String name) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+            var docs = packageService.getDocsFromPackage(name, crosswordUserDetails.getUser());
+            List<DocDTO> docDTOs = docService.transformDocsIntoDTO(docs);
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"documents_export.pdf\"")
+                    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_PDF_VALUE)
+                    .body(pdfService.generateDocListPdf(docDTOs));
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            throw new RuntimeException("An error occurred while creating a pdf!");
+        }
     }
 }
