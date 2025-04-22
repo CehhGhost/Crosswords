@@ -3,6 +3,7 @@ package com.backend.crosswords.corpus.controllers;
 import com.backend.crosswords.admin.models.CrosswordUserDetails;
 import com.backend.crosswords.corpus.dto.CreatePackageDTO;
 import com.backend.crosswords.corpus.dto.DocDTO;
+import com.backend.crosswords.corpus.dto.DocsDTO;
 import com.backend.crosswords.corpus.dto.FoldersDTO;
 import com.backend.crosswords.corpus.models.Package;
 import com.backend.crosswords.corpus.services.DocService;
@@ -111,6 +112,24 @@ public class PackageController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         } catch (Exception e) {
             throw new RuntimeException("An error occurred while creating a pdf!");
+        }
+    }
+    @Operation(summary = "Get all user's package's docs", description = "This endpoint lets you get all documents, from a certain user and a certain package")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You have get all user's package's docs", content = @Content(schema = @Schema(implementation = FoldersDTO.class))),
+            @ApiResponse(responseCode = "401", description = "You are trying to You have get all user's package's docs while not authenticated"),
+            @ApiResponse(responseCode = "404", description = "This user doesn't have packages with such name")
+    })
+    @GetMapping("/{name}/docs")
+    public ResponseEntity<?> getPackagesDocsByName(@PathVariable String name) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+            var docs = packageService.getDocsFromPackage(name, crosswordUserDetails.getUser());
+            List<DocDTO> docDTOs = docService.transformDocsIntoDTO(docs);
+            return ResponseEntity.ok().body(new DocsDTO(docDTOs));
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
 }
