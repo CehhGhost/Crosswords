@@ -7,11 +7,7 @@ import com.backend.crosswords.corpus.models.*;
 import com.backend.crosswords.corpus.repositories.elasticsearch.DigestCoreSearchRepository;
 import com.backend.crosswords.corpus.repositories.jpa.DigestCoreRepository;
 import com.backend.crosswords.corpus.repositories.jpa.DigestRepository;
-import org.opensearch.data.client.orhlc.NativeSearchQueryBuilder;
-import org.opensearch.index.query.QueryBuilder;
-import org.opensearch.index.query.QueryBuilders;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
-import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -89,12 +85,12 @@ public class DigestService {
         System.out.println("The end of creating digests");
     }
 
-    private Digest getDigestById(String digestId) {
+    public Digest getDigestById(String digestId) {
         var ids = digestId.split("#");
         return digestRepository.findById(new DigestId(Long.valueOf(ids[0]), Long.valueOf(ids[1]))).orElseThrow(() -> new NoSuchElementException("There is no digests with such id!"));
     }
 
-    public CertainDigestDTO getDigestById(String digestId, User user) {
+    public CertainDigestDTO getDigestByIdAndTransformIntoDTO(String digestId, User user) {
         CertainDigestDTO certainDigestDTO = new CertainDigestDTO();
         var digest = this.getDigestById(digestId);
         var core = digest.getCore();

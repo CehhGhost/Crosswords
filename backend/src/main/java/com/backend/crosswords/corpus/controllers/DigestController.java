@@ -3,15 +3,15 @@ package com.backend.crosswords.corpus.controllers;
 import com.backend.crosswords.admin.models.CrosswordUserDetails;
 import com.backend.crosswords.admin.models.User;
 import com.backend.crosswords.corpus.dto.*;
+import com.backend.crosswords.corpus.models.Digest;
 import com.backend.crosswords.corpus.services.DigestService;
-import com.backend.crosswords.corpus.services.TagService;
+import com.backend.crosswords.corpus.services.DigestSubscriptionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -29,9 +29,11 @@ import java.util.NoSuchElementException;
 @Tag(name = "Digest controller", description = "Controller for all operations with digests")
 public class DigestController {
     private final DigestService digestService;
+    private final DigestSubscriptionService subscriptionService;
 
-    public DigestController(DigestService digestService) {
+    public DigestController(DigestService digestService, DigestSubscriptionService subscriptionService) {
         this.digestService = digestService;
+        this.subscriptionService = subscriptionService;
     }
 
     @Operation(summary = "Get the digest by id", description = "This endpoint lets get the digest by id")
@@ -51,7 +53,7 @@ public class DigestController {
             user = null;
         }
         try {
-            return ResponseEntity.ok(digestService.getDigestById(id, user));
+            return ResponseEntity.ok(digestService.getDigestByIdAndTransformIntoDTO(id, user));
         } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
@@ -141,5 +143,27 @@ public class DigestController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
         return ResponseEntity.ok(HttpStatus.OK);
+    }
+    @Operation(summary = "Get digest subscription by digest's id", description = "This endpoint lets you get digest subscription by digest's id")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully get digest subscription by digest's id", content = @Content(schema = @Schema(implementation = DigestSubscriptionDTO.class))),
+            @ApiResponse(responseCode = "401", description = "You are trying to get digest subscription by digest's id while not authenticated"),
+            @ApiResponse(responseCode = "404", description = "There is no digests or subscriptions with such id")
+    })
+    @GetMapping("/{id}/subscription")
+    public ResponseEntity<?> getDigestSubscriptionByDigestId(@PathVariable String id) {
+        Digest digest;
+        try {
+            digest = digestService.getDigestById(id);
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+        DigestSubscriptionDTO subscription;
+        try {
+            subscription = subscriptionService.getDigestSubscriptionByIdAndTransformIntoDTO(digest.getSubscription().getId());
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+        return ResponseEntity.ok(subscription);
     }
 }
