@@ -77,6 +77,11 @@ public class SearchDocDTO {
             example = "[\"Спорт\"]"
     )
     private List<String> tags;
+    @Schema(
+            description = "The list of required packages, if document doesn't contains at least in one of them, then it doesn't get through",
+            example = "[\"Избранное\"]"
+    )
+    private List<String> folders;
 
     public SearchDocDTO() {
     }
@@ -166,6 +171,14 @@ public class SearchDocDTO {
         this.approvalPercentage = approvalPercentage;
     }
 
+    public List<String> getFolders() {
+        return folders;
+    }
+
+    public void setFolders(List<String> folders) {
+        this.folders = folders;
+    }
+
     @Override
     public String toString() {
         return "SearchDocDTO{" +
@@ -179,6 +192,7 @@ public class SearchDocDTO {
                 ", language=" + language +
                 ", sources=" + sources +
                 ", tags=" + tags +
+                ", folders=" + folders +
                 '}';
     }
 }

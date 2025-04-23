@@ -1,6 +1,7 @@
 package com.backend.crosswords.corpus.controllers;
 
 import com.backend.crosswords.admin.models.CrosswordUserDetails;
+import com.backend.crosswords.admin.models.User;
 import com.backend.crosswords.corpus.dto.*;
 import com.backend.crosswords.corpus.models.Comment;
 import com.backend.crosswords.corpus.models.Package;
@@ -25,7 +26,6 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 // TODO сделать ручку для проверки владения подпиской
-// TODO сделать ручку для получения всех папок пользователя, включая отображение присутствия выбранного документа в папках
 
 @RestController
 @RequestMapping("/documents")
@@ -94,9 +94,17 @@ public class DocController {
     @PostMapping("/search")
     public ResponseEntity<?> getDocsBySearch(@RequestBody SearchDocDTO searchDocDTO) {
         try {
-            return ResponseEntity.ok(docService.searchDocs(searchDocDTO));
+            User user;
+            try {
+                Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+                CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+                user = crosswordUserDetails.getUser();
+            } catch (ClassCastException e) {
+                user = null;
+            }
+            return ResponseEntity.ok(docService.searchDocs(searchDocDTO, user));
         } catch (NoSuchElementException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No documents with such id!");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
 
@@ -403,7 +411,7 @@ public class DocController {
         try {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
-            docsPackages = docService.getPackagesForDoc(id, crosswordUserDetails.getUser());
+            docsPackages = docService.getPackagesForDocAndTransformIntoDTO(id, crosswordUserDetails.getUser());
         } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }

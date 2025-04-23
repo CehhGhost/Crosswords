@@ -54,12 +54,6 @@ public class DocMeta {
     @ManyToMany(mappedBy = "docs")
     private List<DigestCore> digestCores;
 
-    // TODO добавить модель дайджестов
-
-    // TODO добавить функционал фильтрации дайджестов по дате (от и до), по тегам и по источникам, public/private
-
-    // TODO добавить поиск дайджестов по названию (точный)
-
     // TODO выгрузка дайджестов в PDF
 
     public DocMeta() {

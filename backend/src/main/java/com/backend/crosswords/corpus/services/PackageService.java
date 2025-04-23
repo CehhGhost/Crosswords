@@ -93,6 +93,14 @@ public class PackageService {
         return packageRepository.getAllByOwner(user);
     }
 
+    public Set<String> getPackagesNamesForUser(User user) {
+        Set<String> packagesNames = new HashSet<>();
+        for (var usersPackage : this.getPackagesForUser(user)) {
+            packagesNames.add(usersPackage.getId().getName());
+        }
+        return packagesNames;
+    }
+
     public Set<DocMeta> getDocsFromPackage(String name, User user) {
         var packageId = new PackageId(name, user.getId());
         Package pack = packageRepository.findById(packageId).orElseThrow(() -> new NoSuchElementException("This user doesn't have packages with such name!"));

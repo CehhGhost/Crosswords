@@ -101,7 +101,6 @@ public class DocService {
     }
 
     // TODO документы должны возвращаться в порядке устаревания дат
-    // TODO возможно нужна будет пагинация
     public List<DocDTO> getAllDocs() {
         List<DocDTO> result = new ArrayList<>();
         for (var docMeta : docMetaRepository.findAll()) {
@@ -111,7 +110,7 @@ public class DocService {
     }
 
     public DocDTO getDocById(Long id) {
-        var docMeta = docMetaRepository.findById(id).orElseThrow();
+        var docMeta = docMetaRepository.findById(id).orElseThrow(() -> new NoSuchElementException("No documents with such id!"));
         var docDTO = this.transformDocIntoDocDTO(docMeta);
         if (docDTO.getDocsAnnotations() == null) {
             docDTO.setDocsAnnotations(new ArrayList<>());
@@ -133,7 +132,7 @@ public class DocService {
         return new SearchResultDTO(pageNumber, isAuthed, resultHits);
     }
 
-    public SearchResultDTO searchDocs(SearchDocDTO searchDocDTO) {
+    public SearchResultDTO searchDocs(SearchDocDTO searchDocDTO, User user) {
         List<DocDTO> resultHits = new ArrayList<>();
         QueryBuilder queryBuilder = null;
         float minScore = 1F;
@@ -166,7 +165,7 @@ public class DocService {
         }
         List<Long> filtersIds = new ArrayList<>();
         for (var doc : docMetaRepository.findAll()) {
-            if (this.equalsMetaData(doc, searchDocDTO)) {
+            if (this.equalsMetaData(doc, searchDocDTO, user)) {
                 filtersIds.add(doc.getId());
             }
         }
@@ -199,15 +198,26 @@ public class DocService {
         return this.formSearchResultDTO(nextPage, resultHits);
     }
 
-    private boolean equalsMetaData(DocMeta doc, SearchDocDTO searchDocDTO) {
+    private boolean equalsMetaData(DocMeta doc, SearchDocDTO searchDocDTO, User user) {
         if (searchDocDTO == null) {
             return true;
         }
-        return (searchDocDTO.getDateFrom() == null || searchDocDTO.getDateFrom().before(doc.getDate())) &&
+        if( (searchDocDTO.getDateFrom() == null || searchDocDTO.getDateFrom().before(doc.getDate())) &&
                 (searchDocDTO.getDateTo() == null || searchDocDTO.getDateTo().after(doc.getDate())) &&
                 (searchDocDTO.getLanguage() == null || searchDocDTO.getLanguage().isEmpty() || searchDocDTO.getLanguage().contains(doc.getLanguage().toString())) &&
                 (searchDocDTO.getSources() == null || searchDocDTO.getSources().isEmpty() || searchDocDTO.getSources().contains(doc.getSource().getRussianName())) &&
-                (searchDocDTO.getTags() == null || searchDocDTO.getTags().isEmpty() || tagService.getSetOfTagsNames(doc.getTags()).containsAll(searchDocDTO.getTags()));
+                (searchDocDTO.getTags() == null || searchDocDTO.getTags().isEmpty() || tagService.getSetOfTagsNames(doc.getTags()).containsAll(searchDocDTO.getTags()))) {
+            if (searchDocDTO.getFolders() != null && !searchDocDTO.getFolders().isEmpty() && user != null) {
+                for (var packageName : searchDocDTO.getFolders()) {
+                    if (packageService.getPackageByName(packageName, user).getDocs().contains(doc)) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            return true;
+        }
+        return false;
     }
 
     public void deleteDocById(Long id) {
@@ -285,16 +295,22 @@ public class DocService {
     }
 
     public void deleteDocumentsItself() {
-        IndexOperations indexOps = elasticsearchOperations.indexOps(IndexCoordinates.of("document"));
-        if (indexOps.exists()) {
-            boolean isDeleted = indexOps.delete();
-            if (isDeleted) {
-                System.out.println("Index '" + "document" + "' deleted successfully.");
+        List<IndexOperations> indexOpsList = List.of(
+                elasticsearchOperations.indexOps(IndexCoordinates.of("document")),
+                elasticsearchOperations.indexOps(IndexCoordinates.of("digest_core")),
+                elasticsearchOperations.indexOps(IndexCoordinates.of("digest_subscription"))
+        );
+        for (var indexOps : indexOpsList) {
+            if (indexOps.exists()) {
+                boolean isDeleted = indexOps.delete();
+                if (isDeleted) {
+                    System.out.println("Index '" + "document" + "' deleted successfully.");
+                } else {
+                    throw new RequestRejectedException("Failed to delete index '" + "document" + "'.");
+                }
             } else {
-                throw new RequestRejectedException("Failed to delete index '" + "document" + "'.");
+                throw new NoSuchElementException("Index '" + "document" + "' does not exist.");
             }
-        } else {
-            throw new NoSuchElementException("Index '" + "document" + "' does not exist.");
         }
     }
 
@@ -362,7 +378,7 @@ public class DocService {
         docMetaRepository.save(docMeta);
     }
 
-    public List<PackagesForDocDTO> getPackagesForDoc(Long id, User user) {
+    public List<PackagesForDocDTO> getPackagesForDocAndTransformIntoDTO(Long id, User user) {
         var docMeta = docMetaRepository.findById(id).orElseThrow(() -> new NoSuchElementException("There is no documents with such id!"));
         List<PackagesForDocDTO> docsPackages = new ArrayList<>();
         for (var usersPackage : packageService.getPackagesForUser(user)) {
