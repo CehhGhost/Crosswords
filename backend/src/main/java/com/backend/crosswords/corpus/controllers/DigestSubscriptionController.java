@@ -88,7 +88,7 @@ public class DigestSubscriptionController {
     @Operation(summary = "Get all users from the subscription", description = "This endpoint lets you get all users from the subscription")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "You successfully get all users from the subscription", content = @Content(schema = @Schema(implementation = FollowersUsernamesDTO.class))),
-            @ApiResponse(responseCode = "401", description = "You are trying to updated a digest subscription's settings while not authenticated"), // TODO а нужна ли вообще аутентификация здесь?
+            @ApiResponse(responseCode = "401", description = "You are trying to get all users from the subscription while not authenticated"),
             @ApiResponse(responseCode = "404", description = "There is no subscriptions with such id"),
     })
     @GetMapping("/{id}/followers") // TODO тоже самое для дайджестов сделать

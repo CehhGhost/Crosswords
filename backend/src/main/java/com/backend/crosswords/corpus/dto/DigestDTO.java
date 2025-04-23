@@ -18,7 +18,8 @@ public class DigestDTO {
     @JsonProperty("average_rating")
     private Double averageRating;
     @Schema(example = "5")
-    private Integer userRating; // TODO напомнить Матвею про snake_case
+    @JsonProperty("user_rating")
+    private Integer userRating;
     @Schema(example = "[\n" +
             "            \"Спорт\",\n" +
             "            \"РБК\"\n" +
@@ -40,7 +41,8 @@ public class DigestDTO {
     @JsonProperty("public")
     private Boolean isPublic;
     @Schema(example = "true")
-    private Boolean isOwner; // TODO напомнить Матвею про snake_case
+    @JsonProperty("is_owner")
+    private Boolean isOwner;
     @Schema(example = "admin")
     private String owner;
     @Schema(example = "[\n" +

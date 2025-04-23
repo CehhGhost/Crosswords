@@ -7,7 +7,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.ArrayList;
 import java.util.List;
 
-// TODO доделать
 public class DigestSubscriptionDTO {
     @Schema(example = "1")
     private Long id;

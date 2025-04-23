@@ -2,13 +2,19 @@ package com.backend.crosswords.corpus.services;
 
 import com.backend.crosswords.admin.models.User;
 import com.backend.crosswords.admin.services.UserService;
+import com.backend.crosswords.config.Pair;
 import com.backend.crosswords.corpus.dto.*;
 import com.backend.crosswords.corpus.enums.Source;
-import com.backend.crosswords.corpus.models.DigestSubscription;
-import com.backend.crosswords.corpus.models.DigestTemplate;
-import com.backend.crosswords.corpus.models.Tag;
+import com.backend.crosswords.corpus.models.*;
+import com.backend.crosswords.corpus.repositories.elasticsearch.DigestSubscriptionSearchRepository;
 import com.backend.crosswords.corpus.repositories.jpa.DigestSubscriptionRepository;
 import org.modelmapper.ModelMapper;
+import org.opensearch.data.client.orhlc.NativeSearchQueryBuilder;
+import org.opensearch.index.query.QueryBuilder;
+import org.opensearch.index.query.QueryBuilders;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,17 +26,21 @@ public class DigestSubscriptionService {
     private final UserService userService;
     private final ModelMapper modelMapper;
     private final DigestSubscriptionRepository subscriptionRepository;
+    private final DigestSubscriptionSearchRepository subscriptionSearchRepository;
     private final TagService tagService;
     private final DigestSubscriptionSettingsService subscriptionSettingsService;
     private final DigestTemplateService templateService;
+    private final ElasticsearchOperations elasticsearchOperations;
 
-    public DigestSubscriptionService(UserService userService, ModelMapper modelMapper, DigestSubscriptionRepository subscriptionRepository, TagService tagService, DigestSubscriptionSettingsService subscriptionSettingsService, DigestTemplateService templateService) {
+    public DigestSubscriptionService(UserService userService, ModelMapper modelMapper, DigestSubscriptionRepository subscriptionRepository, DigestSubscriptionSearchRepository subscriptionSearchRepository, TagService tagService, DigestSubscriptionSettingsService subscriptionSettingsService, DigestTemplateService templateService, ElasticsearchOperations elasticsearchOperations) {
         this.userService = userService;
         this.modelMapper = modelMapper;
         this.subscriptionRepository = subscriptionRepository;
+        this.subscriptionSearchRepository = subscriptionSearchRepository;
         this.tagService = tagService;
         this.subscriptionSettingsService = subscriptionSettingsService;
         this.templateService = templateService;
+        this.elasticsearchOperations = elasticsearchOperations;
     }
 
     @Transactional
@@ -50,6 +60,8 @@ public class DigestSubscriptionService {
         subscription = subscriptionRepository.save(subscription);
 
         subscriptionSettingsService.setSubscribersForSubscription(createDigestSubscriptionDTO.getFollowers(), subscription);
+        var subscriptionES = new DigestSubscriptionES(subscription.getId(), createDigestSubscriptionDTO.getTitle());
+        subscriptionSearchRepository.save(subscriptionES);
     }
 
     public DigestSubscription getDigestSubscriptionById(Long id) {
@@ -62,10 +74,10 @@ public class DigestSubscriptionService {
         if (!Objects.equals(user.getId(), subscription.getOwner().getId())) {
             throw new IllegalAccessException("You are not an owner of this subscription!");
         }
+
         subscription.setOwner(userService.getUserByUsername(updateDigestSubscriptionDTO.getOwnersUsername()));
         subscription.setDescription(updateDigestSubscriptionDTO.getDescription());
         subscription.setIsPublic(updateDigestSubscriptionDTO.getPublic());
-        subscription.setTitle(updateDigestSubscriptionDTO.getTitle());
         subscription.setSendToMail(updateDigestSubscriptionDTO.getSubscribeOptions().getSendToMail());
         subscription.setMobileNotifications(updateDigestSubscriptionDTO.getSubscribeOptions().getMobileNotifications());
 
@@ -75,6 +87,10 @@ public class DigestSubscriptionService {
         subscription = subscriptionRepository.save(subscription);
 
         subscriptionSettingsService.setNewSubscribersForSubscription(updateDigestSubscriptionDTO, subscription);
+
+        var subscriptionES = subscriptionSearchRepository.findById(id).orElseThrow(() -> new NoSuchElementException("There is no subscriptions with such id!"));
+        subscriptionES.setTitle(updateDigestSubscriptionDTO.getTitle());
+        subscriptionSearchRepository.save(subscriptionES);
     }
     @Transactional
     public DigestTemplate extractTagsAndSourcesAndCreateTemplate(List<String> tagsNames, List<String> sourcesNames) {
@@ -115,12 +131,14 @@ public class DigestSubscriptionService {
     private UsersDigestSubscriptionsDTO transformSubscriptionSettingsIntoUsersDigestSubscriptionsDTO(User user, Collection<DigestSubscription> usersSubscriptions, boolean allAvailable) {
         UsersDigestSubscriptionsDTO usersDigestSubscriptionsDTO = new UsersDigestSubscriptionsDTO();
         for (var usersSubscription : usersSubscriptions) {
+            var usersSubscriptionES = subscriptionSearchRepository.findById(usersSubscription.getId()).orElseThrow(() -> new NoSuchElementException("There is no subscriptions with such id!"));
             UsersDigestSubscriptionDTO usersDigestSubscriptionDTO = new UsersDigestSubscriptionDTO();
             usersDigestSubscriptionDTO.setId(usersSubscription.getId());
             usersDigestSubscriptionDTO.setCreationDate(usersSubscription.getCreatedAt());
             usersDigestSubscriptionDTO.setDescription(usersSubscription.getDescription());
             usersDigestSubscriptionDTO.setPublic(usersSubscription.getIsPublic());
-            usersDigestSubscriptionDTO.setTitle(usersSubscription.getTitle());
+
+            usersDigestSubscriptionDTO.setTitle(usersSubscriptionES.getTitle());
 
             if (allAvailable) {
                 var subscriptionSettings = subscriptionSettingsService.getAllDigestSubscriptionSettingsByDigestSubscription(usersSubscription);
@@ -203,6 +221,23 @@ public class DigestSubscriptionService {
     }
 
     public List<DigestSubscription> getAllDigestSubscriptionsBySearchTerm(String searchTerm) {
-        return subscriptionRepository.findAllByTitleContains(searchTerm);
+        List<DigestSubscription> digestSubscriptions = new ArrayList<>();
+        QueryBuilder queryBuilder = QueryBuilders.matchPhraseQuery("title", searchTerm);
+        float minScore = 1F;
+        var searchQuery = new NativeSearchQueryBuilder()
+                .withQuery(queryBuilder)
+                .build();
+        var searchHits = elasticsearchOperations.search(searchQuery, DigestSubscriptionES.class, IndexCoordinates.of("digest_subscription"));
+        searchHits.forEach(hit ->
+        {
+            var digestSubscriptionES = hit.getContent();
+            var digestSubscription = subscriptionRepository.findById(digestSubscriptionES.getId()).orElseThrow(() -> new NoSuchElementException("There is no subscriptions with such id!"));
+            digestSubscriptions.add(digestSubscription);
+        });
+        return digestSubscriptions;
+    }
+
+    public DigestSubscriptionES getDigestSubscriptionESById(Long id) {
+        return subscriptionSearchRepository.findById(id).orElseThrow(() -> new NoSuchElementException("There is no subscriptions with such id!"));
     }
 }

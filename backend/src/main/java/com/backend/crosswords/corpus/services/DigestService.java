@@ -96,6 +96,7 @@ public class DigestService {
         var core = digest.getCore();
         var coreES = coreSearchRepository.findById(core.getId()).orElseThrow(() -> new NoSuchElementException("There is no digest cores with such id!"));
         var subscription = digest.getSubscription();
+        var subscriptionES = subscriptionService.getDigestSubscriptionESById(subscription.getId());
         var template = templateService.getTemplateFromId(core.getTemplate().getUuid());
         DigestSubscriptionSettings subscriptionSettings;
 
@@ -114,7 +115,7 @@ public class DigestService {
 
         certainDigestDTO.setId(digestId);
 
-        certainDigestDTO.setTitle(subscription.getTitle());
+        certainDigestDTO.setTitle(subscriptionES.getTitle());
 
         certainDigestDTO.setAverageRating(ratingService.getCoresAverageRating(core));
         certainDigestDTO.setUserRating(ratingService.getCoresUsersRating(core, user));
@@ -191,11 +192,12 @@ public class DigestService {
     }
     private DigestsDTO transformDigestsIntoDigestsDTO(List<Digest> digests, User user) {
         DigestsDTO digestsDTO = new DigestsDTO();
-        digestsDTO.setIsAuthed(user != null); // TODO может ли незарегистрированный пользователь поиск по дайджестам?
+        digestsDTO.setIsAuthed(user != null); // TODO может ли незарегистрированный пользователь поиск по дайджестам? Да, может, надо переделать с учетом этого
         for (var digest : digests) {
             var core = digest.getCore();
             var coreES = coreSearchRepository.findById(core.getId()).orElseThrow(() -> new NoSuchElementException("There is no digest cores with such id!"));
             var subscription = digest.getSubscription();
+            var subscriptionES = subscriptionService.getDigestSubscriptionESById(subscription.getId());
             var template = templateService.getTemplateFromId(core.getTemplate().getUuid());
 
             DigestSubscriptionSettings subscriptionSettings;
@@ -213,7 +215,7 @@ public class DigestService {
 
             digestDTO.setId(digest.getCore().getId().toString() + "#" + digest.getSubscription().getId().toString());
 
-            digestDTO.setTitle(subscription.getTitle());
+            digestDTO.setTitle(subscriptionES.getTitle());
 
             digestDTO.setAverageRating(ratingService.getCoresAverageRating(core));
             digestDTO.setUserRating(ratingService.getCoresUsersRating(core, user));
