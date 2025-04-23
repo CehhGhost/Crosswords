@@ -2,7 +2,6 @@ package com.backend.crosswords.corpus.services;
 
 import com.backend.crosswords.admin.models.User;
 import com.backend.crosswords.admin.services.UserService;
-import com.backend.crosswords.config.Pair;
 import com.backend.crosswords.corpus.dto.*;
 import com.backend.crosswords.corpus.enums.Source;
 import com.backend.crosswords.corpus.models.*;
@@ -12,7 +11,6 @@ import org.modelmapper.ModelMapper;
 import org.opensearch.data.client.orhlc.NativeSearchQueryBuilder;
 import org.opensearch.index.query.QueryBuilder;
 import org.opensearch.index.query.QueryBuilders;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import org.springframework.stereotype.Service;
@@ -239,5 +237,10 @@ public class DigestSubscriptionService {
 
     public DigestSubscriptionES getDigestSubscriptionESById(Long id) {
         return subscriptionSearchRepository.findById(id).orElseThrow(() -> new NoSuchElementException("There is no subscriptions with such id!"));
+    }
+
+    public Boolean checkUsersOwnershipOfDigestSubscriptionById(Long id, User user) {
+        var subscription = this.getDigestSubscriptionById(id);
+        return subscription.getOwner().getId().equals(user.getId());
     }
 }

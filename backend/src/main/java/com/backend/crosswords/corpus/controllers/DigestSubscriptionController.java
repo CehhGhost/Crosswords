@@ -142,4 +142,20 @@ public class DigestSubscriptionController {
         }
         return ResponseEntity.ok(subscription);
     }
+    @Operation(summary = "Check if a user is the digest subscription's owner", description = "This endpoint lets you check if a user is the digest subscription's owner")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully checked if a user is the digest subscription's owner", content = @Content(schema = @Schema(implementation = CheckOwnershipDTO.class))),
+            @ApiResponse(responseCode = "401", description = "You are trying to check if a user is the digest subscription's owner while not authenticated"),
+            @ApiResponse(responseCode = "404", description = "There is no subscriptions with such id")
+    })
+    @GetMapping("/{id}/check_ownership")
+    public ResponseEntity<?> checkOwnership(@PathVariable Long id) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+            return ResponseEntity.ok(new CheckOwnershipDTO(digestSubscriptionService.checkUsersOwnershipOfDigestSubscriptionById(id, crosswordUserDetails.getUser())));
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
 }
