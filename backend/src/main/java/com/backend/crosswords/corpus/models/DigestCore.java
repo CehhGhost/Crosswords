@@ -17,10 +17,7 @@ public class DigestCore {
     @ManyToOne(cascade = {CascadeType.MERGE})
     @JoinColumn(name = "digest_template_id")
     private DigestTemplate template;
-    @ManyToMany(cascade = {CascadeType.MERGE})
-    @JoinTable(name = "_digest_cores_docs",
-            joinColumns = @JoinColumn(name = "digest_core_id"),
-            inverseJoinColumns = @JoinColumn(name = "doc_id"))
+    @ManyToMany(mappedBy = "digestCores")
     private List<DocMeta> docs;
     @OneToMany(mappedBy = "core", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DigestCoreRating> ratings;

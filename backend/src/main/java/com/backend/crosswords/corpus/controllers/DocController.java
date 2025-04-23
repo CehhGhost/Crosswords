@@ -25,8 +25,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-// TODO сделать ручку для проверки владения подпиской
-
 @RestController
 @RequestMapping("/documents")
 @Tag(name = "Doc controller", description = "Controller for all operations with documents")
@@ -80,7 +78,7 @@ public class DocController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getDocById(@PathVariable Long id) {
         try {
-            return ResponseEntity.ok(docService.getDocById(id));
+            return ResponseEntity.ok(docService.getDocByIdAndTransformIntoDTO(id));
         } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No documents with such id!");
         }

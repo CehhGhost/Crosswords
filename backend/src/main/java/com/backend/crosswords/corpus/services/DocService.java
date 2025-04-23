@@ -109,7 +109,7 @@ public class DocService {
         return result;
     }
 
-    public DocDTO getDocById(Long id) {
+    public DocDTO getDocByIdAndTransformIntoDTO(Long id) {
         var docMeta = docMetaRepository.findById(id).orElseThrow(() -> new NoSuchElementException("No documents with such id!"));
         var docDTO = this.transformDocIntoDocDTO(docMeta);
         if (docDTO.getDocsAnnotations() == null) {
@@ -138,7 +138,7 @@ public class DocService {
         float minScore = 1F;
         switch (searchDocDTO.getSearchMode()) {
             case "id" -> {
-                resultHits.add(this.getDocById(Long.parseLong(searchDocDTO.getSearchTerm())));
+                resultHits.add(this.getDocByIdAndTransformIntoDTO(Long.parseLong(searchDocDTO.getSearchTerm())));
                 return this.formSearchResultDTO(searchDocDTO.getPageNumber(), resultHits);
             }
             case "semantic" -> {
@@ -228,6 +228,7 @@ public class DocService {
         var docMeta = docMetaRepository.findById(id).orElseThrow();
         tagService.removeTagsFromDoc(docMeta);
         packageService.removeDocFromPackages(docMeta);
+
         docMetaRepository.delete(docMeta);
         // TODO учесть, что ES не понимает @Transactional и в случае ошибки не откатит изменения обратно, поэтому может произойти повреждение данных в ES
         var checkDocEs = docSearchRepository.findById(id);
@@ -436,5 +437,14 @@ public class DocService {
             docDTOs.add(this.transformDocIntoDocDTO(doc));
         }
         return docDTOs;
+    }
+
+    @Transactional
+    public void setCoreForDocs(DigestCore core, List<DocMeta> docMetas) {
+        docMetas = docMetaRepository.findDocMetasWithCores(docMetas);
+        for (var docMeta : docMetas) {
+            docMeta.getDigestCores().add(core);
+            docMetaRepository.save(docMeta);
+        }
     }
 }

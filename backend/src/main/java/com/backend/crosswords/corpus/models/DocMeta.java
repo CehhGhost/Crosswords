@@ -51,7 +51,10 @@ public class DocMeta {
     @OneToMany(mappedBy = "doc", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments;
 
-    @ManyToMany(mappedBy = "docs")
+    @ManyToMany
+    @JoinTable(name = "_digest_cores_docs",
+            joinColumns = @JoinColumn(name = "doc_id"),
+            inverseJoinColumns = @JoinColumn(name = "digest_core_id"))
     private List<DigestCore> digestCores;
 
     // TODO выгрузка дайджестов в PDF

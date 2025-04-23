@@ -10,6 +10,7 @@ import com.backend.crosswords.corpus.repositories.jpa.DigestRepository;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import java.sql.Timestamp;
@@ -45,7 +46,8 @@ public class DigestService {
         this.tagService = tagService;
         this.elasticsearchOperations = elasticsearchOperations;
     }
-    private DigestCore createNewDigestCore(DigestTemplate template) {
+    @Transactional
+    protected DigestCore createNewDigestCore(DigestTemplate template) {
         template = templateService.getTemplateFromId(template.getUuid()); // необходимо, чтобы сделать полную загрузку данных, избегаю ленивую
         var docMetas = docService.getAllDocsByTemplate(template);
         DigestCore core = new DigestCore();
@@ -53,6 +55,8 @@ public class DigestService {
         core.setDocs(docMetas);
         core.setTemplate(template);
 
+        core = coreRepository.save(core);
+        docService.setCoreForDocs(core, docMetas);
         core = coreRepository.save(core);
 
         StringBuilder docsText = new StringBuilder();
