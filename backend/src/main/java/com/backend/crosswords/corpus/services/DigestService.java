@@ -87,7 +87,13 @@ public class DigestService {
 
     public Digest getDigestById(String digestId) {
         var ids = digestId.split("#");
-        return digestRepository.findById(new DigestId(Long.valueOf(ids[0]), Long.valueOf(ids[1]))).orElseThrow(() -> new NoSuchElementException("There is no digests with such id!"));
+        DigestId id;
+        try {
+            id = new DigestId(Long.valueOf(ids[0]), Long.valueOf(ids[1]));
+        } catch (Exception e) {
+            throw new NoSuchElementException("There is no digests with such id!");
+        }
+        return digestRepository.findById(id).orElseThrow(() -> new NoSuchElementException("There is no digests with such id!"));
     }
 
     public CertainDigestDTO getDigestByIdAndTransformIntoDTO(String digestId, User user) {
@@ -295,5 +301,11 @@ public class DigestService {
         var subscription = digest.getSubscription();
         var delete = subscriptionSettingsService.updateDigestSubscriptionSettingsForUser(subscription, user, subscriptionSettingsDTO);
         subscriptionService.checkDigestSubscriptionDeletion(delete, subscription, user);
+    }
+
+    public List<String> getAllDigestSubscriptionsUsers(String id) {
+        var digest = this.getDigestById(id);
+        var subscription = digest.getSubscription();
+        return subscriptionSettingsService.getAllDigestSubscriptionsUsersUsernames(subscription);
     }
 }

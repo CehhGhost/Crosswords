@@ -91,8 +91,8 @@ public class DigestSubscriptionController {
             @ApiResponse(responseCode = "401", description = "You are trying to get all users from the subscription while not authenticated"),
             @ApiResponse(responseCode = "404", description = "There is no subscriptions with such id"),
     })
-    @GetMapping("/{id}/followers") // TODO тоже самое для дайджестов сделать
-    public ResponseEntity<?> getAllDigestSubscriptionsUsers(@PathVariable Long id) {
+    @GetMapping("/{id}/followers")
+    public ResponseEntity<?> getAllDigestSubscriptionsUsersByDigestSubscriptionId(@PathVariable Long id) {
         FollowersUsernamesDTO usersUsernames = new FollowersUsernamesDTO();
         try {
             usersUsernames.setFollowers(digestSubscriptionService.getAllDigestSubscriptionsUsers(id));

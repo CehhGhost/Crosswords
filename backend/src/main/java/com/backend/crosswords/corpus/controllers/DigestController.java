@@ -166,4 +166,21 @@ public class DigestController {
         }
         return ResponseEntity.ok(subscription);
     }
+    @Operation(summary = "Get all users from the subscription by its digest", description = "This endpoint lets you get all users from the subscription by its digest")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully get all users from the subscription by its digest", content = @Content(schema = @Schema(implementation = FollowersUsernamesDTO.class))),
+            @ApiResponse(responseCode = "401", description = "You are trying to get all users from the subscription by its digest while not authenticated"),
+            @ApiResponse(responseCode = "404", description = "There is no digests with such id"),
+    })
+    @GetMapping("/{id}/followers")
+
+    public ResponseEntity<?> getAllDigestSubscriptionsUsersByDigestId(@PathVariable String id) {
+        FollowersUsernamesDTO usersUsernames = new FollowersUsernamesDTO();
+        try {
+            usersUsernames.setFollowers(digestService.getAllDigestSubscriptionsUsers(id));
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+        return ResponseEntity.ok(usersUsernames);
+    }
 }
