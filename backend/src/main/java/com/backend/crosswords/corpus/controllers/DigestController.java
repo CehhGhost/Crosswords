@@ -107,8 +107,14 @@ public class DigestController {
             @RequestParam(required = false) List<String> tags,
             @RequestParam(required = false) List<String> sources,
             @RequestParam(required = false, defaultValue = "false") Boolean subscribe_only) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+        User user;
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+            user = crosswordUserDetails.getUser();
+        } catch (ClassCastException e) {
+            user = null;
+        }
         SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy");
         Timestamp timestampFrom = null;
         Timestamp timestampTo = null;
@@ -125,7 +131,7 @@ public class DigestController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid date format. Expected: dd/MM/yyyy");
         }
-        return ResponseEntity.ok(digestService.getDigestsBySearch(searchBody, timestampFrom, timestampTo, tags, sources, subscribe_only, crosswordUserDetails.getUser()));
+        return ResponseEntity.ok(digestService.getDigestsBySearch(searchBody, timestampFrom, timestampTo, tags, sources, subscribe_only, user));
     }
     @Operation(summary = "Update a digest subscription's settings", description = "This endpoint lets you update a digest subscription's settings by digest itself, remember that after no followers remains the subscription is being deleted")
     @ApiResponses({

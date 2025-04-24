@@ -60,6 +60,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/documents/{id}").hasAuthority(AuthorityEnum.EDIT_DELETE_DOCS.name())
                         .requestMatchers("/packages/**").authenticated()
                         .requestMatchers("/subscriptions/**").authenticated()
+                        .requestMatchers("/digests/search").permitAll()
                         .requestMatchers("/digests/**").authenticated()
                         .requestMatchers("/documents/{id}/annotate/**").authenticated()
                         .requestMatchers("/documents/{id}/comment/**").authenticated()

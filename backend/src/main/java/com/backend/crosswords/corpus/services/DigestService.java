@@ -202,7 +202,7 @@ public class DigestService {
     }
     private DigestsDTO transformDigestsIntoDigestsDTO(List<Digest> digests, User user) {
         DigestsDTO digestsDTO = new DigestsDTO();
-        digestsDTO.setIsAuthed(user != null); // TODO может ли незарегистрированный пользователь поиск по дайджестам? Да, может, надо переделать с учетом этого
+        digestsDTO.setIsAuthed(user != null);
         for (var digest : digests) {
             var core = digest.getCore();
             var coreES = coreSearchRepository.findById(core.getId()).orElseThrow(() -> new NoSuchElementException("There is no digest cores with such id!"));

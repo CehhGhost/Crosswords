@@ -47,7 +47,9 @@ public class UserService {
     }
 
     public List<String> registerUser(RegisterUserDTO registerUserDTO, String ipAddress, String userAgent) {
+        var usernameFromEmail = registerUserDTO.getEmail().split("@")[0];
         var user = modelMapper.map(registerUserDTO, User.class);
+        user.setUsername(usernameFromEmail);
         if (userRepository.existsUserByUsername(user.getUsername())) {
             throw new IllegalArgumentException("This username is already existed");
         }
@@ -71,7 +73,7 @@ public class UserService {
 
         user = userRepository.save(user);
         packageService.createPackage(Package.favouritesName, user);
-        return this.loginUser(new LoginUserDTO(registerUserDTO.getUsername(), registerUserDTO.getPassword()), ipAddress, userAgent);
+        return this.loginUser(new LoginUserDTO(registerUserDTO.getEmail(), registerUserDTO.getPassword()), ipAddress, userAgent);
     }
 
     public List<String> loginUser(LoginUserDTO loginUserDTO, String ipAddress, String userAgent) {

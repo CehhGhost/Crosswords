@@ -15,12 +15,6 @@ public class RegisterUserDTO {
     private String surname;
 
     @Schema(
-            description = "User's login, can be used to login",
-            example = "Geka"
-    )
-    private String username;
-
-    @Schema(
             example = "12345"
     )
     private String password;
@@ -31,10 +25,9 @@ public class RegisterUserDTO {
     )
     private String email;
 
-    public RegisterUserDTO(String name, String surname, String username, String password, String email) {
+    public RegisterUserDTO(String name, String surname, String password, String email) {
         this.name = name;
         this.surname = surname;
-        this.username = username;
         this.password = password;
         this.email = email;
     }
@@ -58,14 +51,6 @@ public class RegisterUserDTO {
         this.surname = surname;
     }
 
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
     public String getPassword() {
         return password;
     }
@@ -87,7 +72,6 @@ public class RegisterUserDTO {
         return "RegisterUserDTO{" +
                 "name='" + name + '\'' +
                 ", surname='" + surname + '\'' +
-                ", username='" + username + '\'' +
                 ", password='" + password + '\'' +
                 ", email='" + email + '\'' +
                 '}';

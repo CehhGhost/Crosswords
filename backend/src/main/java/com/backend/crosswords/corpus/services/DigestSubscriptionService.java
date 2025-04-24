@@ -178,7 +178,9 @@ public class DigestSubscriptionService {
 
     public DigestSubscriptionDTO getDigestSubscriptionByIdAndTransformIntoDTO(Long id) {
         var subscription = this.getDigestSubscriptionById(id);
+        var subscriptionES = subscriptionSearchRepository.findById(subscription.getId()).orElseThrow(() -> new NoSuchElementException("There is no subscriptions with such id!"));
         var subscriptionDTO = modelMapper.map(subscription, DigestSubscriptionDTO.class);
+        subscriptionDTO.setTitle(subscriptionES.getTitle());
         subscriptionDTO.setOwnersUsername(subscription.getOwner().getUsername());
 
         subscriptionDTO.setSources(new ArrayList<>());
