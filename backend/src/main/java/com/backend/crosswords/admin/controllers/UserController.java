@@ -239,6 +239,29 @@ public class UserController {
         userService.logoutUserFull(crosswordUserDetails.getUser());
         return this.setCookies(response, List.of("", ""));
     }
+    @Operation(
+            summary = "Change user's password",
+            description = "This endpoint lets you change user's password"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully changed user's password"),
+            @ApiResponse(responseCode = "401", description = "You are trying to change user's password while not authenticated"),
+            @ApiResponse(responseCode = "403", description = "An old password is incorrect"),
+            @ApiResponse(responseCode = "400", description = "A new password can't be the same as an old password")
+    })
+    @PatchMapping("/change_password")
+    public ResponseEntity<?> changeUsersPassword(@RequestParam String oldPassword, @RequestParam String newPassword) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+        try {
+            userService.changeUsersPassword(crosswordUserDetails.getUser(), oldPassword, newPassword);
+        } catch (IllegalAccessException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+        return ResponseEntity.ok(HttpStatus.OK);
+    }
     // TODO добавить удаление пользователя, учтя тот факт, что перед удалением необходимо очистить связанные с ним данные
     /*@DeleteMapping("/{id}")
     public ResponseEntity<?> deleteUserById(@PathVariable Long id) {

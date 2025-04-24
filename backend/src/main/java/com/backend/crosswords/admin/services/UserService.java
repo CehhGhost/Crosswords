@@ -173,4 +173,16 @@ public class UserService {
     public void logoutUserFull(User user) {
         refreshTokenService.deleteAllRefreshesForUser(user);
     }
+
+    public void changeUsersPassword(User user, String oldPassword, String newPassword) throws IllegalAccessException, IllegalArgumentException {
+        String actualPassword = user.getPassword();
+        if (!passwordEncoder.matches(oldPassword, actualPassword)) {
+            throw new IllegalAccessException("Incorrect password!");
+        }
+        if (oldPassword.equals(newPassword)) {
+            throw new IllegalArgumentException("New password cant be the same as an old password");
+        }
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
 }
