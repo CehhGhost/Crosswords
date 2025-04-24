@@ -6,7 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public class LoginUserDTO {
     @Schema(
             description = "The user's username, that can be his email or username",
-            examples = "Geka"
+            examples = "geka2003@mail.ru"
     )
     private String username;
     @Schema(
