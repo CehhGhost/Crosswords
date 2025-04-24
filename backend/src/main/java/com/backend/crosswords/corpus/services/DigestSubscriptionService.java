@@ -92,9 +92,6 @@ public class DigestSubscriptionService {
     }
     @Transactional
     public DigestTemplate extractTagsAndSourcesAndCreateTemplate(List<String> tagsNames, List<String> sourcesNames) {
-        if (tagsNames != null && !tagsNames.isEmpty()) {
-            tagsNames.replaceAll(String::toLowerCase);
-        }
         Set<Tag> tags = tagService.getTagsInNames(tagsNames);
         Set<Source> sources = new HashSet<>();
         for (var source : sourcesNames) {
@@ -121,9 +118,9 @@ public class DigestSubscriptionService {
         this.checkDigestSubscriptionDeletion(deleted, subscription, user);
     }
 
-    public List<String> getAllDigestSubscriptionsUsers(Long id) {
+    public List<String> getAllDigestSubscriptionsUsersExceptOwner(Long id) {
         var subscription = subscriptionRepository.findById(id).orElseThrow(() -> new NoSuchElementException("There is no subscriptions with such id!"));
-        return subscriptionSettingsService.getAllDigestSubscriptionsUsersUsernames(subscription);
+        return subscriptionSettingsService.getAllDigestSubscriptionsUsersUsernamesExceptOwner(subscription);
     }
 
     private UsersDigestSubscriptionsDTO transformSubscriptionSettingsIntoUsersDigestSubscriptionsDTO(User user, Collection<DigestSubscription> usersSubscriptions, boolean allAvailable) {
@@ -252,6 +249,10 @@ public class DigestSubscriptionService {
             throw new IllegalAccessException("You are not an owner of this subscription!");
         }
         var newOwner = userService.getUserByUsername(newOwnersUsername);
+        Set<String> followers = new HashSet<>(this.getAllDigestSubscriptionsUsersExceptOwner(id));
+        if (!followers.contains(newOwner.getUsername())) {
+            throw new IllegalArgumentException("New owner must be a follower of this digest subscription and can't be on old owner of it");
+        }
         subscription.setOwner(newOwner);
         subscriptionRepository.save(subscription);
     }

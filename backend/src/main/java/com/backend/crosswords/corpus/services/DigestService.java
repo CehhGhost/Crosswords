@@ -307,9 +307,9 @@ public class DigestService {
         subscriptionService.checkDigestSubscriptionDeletion(delete, subscription, user);
     }
 
-    public List<String> getAllDigestSubscriptionsUsers(String id) {
+    public List<String> getAllDigestSubscriptionsUsersExeptOwner(String id) {
         var digest = this.getDigestById(id);
         var subscription = digest.getSubscription();
-        return subscriptionSettingsService.getAllDigestSubscriptionsUsersUsernames(subscription);
+        return subscriptionSettingsService.getAllDigestSubscriptionsUsersUsernamesExceptOwner(subscription);
     }
 }

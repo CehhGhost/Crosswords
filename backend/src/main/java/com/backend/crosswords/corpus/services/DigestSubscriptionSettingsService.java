@@ -133,11 +133,15 @@ public class DigestSubscriptionSettingsService {
         }
     }
 
-    public List<String> getAllDigestSubscriptionsUsersUsernames(DigestSubscription subscription) {
+    public List<String> getAllDigestSubscriptionsUsersUsernamesExceptOwner(DigestSubscription subscription) {
         var settings = subscriptionSettingsRepository.findAllByDigestSubscription(subscription);
+        var ownersUsername = subscription.getOwner().getUsername();
         List<String> subscribersUsernames = new ArrayList<>();
         for (var setting : settings) {
-            subscribersUsernames.add(setting.getSubscriber().getUsername());
+            var username = setting.getSubscriber().getUsername();
+            if (!username.equals(ownersUsername)) {
+                subscribersUsernames.add(setting.getSubscriber().getUsername());
+            }
         }
         return subscribersUsernames;
     }

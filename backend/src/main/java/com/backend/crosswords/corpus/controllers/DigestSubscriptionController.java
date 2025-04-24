@@ -85,7 +85,7 @@ public class DigestSubscriptionController {
         }
         return ResponseEntity.ok(HttpStatus.OK);
     }
-    @Operation(summary = "Get all users from the subscription", description = "This endpoint lets you get all users from the subscription")
+    @Operation(summary = "Get all users from the subscription", description = "This endpoint lets you get all users from the subscription except the owner")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "You successfully get all users from the subscription", content = @Content(schema = @Schema(implementation = FollowersUsernamesDTO.class))),
             @ApiResponse(responseCode = "401", description = "You are trying to get all users from the subscription while not authenticated"),
@@ -95,7 +95,7 @@ public class DigestSubscriptionController {
     public ResponseEntity<?> getAllDigestSubscriptionsUsersByDigestSubscriptionId(@PathVariable Long id) {
         FollowersUsernamesDTO usersUsernames = new FollowersUsernamesDTO();
         try {
-            usersUsernames.setFollowers(digestSubscriptionService.getAllDigestSubscriptionsUsers(id));
+            usersUsernames.setFollowers(digestSubscriptionService.getAllDigestSubscriptionsUsersExceptOwner(id));
         } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
@@ -158,6 +158,14 @@ public class DigestSubscriptionController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
+    @Operation(summary = "Change digest subscription's owner", description = "This endpoint lets you change digest subscription's owner")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully changed digest subscription's owner"),
+            @ApiResponse(responseCode = "401", description = "You are trying to change digest subscription's owner while not authenticated"),
+            @ApiResponse(responseCode = "400", description = "A user must be a follower of a digest subscription to become a new owner of it and he can't be its old owner!"),
+            @ApiResponse(responseCode = "404", description = "There is no such digest subscriptions or such users that you are trying to give an ownership"),
+            @ApiResponse(responseCode = "403", description = "You are trying to updated a digest subscription while not owning it")
+    })
     @PatchMapping ("/{id}/change_owner")
     public ResponseEntity<?> changeDigestSubscriptionsOwner(@PathVariable Long id, @RequestBody ChangeDigestSubscriptionsOwnerDTO changeDigestSubscriptionOwnerDTO) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -165,9 +173,11 @@ public class DigestSubscriptionController {
         try {
             digestSubscriptionService.changeDigestSubscriptionsOwner(crosswordUserDetails.getUser(), id, changeDigestSubscriptionOwnerDTO.getOwner());
         } catch (IllegalAccessException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
         return ResponseEntity.ok(HttpStatus.OK);
     }

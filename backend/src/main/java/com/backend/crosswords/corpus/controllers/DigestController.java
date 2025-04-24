@@ -183,7 +183,7 @@ public class DigestController {
     public ResponseEntity<?> getAllDigestSubscriptionsUsersByDigestId(@PathVariable String id) {
         FollowersUsernamesDTO usersUsernames = new FollowersUsernamesDTO();
         try {
-            usersUsernames.setFollowers(digestService.getAllDigestSubscriptionsUsers(id));
+            usersUsernames.setFollowers(digestService.getAllDigestSubscriptionsUsersExeptOwner(id));
         } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
