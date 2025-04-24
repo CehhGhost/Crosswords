@@ -136,7 +136,7 @@ public class DocService {
         List<DocDTO> resultHits = new ArrayList<>();
         var searchQueryBuilder = new NativeSearchQueryBuilder();
         QueryBuilder queryBuilder = null;
-
+        // TODO либо продумать новую функцию скоринга, либо отказаться от него
         float minScore = 1F;
         if (searchDocDTO.getDateFrom() != null && searchDocDTO.getDateTo() != null && searchDocDTO.getDateFrom().after(searchDocDTO.getDateTo())) {
             var nothing = searchDocDTO.getDateFrom();
@@ -152,12 +152,12 @@ public class DocService {
         if (searchDocDTO.getPageNumber() == null || searchDocDTO.getPageNumber() < 0) {
             searchDocDTO.setPageNumber(0);
         }
-        if (searchDocDTO.getMatchesPerPage() == null || searchDocDTO.getMatchesPerPage() < 0) {
+        if (searchDocDTO.getMatchesPerPage() == null || searchDocDTO.getMatchesPerPage() <= 0) {
             searchDocDTO.setMatchesPerPage(10);
         }
         QueryBuilder filterBuilder = QueryBuilders.termsQuery("id", filtersIds);
         searchQueryBuilder.withFilter(filterBuilder);
-        if (searchDocDTO.getSearchMode() != null && searchDocDTO.getSearchTerm() != null)
+        if (searchDocDTO.getSearchTerm() != null && !searchDocDTO.getSearchTerm().equals("") && searchDocDTO.getSearchMode() != null)
         {
             switch (searchDocDTO.getSearchMode()) {
                 case "id" -> {
@@ -175,16 +175,12 @@ public class DocService {
                     minScore = searchDocDTO.getSearchTerm().split(" ").length * percentage;
                 }
                 case "certain" -> {
-                    if (searchDocDTO.getMatchesPerPage() <= 0) {
-                        return this.formSearchResultDTO(searchDocDTO.getPageNumber(), resultHits);
-                    }
                     queryBuilder = QueryBuilders.matchPhraseQuery("text", searchDocDTO.getSearchTerm());
                 }
                 default -> throw new IllegalArgumentException("There is no such search modes!");
             }
-            searchQueryBuilder
-                    .withQuery(queryBuilder)
-                    .withMinScore(minScore);
+            searchQueryBuilder.withQuery(queryBuilder);
+            //searchQueryBuilder.withMinScore(minScore);
         }
         int pageNumber = searchDocDTO.getPageNumber() == null ? 0 : searchDocDTO.getPageNumber();
         int matchesPerPage = searchDocDTO.getMatchesPerPage() == null ? 10 : searchDocDTO.getMatchesPerPage();
@@ -197,6 +193,7 @@ public class DocService {
             var docES = hit.getContent();
             var docMeta = docMetaRepository.findById(docES.getId()).orElseThrow();
             resultHits.add(this.transformDocIntoDocDTO(docMeta));
+            System.out.println("Score for a hit: " + hit.getScore());
         });
         int nextPage = pageNumber + 1;
         if (searchHits.getTotalHits() <= (long) nextPage * matchesPerPage) {

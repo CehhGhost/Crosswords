@@ -86,8 +86,7 @@ public class DocController {
 
     @Operation(summary = "Get docs by search", description = "This endpoint gets you all documents by your filtration's and search's arguments." +
             "\nNull or empty filtration's argument always gets though the corresponding filtration check." +
-            "\nNull search mode automatically becomes certain." +
-            "\nNull or empty search body means that you want to use only filtration")
+            "\nNull or empty search body or search mode means that you want to use only filtration")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Searched documents (annotations are not included)", content = @Content(schema = @Schema(implementation = SearchResultDTO.class))),
             @ApiResponse(responseCode = "404", description = "May appear dew to wrong id, while searching by id"),
