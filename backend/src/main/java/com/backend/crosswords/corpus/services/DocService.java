@@ -132,32 +132,12 @@ public class DocService {
         return new SearchResultDTO(pageNumber, isAuthed, resultHits);
     }
 
-    public SearchResultDTO searchDocs(SearchDocDTO searchDocDTO, User user) {
+    public SearchResultDTO searchDocsAndTransformIntoDTO(SearchDocDTO searchDocDTO, User user) {
         List<DocDTO> resultHits = new ArrayList<>();
+        var searchQueryBuilder = new NativeSearchQueryBuilder();
         QueryBuilder queryBuilder = null;
+
         float minScore = 1F;
-        switch (searchDocDTO.getSearchMode()) {
-            case "id" -> {
-                resultHits.add(this.getDocByIdAndTransformIntoDTO(Long.parseLong(searchDocDTO.getSearchTerm())));
-                return this.formSearchResultDTO(searchDocDTO.getPageNumber(), resultHits);
-            }
-            case "semantic" -> {
-                if (searchDocDTO.getMatchesPerPage() <= 0) {
-                    return this.formSearchResultDTO(searchDocDTO.getPageNumber(), resultHits);
-                }
-                queryBuilder = QueryBuilders.boolQuery()
-                        .should(QueryBuilders.matchQuery("text", searchDocDTO.getSearchTerm()).fuzziness(Fuzziness.AUTO))
-                        .should(QueryBuilders.matchPhraseQuery("text", searchDocDTO.getSearchTerm())).boost(2.0F);
-                float percentage = searchDocDTO.getApprovalPercentage() == null ? 0.5F : searchDocDTO.getApprovalPercentage();
-                minScore = searchDocDTO.getSearchTerm().split(" ").length * percentage;
-            }
-            case "certain" -> {
-                if (searchDocDTO.getMatchesPerPage() <= 0) {
-                    return this.formSearchResultDTO(searchDocDTO.getPageNumber(), resultHits);
-                }
-                queryBuilder = QueryBuilders.matchPhraseQuery("text", searchDocDTO.getSearchTerm());
-            }
-        }
         if (searchDocDTO.getDateFrom() != null && searchDocDTO.getDateTo() != null && searchDocDTO.getDateFrom().after(searchDocDTO.getDateTo())) {
             var nothing = searchDocDTO.getDateFrom();
             searchDocDTO.setDateFrom(searchDocDTO.getDateTo());
@@ -176,11 +156,40 @@ public class DocService {
             searchDocDTO.setMatchesPerPage(10);
         }
         QueryBuilder filterBuilder = QueryBuilders.termsQuery("id", filtersIds);
-        var searchQuery = new NativeSearchQueryBuilder()
-                .withFilter(filterBuilder)
-                .withQuery(queryBuilder)
-                .withMinScore(minScore)
-                .withPageable(PageRequest.of(searchDocDTO.getPageNumber(), searchDocDTO.getMatchesPerPage()))
+        searchQueryBuilder.withFilter(filterBuilder);
+        if (searchDocDTO.getSearchMode() != null && searchDocDTO.getSearchTerm() != null)
+        {
+            switch (searchDocDTO.getSearchMode()) {
+                case "id" -> {
+                    resultHits.add(this.getDocByIdAndTransformIntoDTO(Long.parseLong(searchDocDTO.getSearchTerm())));
+                    return this.formSearchResultDTO(searchDocDTO.getPageNumber(), resultHits);
+                }
+                case "semantic" -> {
+                    if (searchDocDTO.getMatchesPerPage() <= 0) {
+                        return this.formSearchResultDTO(searchDocDTO.getPageNumber(), resultHits);
+                    }
+                    queryBuilder = QueryBuilders.boolQuery()
+                            .should(QueryBuilders.matchQuery("text", searchDocDTO.getSearchTerm()).fuzziness(Fuzziness.AUTO))
+                            .should(QueryBuilders.matchPhraseQuery("text", searchDocDTO.getSearchTerm())).boost(2.0F);
+                    float percentage = searchDocDTO.getApprovalPercentage() == null ? 0.5F : searchDocDTO.getApprovalPercentage();
+                    minScore = searchDocDTO.getSearchTerm().split(" ").length * percentage;
+                }
+                case "certain" -> {
+                    if (searchDocDTO.getMatchesPerPage() <= 0) {
+                        return this.formSearchResultDTO(searchDocDTO.getPageNumber(), resultHits);
+                    }
+                    queryBuilder = QueryBuilders.matchPhraseQuery("text", searchDocDTO.getSearchTerm());
+                }
+                default -> throw new IllegalArgumentException("There is no such search modes!");
+            }
+            searchQueryBuilder
+                    .withQuery(queryBuilder)
+                    .withMinScore(minScore);
+        }
+        int pageNumber = searchDocDTO.getPageNumber() == null ? 0 : searchDocDTO.getPageNumber();
+        int matchesPerPage = searchDocDTO.getMatchesPerPage() == null ? 10 : searchDocDTO.getMatchesPerPage();
+        var searchQuery = searchQueryBuilder
+                .withPageable(PageRequest.of(pageNumber, matchesPerPage))
                 .build();
         var searchHits = elasticsearchOperations.search(searchQuery, DocES.class, IndexCoordinates.of("document"));
         searchHits.forEach(hit ->
@@ -188,11 +197,9 @@ public class DocService {
             var docES = hit.getContent();
             var docMeta = docMetaRepository.findById(docES.getId()).orElseThrow();
             resultHits.add(this.transformDocIntoDocDTO(docMeta));
-            System.out.println(hit.getScore());
         });
-        // System.out.println(hits.getTotalHits());
-        int nextPage = searchDocDTO.getPageNumber() + 1;
-        if (searchHits.getTotalHits() <= (long) nextPage * searchDocDTO.getMatchesPerPage()) {
+        int nextPage = pageNumber + 1;
+        if (searchHits.getTotalHits() <= (long) nextPage * matchesPerPage) {
             nextPage = -1;
         }
         return this.formSearchResultDTO(nextPage, resultHits);
