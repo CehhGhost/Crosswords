@@ -158,4 +158,17 @@ public class DigestSubscriptionController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
+    @PatchMapping ("/{id}/change_owner")
+    public ResponseEntity<?> changeDigestSubscriptionsOwner(@PathVariable Long id, @RequestBody ChangeDigestSubscriptionsOwnerDTO changeDigestSubscriptionOwnerDTO) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+        try {
+            digestSubscriptionService.changeDigestSubscriptionsOwner(crosswordUserDetails.getUser(), id, changeDigestSubscriptionOwnerDTO.getOwner());
+        } catch (IllegalAccessException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        }
+        return ResponseEntity.ok(HttpStatus.OK);
+    }
 }

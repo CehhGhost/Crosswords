@@ -249,7 +249,7 @@ public class UserController {
             @ApiResponse(responseCode = "403", description = "An old password is incorrect"),
             @ApiResponse(responseCode = "400", description = "A new password can't be the same as an old password")
     })
-    @PatchMapping("/change_password")
+    @PatchMapping("/change/password")
     public ResponseEntity<?> changeUsersPassword(@RequestParam String oldPassword, @RequestParam String newPassword) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
@@ -262,6 +262,13 @@ public class UserController {
         }
         return ResponseEntity.ok(HttpStatus.OK);
     }
+    /* @PatchMapping("/change/email")
+    public ResponseEntity<?> changeUsersUsername(@RequestParam String newEmail) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+        userService.changeUsersEmail(user, newEmail);
+        return ResponseEntity.ok(HttpStatus.OK);
+    } */
     // TODO добавить удаление пользователя, учтя тот факт, что перед удалением необходимо очистить связанные с ним данные
     /*@DeleteMapping("/{id}")
     public ResponseEntity<?> deleteUserById(@PathVariable Long id) {

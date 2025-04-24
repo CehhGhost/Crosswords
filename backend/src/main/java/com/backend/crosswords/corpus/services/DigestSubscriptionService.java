@@ -245,4 +245,14 @@ public class DigestSubscriptionService {
         var subscription = this.getDigestSubscriptionById(id);
         return subscription.getOwner().getId().equals(user.getId());
     }
+
+    public void changeDigestSubscriptionsOwner(User user, Long id, String newOwnersUsername) throws IllegalAccessException {
+        var subscription = this.getDigestSubscriptionById(id);
+        if (!subscription.getOwner().getId().equals(user.getId())) {
+            throw new IllegalAccessException("You are not an owner of this subscription!");
+        }
+        var newOwner = userService.getUserByUsername(newOwnersUsername);
+        subscription.setOwner(newOwner);
+        subscriptionRepository.save(subscription);
+    }
 }
