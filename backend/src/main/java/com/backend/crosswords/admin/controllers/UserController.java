@@ -250,11 +250,11 @@ public class UserController {
             @ApiResponse(responseCode = "400", description = "A new password can't be the same as an old password")
     })
     @PatchMapping("/change/password")
-    public ResponseEntity<?> changeUsersPassword(@RequestParam String oldPassword, @RequestParam String newPassword) {
+    public ResponseEntity<?> changeUsersPassword(@RequestBody ChangeUsersPasswordDTO changeUsersPasswordDTO) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
         try {
-            userService.changeUsersPassword(crosswordUserDetails.getUser(), oldPassword, newPassword);
+            userService.changeUsersPassword(crosswordUserDetails.getUser(), changeUsersPasswordDTO.getOldPassword(), changeUsersPasswordDTO.getNewPassword());
         } catch (IllegalAccessException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         } catch (IllegalArgumentException e) {
@@ -262,13 +262,26 @@ public class UserController {
         }
         return ResponseEntity.ok(HttpStatus.OK);
     }
-    /* @PatchMapping("/change/email")
-    public ResponseEntity<?> changeUsersUsername(@RequestParam String newEmail) {
+    @Operation(
+            summary = "Change user's email",
+            description = "This endpoint lets you change user's email, remember that username also changes"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully changed user's email"),
+            @ApiResponse(responseCode = "401", description = "You are trying to change user's email while not authenticated"),
+            @ApiResponse(responseCode = "400", description = "A new email can't be the same as an old email and can't be null or empty")
+    })
+    @PatchMapping("/change/email")
+    public ResponseEntity<?> changeUsersUsername(@RequestBody ChangeUsersUsernameDTO changeUsersUsernameDTO) { // TODO добавить верификацию
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
-        userService.changeUsersEmail(user, newEmail);
+        try {
+            userService.changeUsersEmail(crosswordUserDetails.getUser(), changeUsersUsernameDTO.getNewEmail());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
         return ResponseEntity.ok(HttpStatus.OK);
-    } */
+    }
     // TODO добавить удаление пользователя, учтя тот факт, что перед удалением необходимо очистить связанные с ним данные
     /*@DeleteMapping("/{id}")
     public ResponseEntity<?> deleteUserById(@PathVariable Long id) {

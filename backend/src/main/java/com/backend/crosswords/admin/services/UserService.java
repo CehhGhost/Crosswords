@@ -185,4 +185,16 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
     }
+
+    public void changeUsersEmail(User user, String newEmail) {
+        if (newEmail == null || newEmail.equals("")) {
+            throw new IllegalArgumentException("Incorrect email!");
+        }
+        if (user.getEmail().equals(newEmail)) {
+            throw new IllegalArgumentException("A new email can't be the same as an old one!");
+        }
+        user.setEmail(newEmail);
+        user.setUsername(newEmail.split("@")[0]);
+        userRepository.save(user);
+    }
 }
