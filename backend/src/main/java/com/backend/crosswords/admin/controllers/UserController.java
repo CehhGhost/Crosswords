@@ -3,6 +3,7 @@ package com.backend.crosswords.admin.controllers;
 import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.backend.crosswords.admin.dto.*;
 import com.backend.crosswords.admin.models.CrosswordUserDetails;
+import com.backend.crosswords.admin.models.User;
 import com.backend.crosswords.admin.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -267,7 +268,7 @@ public class UserController {
             description = "This endpoint lets you change user's email, remember that username also changes"
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "You successfully changed user's email"),
+            @ApiResponse(responseCode = "200", description = "You successfully changed user's email", content = @Content(schema = @Schema(implementation = NewEmailAndUsernameDTO.class))),
             @ApiResponse(responseCode = "401", description = "You are trying to change user's email while not authenticated"),
             @ApiResponse(responseCode = "400", description = "A new email can't be the same as an old email and can't be null or empty")
     })
@@ -275,12 +276,13 @@ public class UserController {
     public ResponseEntity<?> changeUsersUsername(@RequestBody ChangeUsersUsernameDTO changeUsersUsernameDTO) { // TODO добавить верификацию
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+        User user = crosswordUserDetails.getUser();
         try {
-            userService.changeUsersEmail(crosswordUserDetails.getUser(), changeUsersUsernameDTO.getNewEmail());
+            userService.changeUsersEmail(user, changeUsersUsernameDTO.getNewEmail());
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
-        return ResponseEntity.ok(HttpStatus.OK);
+        return ResponseEntity.ok(new NewEmailAndUsernameDTO(user.getEmail(), user.getUsername()));
     }
     // TODO добавить удаление пользователя, учтя тот факт, что перед удалением необходимо очистить связанные с ним данные
     /*@DeleteMapping("/{id}")
