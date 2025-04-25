@@ -41,7 +41,9 @@ public class UserController {
         var refreshTokenCookie = new Cookie("refresh_token", jwt.get(1));
         refreshTokenCookie.setPath("/");
         response.addCookie(accessTokenCookie);
+        System.out.println("Set access token into cookie: " + accessTokenCookie);
         response.addCookie(refreshTokenCookie);
+        System.out.println("Set refresh token into cookie: " + refreshTokenCookie);
         return ResponseEntity.ok(HttpStatus.OK);
     }
 
@@ -273,12 +275,12 @@ public class UserController {
             @ApiResponse(responseCode = "400", description = "A new email can't be the same as an old email and can't be null or empty")
     })
     @PatchMapping("/change/email")
-    public ResponseEntity<?> changeUsersUsername(@RequestBody ChangeUsersUsernameDTO changeUsersUsernameDTO) { // TODO добавить верификацию
+    public ResponseEntity<?> changeUsersEmail(@RequestBody ChangeUsersEmailDTO changeUsersEmailDTO) { // TODO добавить верификацию
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
         User user = crosswordUserDetails.getUser();
         try {
-            userService.changeUsersEmail(user, changeUsersUsernameDTO.getNewEmail());
+            userService.changeUsersEmail(user, changeUsersEmailDTO.getNewEmail());
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }

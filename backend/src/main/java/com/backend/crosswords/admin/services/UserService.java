@@ -194,6 +194,9 @@ public class UserService {
         if (user.getEmail().equals(newEmail)) {
             throw new IllegalArgumentException("A new email can't be the same as an old one!");
         }
+        if (userRepository.existsUserByEmail(newEmail)) {
+            throw new IllegalArgumentException("A user with such email already exists!");
+        }
         user.setEmail(newEmail);
         user.setUsername(newEmail.split("@")[0]);
         userRepository.save(user);
