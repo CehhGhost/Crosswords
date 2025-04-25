@@ -128,12 +128,14 @@ public class DigestController {
     })
     @GetMapping("/search")
     public ResponseEntity<?> getDigestsBySearch(
-            @RequestParam(required = false) String searchBody,
-            @RequestParam(required = false) String dateFrom,
-            @RequestParam(required = false) String dateTo,
+            @RequestParam(required = false, name = "search_body") String searchBody,
+            @RequestParam(required = false, name = "date_from") String dateFrom,
+            @RequestParam(required = false, name = "date_to") String dateTo,
             @RequestParam(required = false) List<String> tags,
             @RequestParam(required = false) List<String> sources,
-            @RequestParam(required = false, defaultValue = "false") Boolean subscribe_only) {
+            @RequestParam(required = false, defaultValue = "false", name = "subscribe_only") Boolean subscribeOnly,
+            @RequestParam(required = false, name = "page_number") Integer pageNumber,
+            @RequestParam(required = false, name = "matches_per_page") Integer matchesPerPage) {
         User user;
         try {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -158,7 +160,7 @@ public class DigestController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid date format. Expected: dd/MM/yyyy");
         }
-        return ResponseEntity.ok(digestService.getDigestsBySearch(searchBody, timestampFrom, timestampTo, tags, sources, subscribe_only, user));
+        return ResponseEntity.ok(digestService.getDigestsBySearchAndTransformIntoDTO(searchBody, timestampFrom, timestampTo, tags, sources, subscribeOnly, user, pageNumber, matchesPerPage));
     }
     @Operation(summary = "Update a digest subscription's settings", description = "This endpoint lets you update a digest subscription's settings by digest itself, remember that after no followers remains the subscription is being deleted")
     @ApiResponses({

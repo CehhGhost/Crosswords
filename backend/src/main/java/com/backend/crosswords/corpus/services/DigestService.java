@@ -163,7 +163,7 @@ public class DigestService {
 
     public DigestsDTO getAllDigests(User user) {
         var digests = digestRepository.findAll();
-        return this.transformDigestsIntoDigestsDTO(digests, user);
+        return this.transformDigestsIntoDigestsDTO(digests, user, null);
     }
 
     public void rateDigestCoreByDigestId(String id, Integer digestCoreRating, User user) {
@@ -173,36 +173,49 @@ public class DigestService {
         var digest = this.getDigestById(id);
         var core = digest.getCore();
         user = userService.loadUserById(user.getId());
-
         ratingService.createRating(core, user, digestCoreRating);
     }
 
-    public DigestsDTO getDigestsBySearch(String searchBody, Timestamp dateFrom, Timestamp dateTo, List<String> tags, List<String> sources, Boolean subscribe_only, User user) {
+    private List<Digest> filterDigests(Collection<Digest> searchResult, Timestamp dateFrom, Timestamp dateTo, List<String> tags, List<String> sources, Boolean subscribeOnly, User user) {
+        List<Digest> digests = new ArrayList<>();
+        for (var digest : searchResult) {
+            if (this.equalsMetaData(dateFrom, dateTo, tags, sources, subscribeOnly, digest, user)) {
+                digests.add(digest);
+            }
+        }
+        return digests;
+    }
+
+    public DigestsDTO getDigestsBySearchAndTransformIntoDTO(String searchBody, Timestamp dateFrom, Timestamp dateTo, List<String> tags, List<String> sources, Boolean subscribeOnly, User user, Integer pageNumber, Integer matchesPerPage) {
+        pageNumber = pageNumber == null || pageNumber < 0 ? 0 : pageNumber;
+        matchesPerPage = matchesPerPage == 0 || matchesPerPage <= 0 ? 10 : matchesPerPage;
         if (dateFrom != null && dateTo != null && dateFrom.after(dateTo)) {
             var nothing = dateFrom;
             dateFrom = dateTo;
             dateTo = nothing;
         }
-        List<Digest> digests = new ArrayList<>();
+        List<Digest> digests;
         if (searchBody != null) {
             List<DigestSubscription> subscriptions = subscriptionService.getAllDigestSubscriptionsBySearchTerm(searchBody);
-            for (var digest : digestRepository.findAllBySubscriptionIn(subscriptions)) {
-                if (this.equalsMetaData(dateFrom, dateTo, tags, sources, subscribe_only, digest, user)) {
-                    digests.add(digest);
-                }
-            }
+            digests = this.filterDigests(digestRepository.findAllBySubscriptionIn(subscriptions), dateFrom, dateTo, tags, sources, subscribeOnly, user);
         } else {
-            for (var digest : digestRepository.findAll()) {
-                if (this.equalsMetaData(dateFrom, dateTo, tags, sources, subscribe_only, digest, user)) {
-                    digests.add(digest);
-                }
-            }
+            digests = this.filterDigests(digestRepository.findAll(), dateFrom, dateTo, tags, sources, subscribeOnly, user);
         }
-        return this.transformDigestsIntoDigestsDTO(digests, user);
+        int startPage = pageNumber * matchesPerPage;
+        int endPage = startPage + matchesPerPage;
+        int size = digests.size();
+        int nextPage = pageNumber + 1;
+        if (size <= endPage) {
+            endPage = size;
+            nextPage = -1;
+        }
+        List<Digest> digestsPage = digests.subList(startPage, endPage);
+        return this.transformDigestsIntoDigestsDTO(digestsPage, user, nextPage);
     }
-    private DigestsDTO transformDigestsIntoDigestsDTO(List<Digest> digests, User user) {
+    private DigestsDTO transformDigestsIntoDigestsDTO(List<Digest> digests, User user, Integer nextPage) {
         DigestsDTO digestsDTO = new DigestsDTO();
         digestsDTO.setIsAuthed(user != null);
+        digestsDTO.setNextPage(nextPage);
         for (var digest : digests) {
             var core = digest.getCore();
             var coreES = coreSearchRepository.findById(core.getId()).orElseThrow(() -> new NoSuchElementException("There is no digest cores with such id!"));

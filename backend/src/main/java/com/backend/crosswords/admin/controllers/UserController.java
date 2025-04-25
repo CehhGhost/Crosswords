@@ -37,8 +37,12 @@ public class UserController {
 
     private ResponseEntity<?> setCookies(HttpServletResponse response, List<String> jwt) {
         var accessTokenCookie = new Cookie("access_token", jwt.get(0));
+        accessTokenCookie.setHttpOnly(true);
+        accessTokenCookie.setSecure(true);
         accessTokenCookie.setPath("/");
         var refreshTokenCookie = new Cookie("refresh_token", jwt.get(1));
+        refreshTokenCookie.setHttpOnly(true);
+        refreshTokenCookie.setSecure(true);
         refreshTokenCookie.setPath("/");
         response.addCookie(accessTokenCookie);
         System.out.println("Set access token into cookie: " + accessTokenCookie);

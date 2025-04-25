@@ -8,6 +8,12 @@ import java.util.List;
 
 @Schema(description = "DTO to wrap a list of digests")
 public class DigestsDTO {
+    @Schema(
+            description = "The next page for pagination, if -1, then there is no more docs left",
+            example = "1"
+    )
+    @JsonProperty("next_page")
+    Integer nextPage;
     @JsonProperty("is_authed")
     private Boolean isAuthed;
     private List<DigestDTO> digests;
@@ -32,10 +38,19 @@ public class DigestsDTO {
         this.isAuthed = isAuthed;
     }
 
+    public Integer getNextPage() {
+        return nextPage;
+    }
+
+    public void setNextPage(Integer nextPage) {
+        this.nextPage = nextPage;
+    }
+
     @Override
     public String toString() {
         return "DigestsDTO{" +
-                "isAuthed=" + isAuthed +
+                "nextPage=" + nextPage +
+                ", isAuthed=" + isAuthed +
                 ", digests=" + digests +
                 '}';
     }

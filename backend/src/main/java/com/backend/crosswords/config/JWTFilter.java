@@ -147,11 +147,11 @@ public class JWTFilter extends OncePerRequestFilter {
     private void setCookies(HttpServletResponse response, String newAccessToken, String newRefreshToken) {
         var accessTokenCookie = new Cookie("access_token", newAccessToken);
         accessTokenCookie.setHttpOnly(true);
-        // accessTokenCookie.setSecure(true); // TODO Для HTTPS
+        accessTokenCookie.setSecure(true);
         accessTokenCookie.setPath("/");
         var refreshTokenCookie = new Cookie("refresh_token", newRefreshToken);
         refreshTokenCookie.setHttpOnly(true);
-        // refreshTokenCookie.setSecure(true); // TODO Для HTTPS
+        refreshTokenCookie.setSecure(true);
         refreshTokenCookie.setPath("/");
         response.addCookie(accessTokenCookie);
         response.addCookie(refreshTokenCookie);
