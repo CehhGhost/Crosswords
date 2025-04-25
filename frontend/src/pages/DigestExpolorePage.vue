@@ -236,7 +236,7 @@
 
 <script>
 import DigestCard from '../components/DigestCard.vue'
-import { availableTags, availableSources } from '../data/lookups.js'
+import { availableTags, availableSources, backendURL } from '../data/lookups.js'
 import MySubscriptions from '../components/MySubscriptions.vue'
 import FilterSelector from 'src/components/FilterSelector.vue'
 import LockedContent from 'src/components/LockedContent.vue'
@@ -368,21 +368,23 @@ export default {
         }
         params.append('subscribe_only', this.subscribeOnly ? 'true' : 'false')
         const response = await fetch(
-          //`https://example.com/api/digests?${params.toString()}`,
-          `https://38eb0762b63f400b81812fc5431695d1.api.mockbin.io/`,
+          backendURL + `digests/search?${params.toString()}`,
+          //`https://38eb0762b63f400b81812fc5431695d1.api.mockbin.io/`,
           {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
             },
+            credentials: 'include',
           },
         )
         console.log(params.toString())
         if (!response.ok) {
           throw new Error('Ошибка при получении дайджестов')
         }
-
+        
         const data = await response.json()
+        console.log(data)
         // Предполагается, что формат ответа:
         // {
         //   "digests": [ ... ]

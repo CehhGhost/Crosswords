@@ -111,11 +111,11 @@ export default {
             credentials: 'include',
           },
         )
+        console.log('Response:', response)
         if (!response.ok) {
           throw new Error('Ошибка при получении подписок')
         }
         const data = await response.json()
-        console.error(data)
         this.subscriptions = data.digest_subscriptions || []
       } catch (err) {
         console.error(err)

@@ -24,6 +24,8 @@
 </template>
 
 <script>
+import { backendURL } from 'src/data/lookups'
+
 
 export default {
   name: 'FolderSelector',
@@ -59,7 +61,8 @@ export default {
       // Запрос к бэкенду для получения папок.
       // Замените '/api/folders' на нужный URL, если требуется.
       fetch(
-      'https://da60a9bd46b9478585c028e21b6b5e71.api.mockbin.io/', 
+      // 'https://da60a9bd46b9478585c028e21b6b5e71.api.mockbin.io/', 
+      backendURL + 'packages',
       { credentials: 'include' })
         .then((response) => {
           if (response.status === 401) {

@@ -22,6 +22,7 @@
           v-model="selectedSources"
           :label="'Источники'"
           :options="availableSources"
+          :required=true
         />
         <FilterSelector v-model="selectedTags" :label="'Теги'" :options="availableTags" />
       </div>
@@ -92,7 +93,7 @@
           @remove="removeChip(index)"
           class="q-mb-xs"
         >
-          <q-icon v-if="chip.has_email" name="mail" color="secondary" class="q-ml-xs">
+          <q-icon v-if="chip.send_to_mail" name="mail" color="secondary" class="q-ml-xs">
             <q-tooltip
               class="bg-primary text-secondary"
               transition-show="scale"
@@ -101,7 +102,7 @@
               Этот пользователь получает уведомления на почту
             </q-tooltip>
           </q-icon>
-          <q-icon v-if="chip.has_mobile" name="phone_iphone" color="secondary" class="q-ml-xs">
+          <q-icon v-if="chip.mobile_notifications" name="phone_iphone" color="secondary" class="q-ml-xs">
             <q-tooltip
               class="bg-primary text-secondary"
               transition-show="scale"
@@ -221,13 +222,13 @@ export default {
           })
           .then((data) => {
             console.log(data)
-            const { has_email, has_mobile } = data
-            if (has_email !== undefined || has_mobile !== undefined) {
+            const { send_to_mail, mobile_notifications } = data
+            if (send_to_mail !== undefined || mobile_notifications !== undefined) {
               this.emailError = false
               this.addedEmails.push({
                 email: this.email,
-                has_email,
-                has_mobile,
+                send_to_mail,
+                mobile_notifications,
               })
               this.email = ''
             }

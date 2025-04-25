@@ -36,18 +36,23 @@ export default defineRouter(function (/* { store, ssrContext } */) {
         }
         // Если маршрут требует проверки владельца подписки, выполняем дополнительный запрос
         if (to.meta.subscriptionOwner) {
-          fetch(`/api/subscriptions/${to.params.id}/check-owner`, { credentials: 'include' })
+          fetch(
+            // `/api/subscriptions/${to.params.id}/check-owner`,
+            backendURL + `subscriptions/${to.params.id}/check_ownership`,
+             { credentials: 'include' })
             .then(response => {
               if (!response.ok) {
+                console.log("response not ok")
                 throw new Error('Not authorized')
               }
-              return response.json()
+              console.log(`/subscriptions/${to.params.id}/check_ownership`)
+              return response.json() // вот тут
             })
             .then(data => {
               if (data.is_owner) {
                 return next()
               }
-              return next({ name: 'home' })
+              return next({ name: '404' })
             })
             .catch(() => next({ name: 'home' }))
           return // Выходим, т.к. next() будет вызван внутри fetch
