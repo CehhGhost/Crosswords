@@ -164,7 +164,7 @@ public class DigestSubscriptionController {
             @ApiResponse(responseCode = "401", description = "You are trying to change digest subscription's owner while not authenticated"),
             @ApiResponse(responseCode = "400", description = "A user must be a follower of a digest subscription to become a new owner of it and he can't be its old owner!"),
             @ApiResponse(responseCode = "404", description = "There is no such digest subscriptions or such users that you are trying to give an ownership"),
-            @ApiResponse(responseCode = "403", description = "You are trying to updated a digest subscription while not owning it")
+            @ApiResponse(responseCode = "403", description = "You are trying to set a new digest subscription's owner while not owning it")
     })
     @PatchMapping ("/{id}/change_owner")
     public ResponseEntity<?> changeDigestSubscriptionsOwner(@PathVariable Long id, @RequestBody ChangeDigestSubscriptionsOwnerDTO changeDigestSubscriptionOwnerDTO) {

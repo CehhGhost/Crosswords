@@ -307,9 +307,15 @@ public class DigestService {
         subscriptionService.checkDigestSubscriptionDeletion(delete, subscription, user);
     }
 
-    public List<String> getAllDigestSubscriptionsUsersExeptOwner(String id) {
+    public List<String> getAllDigestSubscriptionsUsersExceptOwner(String id) {
         var digest = this.getDigestById(id);
         var subscription = digest.getSubscription();
         return subscriptionSettingsService.getAllDigestSubscriptionsUsersUsernamesExceptOwner(subscription);
+    }
+
+    public void changeDigestSubscriptionsOwnerByDigestId(User user, String id, String owner) throws IllegalAccessException {
+        var digest = this.getDigestById(id);
+        var subscriptionId = digest.getSubscription().getId();
+        subscriptionService.changeDigestSubscriptionsOwner(user, subscriptionId, owner);
     }
 }

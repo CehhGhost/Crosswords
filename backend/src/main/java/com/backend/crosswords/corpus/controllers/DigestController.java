@@ -6,13 +6,16 @@ import com.backend.crosswords.corpus.dto.*;
 import com.backend.crosswords.corpus.models.Digest;
 import com.backend.crosswords.corpus.services.DigestService;
 import com.backend.crosswords.corpus.services.DigestSubscriptionService;
+import com.backend.crosswords.corpus.services.PdfService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -30,10 +33,12 @@ import java.util.NoSuchElementException;
 public class DigestController {
     private final DigestService digestService;
     private final DigestSubscriptionService subscriptionService;
+    private final PdfService pdfService;
 
-    public DigestController(DigestService digestService, DigestSubscriptionService subscriptionService) {
+    public DigestController(DigestService digestService, DigestSubscriptionService subscriptionService, PdfService pdfService) {
         this.digestService = digestService;
         this.subscriptionService = subscriptionService;
+        this.pdfService = pdfService;
     }
 
     @Operation(summary = "Get the digest by id", description = "This endpoint lets get the digest by id")
@@ -56,6 +61,28 @@ public class DigestController {
             return ResponseEntity.ok(digestService.getDigestByIdAndTransformIntoDTO(id, user));
         } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
+    @GetMapping("/{id}/pdf")
+    public ResponseEntity<?> getDigestByIdAndConvertIntoPDF(@PathVariable String id) {
+        User user;
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+            user = crosswordUserDetails.getUser();
+        } catch (ClassCastException e) {
+            user = null;
+        }
+        try {
+            var digestDTO = digestService.getDigestByIdAndTransformIntoDTO(id, user);
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"documents_export.pdf\"")
+                    .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_PDF_VALUE)
+                    .body(pdfService.generateDigestPdf(digestDTO));
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            throw new RuntimeException("An error occurred while creating a pdf!");
         }
     }
 
@@ -183,10 +210,33 @@ public class DigestController {
     public ResponseEntity<?> getAllDigestSubscriptionsUsersByDigestId(@PathVariable String id) {
         FollowersUsernamesDTO usersUsernames = new FollowersUsernamesDTO();
         try {
-            usersUsernames.setFollowers(digestService.getAllDigestSubscriptionsUsersExeptOwner(id));
+            usersUsernames.setFollowers(digestService.getAllDigestSubscriptionsUsersExceptOwner(id));
         } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
         return ResponseEntity.ok(usersUsernames);
+    }
+    @Operation(summary = "Change digest subscription's owner by digest itself", description = "This endpoint lets you change digest subscription's owner by digest itself")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully changed digest subscription's owner by digest itself"),
+            @ApiResponse(responseCode = "401", description = "You are trying to change digest subscription's owner by digest itself while not authenticated"),
+            @ApiResponse(responseCode = "400", description = "A user must be a follower of a digest subscription to become a new owner of it and he can't be its old owner!"),
+            @ApiResponse(responseCode = "404", description = "There is no such digest subscriptions, such digests or such users that you are trying to give an ownership"),
+            @ApiResponse(responseCode = "403", description = "You are trying to set a new digest subscription's owner by digest itself while not owning it")
+    })
+    @PatchMapping ("/{id}/change_owner")
+    public ResponseEntity<?> changeDigestSubscriptionsOwner(@PathVariable String id, @RequestBody ChangeDigestSubscriptionsOwnerDTO changeDigestSubscriptionOwnerDTO) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+        try {
+            digestService.changeDigestSubscriptionsOwnerByDigestId(crosswordUserDetails.getUser(), id, changeDigestSubscriptionOwnerDTO.getOwner());
+        } catch (IllegalAccessException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+        return ResponseEntity.ok(HttpStatus.OK);
     }
 }
