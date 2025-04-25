@@ -289,7 +289,7 @@ public class UserController {
             description = "This endpoint lets you get user's personal info"
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "You successfully get user's personal info", content = @Content(schema = @Schema(implementation = NewEmailAndUsernameDTO.class))),
+            @ApiResponse(responseCode = "200", description = "You successfully get user's personal info", content = @Content(schema = @Schema(implementation = GetPersonalInfoDTO.class))),
             @ApiResponse(responseCode = "401", description = "You are trying to get user's personal info while not authenticated"),
     })
     @GetMapping("/personal_info")
