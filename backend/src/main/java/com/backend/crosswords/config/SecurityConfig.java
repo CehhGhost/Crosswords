@@ -55,6 +55,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/users/check_auth").authenticated()
                         .requestMatchers(HttpMethod.GET, "/users/get_email").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/users/subscription_settings/set").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/users/personal_info").authenticated()
                         .requestMatchers(HttpMethod.POST, "/users/logout/**").authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/users/change/**").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/documents/{id}/edit").hasAuthority(AuthorityEnum.EDIT_DELETE_DOCS.name())

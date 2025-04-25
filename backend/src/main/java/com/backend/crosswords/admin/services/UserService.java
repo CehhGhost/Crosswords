@@ -1,5 +1,6 @@
 package com.backend.crosswords.admin.services;
 
+import com.backend.crosswords.admin.dto.GetPersonalInfoDTO;
 import com.backend.crosswords.admin.dto.LoginUserDTO;
 import com.backend.crosswords.admin.dto.RegisterUserDTO;
 import com.backend.crosswords.admin.dto.PersonalDigestSubscriptionSettingsDTO;
@@ -196,5 +197,8 @@ public class UserService {
         user.setEmail(newEmail);
         user.setUsername(newEmail.split("@")[0]);
         userRepository.save(user);
+    }
+    public GetPersonalInfoDTO getUsersPersonalInfoAndTransformIntoDTO(User user) {
+        return new GetPersonalInfoDTO(user.getName(), user.getSurname(), user.getUsername(), user.getEmail(), user.getSendToMail(), user.getMobileNotifications(), user.getPersonalSendToMail(), user.getPersonalMobileNotifications(), user.getSubscribable());
     }
 }

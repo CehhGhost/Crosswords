@@ -284,6 +284,21 @@ public class UserController {
         }
         return ResponseEntity.ok(new NewEmailAndUsernameDTO(user.getEmail(), user.getUsername()));
     }
+    @Operation(
+            summary = "Get user's personal info",
+            description = "This endpoint lets you get user's personal info"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully get user's personal info", content = @Content(schema = @Schema(implementation = NewEmailAndUsernameDTO.class))),
+            @ApiResponse(responseCode = "401", description = "You are trying to get user's personal info while not authenticated"),
+    })
+    @GetMapping("/personal_info")
+    public ResponseEntity<?> getUsersPersonalInfo() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+        GetPersonalInfoDTO personalInfoDTO = userService.getUsersPersonalInfoAndTransformIntoDTO(crosswordUserDetails.getUser());
+        return ResponseEntity.ok(personalInfoDTO);
+    }
     // TODO добавить удаление пользователя, учтя тот факт, что перед удалением необходимо очистить связанные с ним данные
     /*@DeleteMapping("/{id}")
     public ResponseEntity<?> deleteUserById(@PathVariable Long id) {
