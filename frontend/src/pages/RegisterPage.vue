@@ -69,6 +69,7 @@
 import lightLogo from '../assets/crosswords_mono.png'
 import darkLogo from '../assets/crosswords_mono_white.png'
 import { backendURL } from 'src/data/lookups'
+import { emitter } from 'src/boot/emitter'
 export default {
   name: 'RegisterPage',
   data() {
@@ -102,6 +103,7 @@ export default {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(payload),
+           credentials: 'include'
         },
       )
         .then((response) => {
@@ -112,6 +114,7 @@ export default {
         })
         .then((data) => {
           console.log(data)
+          emitter.emit('auth-changed')
           this.$router.replace('/')
         })
         .catch((error) => {

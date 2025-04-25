@@ -98,7 +98,7 @@ export default {
       required: true,
     },
     triggeredFrom: {
-      type: Boolean,
+      type: String,
       required: true,
     },
   },

@@ -55,6 +55,7 @@
 import lightLogo from '../assets/crosswords_mono.png'
 import darkLogo from '../assets/crosswords_mono_white.png'
 import { backendURL } from 'src/data/lookups'
+import { emitter } from 'src/boot/emitter'
 export default {
   name: 'LoginPage',
   data() {
@@ -88,12 +89,19 @@ export default {
       )
       .then((response) => {
           if (!response.ok) {
+            console.log(response)
+            this.$q.notify({
+              type: 'negative',
+              message: 'Ошибка входа. Проверьте свои данные.',
+              position: 'top',
+            })
             throw new Error('Ошибка при входе')
           }
           return response.json()
         })
         .then((data) => {
           console.log(data)
+          emitter.emit('auth-changed')
           this.$router.replace('/')
         })
         .catch((error) => {

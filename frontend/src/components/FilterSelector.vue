@@ -13,6 +13,7 @@
     stack-label
     clearable
     class="full-width"
+    :required="required && selected.length === 0"
   >
     <template v-slot:no-option>
       <q-item>
@@ -38,6 +39,10 @@ export default {
       default: () => [],
     },
     dense: {
+      type: Boolean,
+      default: false,
+    },
+    required: {
       type: Boolean,
       default: false,
     },

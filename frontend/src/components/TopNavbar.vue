@@ -39,13 +39,23 @@
         aria-label="Toggle dark mode"
       />
 
-      <q-btn
-        flat
-        round
-        icon="account_circle"
-        :to="{ name: 'privacy' }"
-        aria-label="Profile"
-      />
+      <template v-if="isAuthenticated">
+        <q-btn
+          flat
+          round
+          icon="account_circle"
+          :to="{ name: 'privacy' }"
+          aria-label="Profile"
+        />
+      </template>
+      <template v-else>
+        <q-btn
+          flat
+          label="Войти"
+          :to="{ name: 'login' }"
+          aria-label="Login"
+        />
+      </template>
     </q-toolbar>
 
     <q-drawer
@@ -85,9 +95,11 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount} from 'vue'
 import { useQuasar } from 'quasar'
 import TopNavBarButton from '../components/TopNavbarButton.vue'
+import { backendURL } from 'src/data/lookups'
+import { emitter } from 'src/boot/emitter' 
 
 // Флаг открытия/закрытия мобильного меню
 const drawerOpen = ref(false)
@@ -99,10 +111,38 @@ function toggleDrawer() {
 const $q = useQuasar()
 const isMobile = computed(() => $q.screen.lt.md)
 const isDark = ref($q.dark.isActive);
+const isAuthenticated = ref(false)
 
 function toggleDarkMode() {
   $q.dark.set(!isDark.value);
   isDark.value = !isDark.value;
+}
+
+onMounted(() => {
+  checkAuth()
+  emitter.on('auth-changed', checkAuth)
+})
+onBeforeUnmount(() => {
+  emitter.off('auth-changed', checkAuth)
+})
+
+async function checkAuth() {
+  try {
+    console.log('Проверка авторизации...')
+    const response = await fetch(backendURL + 'users/check_auth', { credentials: 'include' })
+    console.log(response.json())
+    if (response.ok) {
+      isAuthenticated.value = true
+      console.log('Пользователь авторизован')
+    } else {
+      isAuthenticated.value = false
+      console.log('Пользователь не авторизован')
+    }
+  }
+  catch {
+    isAuthenticated.value = false
+    console.log('Пользователь не авторизован')
+  }
 }
 </script>
 

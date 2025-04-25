@@ -43,7 +43,7 @@ const routes = [
         path: 'subscriptions/:id/edit',
         name: 'subscription-edit',
         component: () => import('../pages/SubscriptionEdit.vue'),
-        // meta: { requiresAuth: true, subscriptionOwner: true }
+        meta: { requiresAuth: true, subscriptionOwner: true }
       },
       {
         path: 'digests',

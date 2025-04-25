@@ -80,12 +80,12 @@
             @remove="removeChip(index)"
             class="q-mb-xs"
           >
-            <q-icon v-if="chip.has_email" name="mail" color="secondary" class="q-ml-xs">
+            <q-icon v-if="chip.send_to_mail" name="mail" color="secondary" class="q-ml-xs">
               <q-tooltip class="bg-primary text-secondary" transition-show="scale" transition-hide="scale">
                 Этот пользователь получает уведомления на почту
               </q-tooltip>
             </q-icon>
-            <q-icon v-if="chip.has_mobile" name="phone_iphone" color="secondary" class="q-ml-xs">
+            <q-icon v-if="chip.mobile_notifications" name="phone_iphone" color="secondary" class="q-ml-xs">
               <q-tooltip class="bg-primary text-secondary" transition-show="scale" transition-hide="scale">
                 Этот пользователь получает мобильные уведомления
               </q-tooltip>
@@ -176,10 +176,12 @@
     fetch(
         //`/api/get-digest/${digestId}`
         //'https://cd38f834d72d4f5abd4105ca6807a70f.api.mockbin.io/'
-        backendURL +  `/subscriptions/${digestId}`
+        backendURL +  `subscriptions/${digestId}`, 
+        {credentials: 'include'}
     )
       .then(response => response.json())
       .then(data => {
+        console.log('Полученные данные:', data);
         this.title = data.title;
         this.description = data.description;
         this.selectedSources = data.sources;
@@ -191,11 +193,12 @@
         // Заполняем подписчиков с учетом настроек уведомлений
         this.addedEmails = data.followers.map(follower => ({
           email: follower.email,
-          has_email: follower.send_to_mail,
-          has_mobile: follower.mobile_notifications,
+          send_to_mail: follower.send_to_mail,
+          mobile_notifications: follower.mobile_notifications,
         }));
       })
       .catch(error => console.error('Ошибка при получении данных дайджеста:', error));
+      
   },
   methods: {
     addEmail() {
@@ -219,7 +222,7 @@
             'Content-Type': 'application/json',
           },
           credentials: 'include',
-          body: JSON.stringify({ credentials: this.email }),
+          body: JSON.stringify({ username: this.email }),
         })
         .then((response) => {
             if (response.status === 401) {
@@ -228,13 +231,13 @@
             return response.json()
           })
           .then((data) => {
-            const { has_email, has_mobile } = data;
-            if (has_email !== undefined || has_mobile !== undefined) {
+            const { send_to_mail, mobile_notifications } = data;
+            if (send_to_mail !== undefined || mobile_notifications !== undefined) {
               this.emailError = false;
               this.addedEmails.push({
                 email: this.email,
-                has_email,
-                has_mobile,
+                send_to_mail,
+                mobile_notifications,
               });
               this.email = '';
             }
@@ -277,8 +280,8 @@
         public: this.isPublic,
         followers: this.addedEmails.map((email) => ({
           email: email.email,
-          send_to_mail: email.has_email,
-          mobile_notifications: email.has_mobile,
+          send_to_mail: email.send_to_mail,
+          mobile_notifications: email.mobile_notifications,
         })),
         owner: this.ownerEmail,  // Передаем новый email владельца
       };
@@ -286,7 +289,7 @@
 
       // Отправка данных на сервер
       const digestId = this.$route.params.id;
-      fetch(backendURL + `/subscriptions/${digestId}`, {
+      fetch(backendURL + `subscriptions/${digestId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
