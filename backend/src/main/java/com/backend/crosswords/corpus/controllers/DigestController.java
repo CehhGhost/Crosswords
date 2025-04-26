@@ -92,10 +92,12 @@ public class DigestController {
             @ApiResponse(responseCode = "401", description = "You are trying to get all digests while not authenticated")
     })
     @GetMapping
-    public ResponseEntity<?> getAllDigests() {
+    public ResponseEntity<?> getAllDigests(
+            @RequestParam(required = false, name = "page_number") Integer pageNumber,
+            @RequestParam(required = false, name = "matches_per_page") Integer matchesPerPage) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
-        var digests = digestService.getAllDigests(crosswordUserDetails.getUser());
+        var digests = digestService.getAllDigests(crosswordUserDetails.getUser(), pageNumber, matchesPerPage);
         return ResponseEntity.ok(digests);
     }
 

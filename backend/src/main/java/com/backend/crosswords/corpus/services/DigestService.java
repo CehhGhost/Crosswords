@@ -13,11 +13,12 @@ import org.opensearch.index.query.BoolQueryBuilder;
 import org.opensearch.index.query.IdsQueryBuilder;
 import org.opensearch.index.query.QueryBuilder;
 import org.opensearch.index.query.QueryBuilders;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
-import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -178,9 +179,14 @@ public class DigestService {
         return certainDigestDTO;
     }
 
-    public DigestsDTO getAllDigests(User user) {
-        var digests = digestRepository.findAll();
-        return this.transformDigestsIntoDigestsDTO(digests, user, null);
+    public DigestsDTO getAllDigests(User user, Integer pageNumber, Integer matchesPerPage) {
+        Pageable pageable = PageRequest.of(pageNumber, matchesPerPage);
+        Page<Digest> digestPage = digestRepository.findAll(pageable);
+        int nextPage = pageNumber + 1;
+        if (nextPage >= digestPage.getTotalPages()) {
+            nextPage = -1;
+        }
+        return this.transformDigestsIntoDigestsDTO(digestPage.getContent(), user, nextPage);
     }
 
     public void rateDigestCoreByDigestId(String id, Integer digestCoreRating, User user) {
