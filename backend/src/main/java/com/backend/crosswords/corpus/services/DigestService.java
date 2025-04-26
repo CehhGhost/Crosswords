@@ -177,6 +177,8 @@ public class DigestService {
     }
 
     public DigestsDTO getAllDigests(User user, Integer pageNumber, Integer matchesPerPage) {
+        pageNumber = pageNumber == null || pageNumber < 0 ? 0 : pageNumber;
+        matchesPerPage = matchesPerPage == null || matchesPerPage <= 0 ? 20 : matchesPerPage;
         Sort sort = Sort.by(Sort.Direction.DESC, "core.date");
         Pageable pageable = PageRequest.of(pageNumber, matchesPerPage, sort);
         Slice<Digest> digestPage = digestRepository.findAll(pageable);
