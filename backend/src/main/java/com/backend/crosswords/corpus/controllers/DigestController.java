@@ -125,7 +125,6 @@ public class DigestController {
     @Operation(summary = "Get digests by search", description = "This endpoint gets you all digests by your filtration's and by a certain search with title")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Searched digests", content = @Content(schema = @Schema(implementation = DigestsDTO.class))),
-            @ApiResponse(responseCode = "401", description = "You are trying to get digests by search while unauthorized"),
             @ApiResponse(responseCode = "400", description = "Invalid date format. Expected: dd/MM/yyyy")
     })
     @GetMapping("/search")

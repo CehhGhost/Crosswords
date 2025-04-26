@@ -88,7 +88,7 @@ public class DigestService {
                 var subscriptionId = subscription.getId();
                 Digest digest = new Digest(new DigestId(coreId, subscriptionId), core, subscription);
                 digests.add(digest);
-                String digestESId = coreId + "#" + subscriptionId;
+                String digestESId = coreId + "-" + subscriptionId;
                 digestsES.add(new DigestES(digestESId, subscriptionService.getDigestSubscriptionsTitle(subscriptionId), core.getDate()));
             }
         }
@@ -105,7 +105,7 @@ public class DigestService {
     }
 
     public Digest getDigestById(String digestId) {
-        var ids = digestId.split("#");
+        var ids = digestId.split("-");
         DigestId id;
         try {
             id = new DigestId(Long.valueOf(ids[0]), Long.valueOf(ids[1]));
@@ -200,7 +200,7 @@ public class DigestService {
         List<String> digests = new ArrayList<>();
         for (var digest : searchResult) {
             if (this.equalsMetaData(dateFrom, dateTo, tags, sources, subscribeOnly, digest, user)) {
-                String digestESId = digest.getCore().getId() + "#" + digest.getSubscription().getId();
+                String digestESId = digest.getCore().getId() + "-" + digest.getSubscription().getId();
                 digests.add(digestESId);
             }
         }
@@ -237,7 +237,7 @@ public class DigestService {
         searchHits.forEach(hit ->
         {
             var digestES = hit.getContent();
-            var ids = digestES.getId().split("#");
+            var ids = digestES.getId().split("-");
             var id = new DigestId(Long.valueOf(ids[0]), Long.valueOf(ids[1]));
             var digest = digestRepository.findById(id).orElseThrow(() -> new NoSuchElementException("There is no digests with such id!"));
             digests.add(digest);
@@ -272,7 +272,7 @@ public class DigestService {
 
             DigestDTO digestDTO = new DigestDTO();
 
-            digestDTO.setId(digest.getCore().getId().toString() + "#" + digest.getSubscription().getId().toString());
+            digestDTO.setId(digest.getCore().getId().toString() + "-" + digest.getSubscription().getId().toString());
 
             digestDTO.setTitle(subscriptionES.getTitle());
 
