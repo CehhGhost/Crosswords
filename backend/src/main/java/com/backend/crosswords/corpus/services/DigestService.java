@@ -342,9 +342,7 @@ public class DigestService {
                 second = true;
             }
         } else {
-            if (subscribe_only) {
-                second = subscriptionSettings != null;
-            }
+            second = subscriptionSettings != null;
         }
         return first && second;
     }
