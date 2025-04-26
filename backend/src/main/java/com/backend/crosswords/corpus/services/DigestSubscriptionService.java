@@ -100,7 +100,7 @@ public class DigestSubscriptionService {
         return templateService.createTemplateBySourcesAndTags(sources, tags);
     }
 
-    public void checkDigestSubscriptionDeletion(boolean deleted, DigestSubscription subscription, User user) {
+    public boolean checkDigestSubscriptionDeletion(boolean deleted, DigestSubscription subscription, User user) {
         if (deleted) {
             if (Objects.equals(subscription.getOwner().getId(), user.getId())) {
                 subscription.setOwner(null);
@@ -108,14 +108,16 @@ public class DigestSubscriptionService {
             }
             if (subscriptionSettingsService.getAllDigestSubscriptionSettingsByDigestSubscription(subscription).isEmpty()) {
                 subscriptionRepository.delete(subscription);
+                return true;
             }
         }
+        return false;
     }
 
-    public void updateDigestSubscriptionSettingsForUser(Long id, DigestSubscriptionSettingsDTO subscriptionSettingsDTO, User user) {
+    public boolean updateDigestSubscriptionSettingsForUser(Long id, DigestSubscriptionSettingsDTO subscriptionSettingsDTO, User user) {
         var subscription = subscriptionRepository.findById(id).orElseThrow(() -> new NoSuchElementException("There is no subscriptions with such id!"));
-        var deleted = subscriptionSettingsService.updateDigestSubscriptionSettingsForUser(subscription, user, subscriptionSettingsDTO);
-        this.checkDigestSubscriptionDeletion(deleted, subscription, user);
+        var deletedSettings = subscriptionSettingsService.updateDigestSubscriptionSettingsForUser(subscription, user, subscriptionSettingsDTO);
+        return this.checkDigestSubscriptionDeletion(deletedSettings, subscription, user);
     }
 
     public List<String> getAllDigestSubscriptionsUsersExceptOwner(Long id) {

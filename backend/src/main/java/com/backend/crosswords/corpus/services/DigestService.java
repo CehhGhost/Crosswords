@@ -347,11 +347,11 @@ public class DigestService {
         return first && second;
     }
 
-    public void updateDigestSubscriptionSettingsForUserByDigestId(String id, DigestSubscriptionSettingsDTO subscriptionSettingsDTO, User user) {
+    public boolean updateDigestSubscriptionSettingsForUserByDigestId(String id, DigestSubscriptionSettingsDTO subscriptionSettingsDTO, User user) {
         var digest = this.getDigestById(id);
         var subscription = digest.getSubscription();
-        var delete = subscriptionSettingsService.updateDigestSubscriptionSettingsForUser(subscription, user, subscriptionSettingsDTO);
-        subscriptionService.checkDigestSubscriptionDeletion(delete, subscription, user);
+        var deleteSettings = subscriptionSettingsService.updateDigestSubscriptionSettingsForUser(subscription, user, subscriptionSettingsDTO);
+        return subscriptionService.checkDigestSubscriptionDeletion(deleteSettings, subscription, user);
     }
 
     public List<String> getAllDigestSubscriptionsUsersExceptOwner(String id) {

@@ -70,7 +70,7 @@ public class DigestSubscriptionController {
     }
     @Operation(summary = "Update a digest subscription's settings", description = "This endpoint lets you update a digest subscription's settings, remember that after no followers remains the subscription is being deleted")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "You successfully updated a digest subscription's settings"),
+            @ApiResponse(responseCode = "200", description = "You successfully updated a digest subscription's settings", content = @Content(schema = @Schema(implementation = UpdatedDigestSubscriptionSettingsDTO.class))),
             @ApiResponse(responseCode = "401", description = "You are trying to updated a digest subscription's settings while not authenticated"),
             @ApiResponse(responseCode = "404", description = "There is no such digest subscription or you are trying to edit private subscription while not its follower"),
     })
@@ -78,12 +78,13 @@ public class DigestSubscriptionController {
     public ResponseEntity<?> updateDigestSubscriptionSettingsForUser(@PathVariable Long id, @RequestBody DigestSubscriptionSettingsDTO subscriptionSettingsDTO) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+        boolean deleted;
         try {
-            digestSubscriptionService.updateDigestSubscriptionSettingsForUser(id, subscriptionSettingsDTO, crosswordUserDetails.getUser());
+            deleted = digestSubscriptionService.updateDigestSubscriptionSettingsForUser(id, subscriptionSettingsDTO, crosswordUserDetails.getUser());
         } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
-        return ResponseEntity.ok(HttpStatus.OK);
+        return ResponseEntity.ok(new UpdatedDigestSubscriptionSettingsDTO(subscriptionSettingsDTO.getSubscribed(), subscriptionSettingsDTO.getSend_to_mail(), subscriptionSettingsDTO.getMobile_notifications(), deleted));
     }
     @Operation(summary = "Get all users from the subscription", description = "This endpoint lets you get all users from the subscription except the owner")
     @ApiResponses({

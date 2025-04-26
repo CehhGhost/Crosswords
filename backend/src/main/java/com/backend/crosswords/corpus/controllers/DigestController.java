@@ -165,7 +165,7 @@ public class DigestController {
     }
     @Operation(summary = "Update a digest subscription's settings", description = "This endpoint lets you update a digest subscription's settings by digest itself, remember that after no followers remains the subscription is being deleted")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "You successfully updated a digest subscription's settings"),
+            @ApiResponse(responseCode = "200", description = "You successfully updated a digest subscription's settings", content = @Content(schema = @Schema(implementation = UpdatedDigestSubscriptionSettingsDTO.class))),
             @ApiResponse(responseCode = "401", description = "You are trying to updated a digest subscription's settings while not authenticated"),
             @ApiResponse(responseCode = "404", description = "There is no digests with such id, there is no such digest subscription or you are trying to edit private subscription while not its follower"),
     })
@@ -173,12 +173,13 @@ public class DigestController {
     public ResponseEntity<?> updateDigestSubscriptionSettingsForUserByDigestId(@PathVariable String id, @RequestBody DigestSubscriptionSettingsDTO subscriptionSettingsDTO) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+        boolean deleted;
         try {
-            digestService.updateDigestSubscriptionSettingsForUserByDigestId(id, subscriptionSettingsDTO, crosswordUserDetails.getUser());
+            deleted = digestService.updateDigestSubscriptionSettingsForUserByDigestId(id, subscriptionSettingsDTO, crosswordUserDetails.getUser());
         } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
-        return ResponseEntity.ok(HttpStatus.OK);
+        return ResponseEntity.ok(new UpdatedDigestSubscriptionSettingsDTO(subscriptionSettingsDTO.getSubscribed(), subscriptionSettingsDTO.getSend_to_mail(), subscriptionSettingsDTO.getMobile_notifications(), deleted));
     }
     @Operation(summary = "Get digest subscription by digest's id", description = "This endpoint lets you get digest subscription by digest's id")
     @ApiResponses({
