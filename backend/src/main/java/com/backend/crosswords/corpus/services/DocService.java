@@ -303,6 +303,7 @@ public class DocService {
         return ResponseEntity.ok(HttpStatus.OK);
     }
 
+    @Deprecated
     public void deleteDocumentsItself() {
         List<IndexOperations> indexOpsList = List.of(
                 elasticsearchOperations.indexOps(IndexCoordinates.of("document")),

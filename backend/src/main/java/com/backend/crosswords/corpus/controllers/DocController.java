@@ -165,7 +165,10 @@ public class DocController {
     }
 
     // Очистка индекса документов из ES, если предварительно не почистить доки из Postgres, то дальше возникнут ошибки
-    @Operation(summary = "Delete index from ES", description = "This endpoint lets clean the documents' index from ES, if you do not clean the docs from Postgres at the same time, then errors may occur")
+    @Operation(
+            summary = "Delete index from ES",
+            description = "This endpoint lets clean the documents' index from ES, if you do not clean the docs from Postgres at the same time, then errors may occur",
+            deprecated = true)
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "You successfully deleted the documents' index"),
             @ApiResponse(responseCode = "404", description = "You are trying to delete index, that doesn't exist (maybe it has been already deleted)"),

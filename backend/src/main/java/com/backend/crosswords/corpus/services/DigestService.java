@@ -364,8 +364,4 @@ public class DigestService {
         var subscriptionId = digest.getSubscription().getId();
         subscriptionService.changeDigestSubscriptionsOwner(user, subscriptionId, owner);
     }
-
-    public Iterable<DigestES> findAllES() {
-        return digestSearchRepository.findAll();
-    }
 }

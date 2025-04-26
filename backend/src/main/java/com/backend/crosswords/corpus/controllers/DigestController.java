@@ -241,8 +241,4 @@ public class DigestController {
         }
         return ResponseEntity.ok(HttpStatus.OK);
     }
-    @GetMapping ("/ES")
-    public ResponseEntity<?> findAll() {
-        return ResponseEntity.ok(digestService.findAllES());
-    }
 }
