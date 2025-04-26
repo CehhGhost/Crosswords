@@ -5,9 +5,18 @@ import com.backend.crosswords.admin.services.UserService;
 import com.backend.crosswords.corpus.dto.*;
 import com.backend.crosswords.corpus.models.*;
 import com.backend.crosswords.corpus.repositories.elasticsearch.DigestCoreSearchRepository;
+import com.backend.crosswords.corpus.repositories.elasticsearch.DigestSearchRepository;
 import com.backend.crosswords.corpus.repositories.jpa.DigestCoreRepository;
 import com.backend.crosswords.corpus.repositories.jpa.DigestRepository;
+import org.opensearch.data.client.orhlc.NativeSearchQueryBuilder;
+import org.opensearch.index.query.QueryBuilder;
+import org.opensearch.index.query.QueryBuilders;
+import org.opensearch.search.sort.SortBuilders;
+import org.opensearch.search.sort.SortOrder;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,21 +32,22 @@ public class DigestService {
     private final DigestSubscriptionSettingsService subscriptionSettingsService;
     private final DigestTemplateService templateService;
     private final DigestRepository digestRepository;
+    private final DigestSearchRepository digestSearchRepository;
     private final DocService docService;
     private final DigestCoreSearchRepository coreSearchRepository;
     private final DigestRatingService ratingService;
-
     private final UserService userService;
     private final RestTemplate restTemplate;
     private final TagService tagService;
     private final ElasticsearchOperations elasticsearchOperations;
     private final Queue<DigestTemplate> templates = new LinkedList<>();
-    public DigestService(DigestCoreRepository digestCoreRepository, DigestSubscriptionService subscriptionService, DigestSubscriptionSettingsService subscriptionSettingsService, DigestTemplateService templateService, DigestRepository digestRepository, DocService docService, DigestCoreSearchRepository coreSearchRepository, DigestRatingService ratingService, UserService userService, RestTemplate restTemplate, TagService tagService, ElasticsearchOperations elasticsearchOperations) {
+    public DigestService(DigestCoreRepository digestCoreRepository, DigestSubscriptionService subscriptionService, DigestSubscriptionSettingsService subscriptionSettingsService, DigestTemplateService templateService, DigestRepository digestRepository, DigestSearchRepository digestSearchRepository, DocService docService, DigestCoreSearchRepository coreSearchRepository, DigestRatingService ratingService, UserService userService, RestTemplate restTemplate, TagService tagService, ElasticsearchOperations elasticsearchOperations) {
         this.coreRepository = digestCoreRepository;
         this.subscriptionService = subscriptionService;
         this.subscriptionSettingsService = subscriptionSettingsService;
         this.templateService = templateService;
         this.digestRepository = digestRepository;
+        this.digestSearchRepository = digestSearchRepository;
         this.docService = docService;
         this.coreSearchRepository = coreSearchRepository;
         this.ratingService = ratingService;
@@ -70,15 +80,21 @@ public class DigestService {
     }
     private void createNewDigests() {
         List<Digest> digests = new ArrayList<>();
+        List<DigestES> digestsES = new ArrayList<>();
         while (!templates.isEmpty()) {
             var template = templates.poll();
             var core = this.createNewDigestCore(template);
             for (var subscription : subscriptionService.getAllDigestSubscriptionsByTemplate(template)) {
-                Digest digest = new Digest(new DigestId(core.getId(), subscription.getId()), core, subscription);
+                var coreId = core.getId();
+                var subscriptionId = subscription.getId();
+                Digest digest = new Digest(new DigestId(coreId, subscriptionId), core, subscription);
                 digests.add(digest);
+                String digestESId = coreId + "#" + subscriptionId;
+                digestsES.add(new DigestES(digestESId, subscriptionService.getDigestSubscriptionsTitle(subscriptionId), core.getDate()));
             }
         }
         digestRepository.saveAll(digests);
+        digestSearchRepository.saveAll(digestsES);
     }
 
     @Scheduled(cron = "${scheduler.cron}")
@@ -194,23 +210,33 @@ public class DigestService {
             dateFrom = dateTo;
             dateTo = nothing;
         }
+        NativeSearchQueryBuilder searchQueryBuilder = new NativeSearchQueryBuilder();
         List<Digest> digests;
         if (searchBody != null) {
-            List<DigestSubscription> subscriptions = subscriptionService.getAllDigestSubscriptionsBySearchTerm(searchBody);
-            digests = this.filterDigests(digestRepository.findAllBySubscriptionIn(subscriptions), dateFrom, dateTo, tags, sources, subscribeOnly, user);
-        } else {
-            digests = this.filterDigests(digestRepository.findAll(), dateFrom, dateTo, tags, sources, subscribeOnly, user);
+            QueryBuilder filterBuilder = QueryBuilders.matchPhraseQuery("title", searchBody);
+            searchQueryBuilder.withFilter(filterBuilder);
+
         }
-        int startPage = pageNumber * matchesPerPage;
-        int endPage = startPage + matchesPerPage;
-        int size = digests.size();
+        var searchQuery = searchQueryBuilder
+                .withPageable(PageRequest.of(pageNumber, matchesPerPage))
+                .withSort(Sort.by(Sort.Order.desc("date")))
+                .build();
+        var searchHits = elasticsearchOperations.search(searchQuery, DigestES.class, IndexCoordinates.of("digest"));
+        digests = new ArrayList<>();
+        searchHits.forEach(hit ->
+        {
+            var digestES = hit.getContent();
+            var ids = digestES.getId().split("#");
+            var id = new DigestId(Long.valueOf(ids[0]), Long.valueOf(ids[1]));
+            var digest = digestRepository.findById(id).orElseThrow(() -> new NoSuchElementException("There is no digests with such id!"));
+            digests.add(digest);
+        });
         int nextPage = pageNumber + 1;
-        if (size <= endPage) {
-            endPage = size;
+        if (searchHits.getTotalHits() <= (long) nextPage * matchesPerPage) {
             nextPage = -1;
         }
-        List<Digest> digestsPage = digests.subList(startPage, endPage);
-        return this.transformDigestsIntoDigestsDTO(digestsPage, user, nextPage);
+        var filteredDigests = this.filterDigests(digests, dateFrom, dateTo, tags, sources, subscribeOnly, user);
+        return this.transformDigestsIntoDigestsDTO(filteredDigests, user, nextPage);
     }
     private DigestsDTO transformDigestsIntoDigestsDTO(List<Digest> digests, User user, Integer nextPage) {
         DigestsDTO digestsDTO = new DigestsDTO();

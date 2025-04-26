@@ -256,4 +256,9 @@ public class DigestSubscriptionService {
         subscription.setOwner(newOwner);
         subscriptionRepository.save(subscription);
     }
+
+    public String getDigestSubscriptionsTitle(Long subscriptionId) {
+        var subscriptionES = subscriptionSearchRepository.findById(subscriptionId).orElseThrow(() -> new NoSuchElementException("There is no subscriptions with such id!"));
+        return subscriptionES.getTitle();
+    }
 }
