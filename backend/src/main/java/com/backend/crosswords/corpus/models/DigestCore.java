@@ -5,7 +5,10 @@ import jakarta.persistence.*;
 import java.sql.Timestamp;
 import java.util.List;
 
-@Table(name = "_digest_cores")
+@Table(
+        name = "_digest_cores",
+        indexes = @Index(name = "idx_digest_core_date", columnList = "date")
+)
 @Entity
 public class DigestCore {
     @Id

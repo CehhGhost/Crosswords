@@ -13,10 +13,7 @@ import org.opensearch.index.query.BoolQueryBuilder;
 import org.opensearch.index.query.IdsQueryBuilder;
 import org.opensearch.index.query.QueryBuilder;
 import org.opensearch.index.query.QueryBuilders;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -180,12 +177,10 @@ public class DigestService {
     }
 
     public DigestsDTO getAllDigests(User user, Integer pageNumber, Integer matchesPerPage) {
-        Pageable pageable = PageRequest.of(pageNumber, matchesPerPage);
-        Page<Digest> digestPage = digestRepository.findAll(pageable);
-        int nextPage = pageNumber + 1;
-        if (nextPage >= digestPage.getTotalPages()) {
-            nextPage = -1;
-        }
+        Sort sort = Sort.by(Sort.Direction.DESC, "core.date");
+        Pageable pageable = PageRequest.of(pageNumber, matchesPerPage, sort);
+        Slice<Digest> digestPage = digestRepository.findAll(pageable);
+        int nextPage = digestPage.hasNext() ? pageNumber + 1 : -1;
         return this.transformDigestsIntoDigestsDTO(digestPage.getContent(), user, nextPage);
     }
 
