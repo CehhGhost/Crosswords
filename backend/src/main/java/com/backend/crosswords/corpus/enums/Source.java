@@ -4,7 +4,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 public enum Source {
-    INTER("Интерфакс");
+    INTER("Интерфакс"),
+    COMMER("Коммерсантъ"),
+    CBUZ("ЦБ Узбекистан"),
+    CBTAJ("ЦБ Таджикистан"),
+    CBKIR("ЦБ Кыргызстан"),
+    CBAZER("ЦБ Азербайджан");
+
     private final String russianName;
     private static final Map<String, Source> RUSSIAN_NAME_MAP = new HashMap<>();
     static {
