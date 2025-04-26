@@ -307,7 +307,8 @@ public class DocService {
         List<IndexOperations> indexOpsList = List.of(
                 elasticsearchOperations.indexOps(IndexCoordinates.of("document")),
                 elasticsearchOperations.indexOps(IndexCoordinates.of("digest_core")),
-                elasticsearchOperations.indexOps(IndexCoordinates.of("digest_subscription"))
+                elasticsearchOperations.indexOps(IndexCoordinates.of("digest_subscription")),
+                elasticsearchOperations.indexOps(IndexCoordinates.of("digest"))
         );
         for (var indexOps : indexOpsList) {
             if (indexOps.exists()) {

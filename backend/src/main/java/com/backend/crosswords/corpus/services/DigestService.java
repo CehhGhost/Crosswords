@@ -9,14 +9,15 @@ import com.backend.crosswords.corpus.repositories.elasticsearch.DigestSearchRepo
 import com.backend.crosswords.corpus.repositories.jpa.DigestCoreRepository;
 import com.backend.crosswords.corpus.repositories.jpa.DigestRepository;
 import org.opensearch.data.client.orhlc.NativeSearchQueryBuilder;
+import org.opensearch.index.query.BoolQueryBuilder;
+import org.opensearch.index.query.IdsQueryBuilder;
 import org.opensearch.index.query.QueryBuilder;
 import org.opensearch.index.query.QueryBuilders;
-import org.opensearch.search.sort.SortBuilders;
-import org.opensearch.search.sort.SortOrder;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -192,11 +193,12 @@ public class DigestService {
         ratingService.createRating(core, user, digestCoreRating);
     }
 
-    private List<Digest> filterDigests(Collection<Digest> searchResult, Timestamp dateFrom, Timestamp dateTo, List<String> tags, List<String> sources, Boolean subscribeOnly, User user) {
-        List<Digest> digests = new ArrayList<>();
+    private List<String> filterDigestsAndGetESIds(Collection<Digest> searchResult, Timestamp dateFrom, Timestamp dateTo, List<String> tags, List<String> sources, Boolean subscribeOnly, User user) {
+        List<String> digests = new ArrayList<>();
         for (var digest : searchResult) {
             if (this.equalsMetaData(dateFrom, dateTo, tags, sources, subscribeOnly, digest, user)) {
-                digests.add(digest);
+                String digestESId = digest.getCore().getId() + "#" + digest.getSubscription().getId();
+                digests.add(digestESId);
             }
         }
         return digests;
@@ -211,11 +213,17 @@ public class DigestService {
             dateTo = nothing;
         }
         NativeSearchQueryBuilder searchQueryBuilder = new NativeSearchQueryBuilder();
+        var filtersIds = this.filterDigestsAndGetESIds(digestRepository.findAll(), dateFrom, dateTo, tags, sources, subscribeOnly, user);
+        IdsQueryBuilder filterBuilder = QueryBuilders.idsQuery().addIds(filtersIds.toArray(new String[0]));
         List<Digest> digests;
         if (searchBody != null) {
-            QueryBuilder filterBuilder = QueryBuilders.matchPhraseQuery("title", searchBody);
+            QueryBuilder queryBuilder = QueryBuilders.matchPhraseQuery("title", searchBody);
+            BoolQueryBuilder boolQuery = QueryBuilders.boolQuery()
+                    .must(filterBuilder)
+                    .must(queryBuilder);
+            searchQueryBuilder.withFilter(boolQuery);
+        } else {
             searchQueryBuilder.withFilter(filterBuilder);
-
         }
         var searchQuery = searchQueryBuilder
                 .withPageable(PageRequest.of(pageNumber, matchesPerPage))
@@ -235,8 +243,7 @@ public class DigestService {
         if (searchHits.getTotalHits() <= (long) nextPage * matchesPerPage) {
             nextPage = -1;
         }
-        var filteredDigests = this.filterDigests(digests, dateFrom, dateTo, tags, sources, subscribeOnly, user);
-        return this.transformDigestsIntoDigestsDTO(filteredDigests, user, nextPage);
+        return this.transformDigestsIntoDigestsDTO(digests, user, nextPage);
     }
     private DigestsDTO transformDigestsIntoDigestsDTO(List<Digest> digests, User user, Integer nextPage) {
         DigestsDTO digestsDTO = new DigestsDTO();
@@ -356,5 +363,9 @@ public class DigestService {
         var digest = this.getDigestById(id);
         var subscriptionId = digest.getSubscription().getId();
         subscriptionService.changeDigestSubscriptionsOwner(user, subscriptionId, owner);
+    }
+
+    public Iterable<DigestES> findAllES() {
+        return digestSearchRepository.findAll();
     }
 }

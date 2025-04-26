@@ -16,7 +16,8 @@ public class DigestES {
     private String title;
     @Field(type = FieldType.Date,
             name = "date",
-            format = {DateFormat.epoch_millis, DateFormat.date_optional_time})
+            format = DateFormat.epoch_millis,
+            pattern = "yyyy-MM-dd HH:mm:ss")
     private Date date;
 
     public DigestES() {
