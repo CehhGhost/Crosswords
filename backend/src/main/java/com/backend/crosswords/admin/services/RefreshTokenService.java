@@ -4,6 +4,7 @@ import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.backend.crosswords.admin.models.RefreshToken;
 import com.backend.crosswords.admin.models.User;
 import com.backend.crosswords.admin.repositories.RefreshTokenRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -22,12 +23,14 @@ public class RefreshTokenService {
     public RefreshTokenService(RefreshTokenRepository refreshTokenRepository) {
         this.refreshTokenRepository = refreshTokenRepository;
     }
+    @Transactional
     public RefreshToken generateRefreshToken(String ipAddress, String userAgent, User user) {
         RefreshToken refreshToken = new RefreshToken(UUID.randomUUID().toString(), ipAddress, userAgent, user,
                 ZonedDateTime.now().plusMinutes(refreshExpirationMinutes).toInstant());
         return refreshTokenRepository.save(refreshToken);
     }
 
+    @Transactional
     public RefreshToken refreshUser(String token, String ipAddress, String userAgent) {
         var oldToken = refreshTokenRepository.findByToken(token).orElseThrow();
         if (!Objects.equals(oldToken.getIp(), ipAddress) || !Objects.equals(oldToken.getUserAgent(), userAgent)) {
@@ -38,10 +41,8 @@ public class RefreshTokenService {
             refreshTokenRepository.delete(oldToken);
             throw new TokenExpiredException("Your refresh token is expired!", oldToken.getExpiryDate());
         }
-
-        var newToken = this.generateRefreshToken(ipAddress, userAgent, oldToken.getUser());
         refreshTokenRepository.delete(oldToken);
-        return newToken;
+        return this.generateRefreshToken(ipAddress, userAgent, oldToken.getUser());
     }
 
     public Optional<RefreshToken> checkExistingRefreshToken(String ipAddress, String userAgent, User user) {

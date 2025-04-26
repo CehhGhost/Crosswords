@@ -187,19 +187,23 @@ public class DocService {
         var searchQuery = searchQueryBuilder
                 .withPageable(PageRequest.of(pageNumber, matchesPerPage))
                 .build();
-        var searchHits = elasticsearchOperations.search(searchQuery, DocES.class, IndexCoordinates.of("document"));
-        searchHits.forEach(hit ->
-        {
-            var docES = hit.getContent();
-            var docMeta = docMetaRepository.findById(docES.getId()).orElseThrow();
-            resultHits.add(this.transformDocIntoDocDTO(docMeta));
-            System.out.println("Score for a hit: " + hit.getScore());
-        });
-        int nextPage = pageNumber + 1;
-        if (searchHits.getTotalHits() <= (long) nextPage * matchesPerPage) {
-            nextPage = -1;
+        try {
+            var searchHits = elasticsearchOperations.search(searchQuery, DocES.class, IndexCoordinates.of("document"));
+            searchHits.forEach(hit ->
+            {
+                var docES = hit.getContent();
+                var docMeta = docMetaRepository.findById(docES.getId()).orElseThrow();
+                resultHits.add(this.transformDocIntoDocDTO(docMeta));
+                System.out.println("Score for a hit: " + hit.getScore());
+            });
+            int nextPage = pageNumber + 1;
+            if (searchHits.getTotalHits() <= (long) nextPage * matchesPerPage) {
+                nextPage = -1;
+            }
+            return this.formSearchResultDTO(nextPage, resultHits);
+        } catch (NoSuchElementException e) {
+            return this.formSearchResultDTO(-1, resultHits);
         }
-        return this.formSearchResultDTO(nextPage, resultHits);
     }
 
     private boolean equalsMetaData(DocMeta doc, SearchDocDTO searchDocDTO, User user) {

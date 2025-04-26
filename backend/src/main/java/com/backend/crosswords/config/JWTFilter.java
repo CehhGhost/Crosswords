@@ -101,47 +101,28 @@ public class JWTFilter extends OncePerRequestFilter {
     }
 
     private void refreshUser(String oldToken, HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        if (oldToken != null && !oldToken.isBlank()) {
-            String ipAddress = request.getHeader("X-Forwarded-For");
-            if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
-                ipAddress = request.getRemoteAddr();
-            }
-            String userAgent = request.getHeader("User-Agent");
-            RefreshToken newRefreshToken;
-            try {
+        try {
+            if (oldToken != null && !oldToken.isBlank()) {
+                String ipAddress = request.getHeader("X-Forwarded-For");
+                if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
+                    ipAddress = request.getRemoteAddr();
+                }
+                String userAgent = request.getHeader("User-Agent");
+                RefreshToken newRefreshToken;
                 newRefreshToken = refreshTokenService.refreshUser(oldToken, ipAddress, userAgent);
-            } catch (TokenExpiredException | NoSuchElementException e) {
-                AnonymousAuthenticationToken anonymousToken = new AnonymousAuthenticationToken(
-                        "anonymous", "anonymousUser", AuthorityUtils.createAuthorityList("ROLE_ANONYMOUS"));
-                SecurityContextHolder.getContext().setAuthentication(anonymousToken);
-                return;
-            }
-            String newAccessToken = jwtUtil.generateAccessToken(newRefreshToken.getUser().getUsername());
-            String username = jwtUtil.validateTokenAndRetrieveClaim(newAccessToken);
-            UserDetails userDetails = crosswordUserDetailsService.loadUserByUsername(username);
-
-            UsernamePasswordAuthenticationToken authToken =
-                    new UsernamePasswordAuthenticationToken(userDetails,
-                            userDetails.getPassword(),
-                            userDetails.getAuthorities());
-
-            if (SecurityContextHolder.getContext().getAuthentication() == null) {
-                SecurityContextHolder.getContext().setAuthentication(authToken);
-            }
-            this.setCookies(response, newAccessToken, newRefreshToken.getToken());
-            try {
+                String newAccessToken = jwtUtil.generateAccessToken(newRefreshToken.getUser().getUsername());
+                this.setCookies(response, newAccessToken, newRefreshToken.getToken());
                 this.validateJWTAndAuthenticate(newAccessToken, request);
-            } catch (IllegalAccessException e) {
+            } else {
                 AnonymousAuthenticationToken anonymousToken = new AnonymousAuthenticationToken(
                         "anonymous", "anonymousUser", AuthorityUtils.createAuthorityList("ROLE_ANONYMOUS"));
                 SecurityContextHolder.getContext().setAuthentication(anonymousToken);
             }
-            System.out.println("New access token: " + newAccessToken);
-            System.out.println("New refresh token: " + newRefreshToken.getToken());
-        } else {
+        } catch (TokenExpiredException | NoSuchElementException | SecurityException | IllegalAccessException e) {
             AnonymousAuthenticationToken anonymousToken = new AnonymousAuthenticationToken(
                     "anonymous", "anonymousUser", AuthorityUtils.createAuthorityList("ROLE_ANONYMOUS"));
             SecurityContextHolder.getContext().setAuthentication(anonymousToken);
+            this.setCookies(response, "", "");
         }
     }
     private void setCookies(HttpServletResponse response, String newAccessToken, String newRefreshToken) {

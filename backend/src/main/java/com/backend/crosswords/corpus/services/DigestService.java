@@ -188,7 +188,7 @@ public class DigestService {
 
     public DigestsDTO getDigestsBySearchAndTransformIntoDTO(String searchBody, Timestamp dateFrom, Timestamp dateTo, List<String> tags, List<String> sources, Boolean subscribeOnly, User user, Integer pageNumber, Integer matchesPerPage) {
         pageNumber = pageNumber == null || pageNumber < 0 ? 0 : pageNumber;
-        matchesPerPage = matchesPerPage == 0 || matchesPerPage <= 0 ? 10 : matchesPerPage;
+        matchesPerPage = matchesPerPage == null || matchesPerPage <= 0 ? 10 : matchesPerPage;
         if (dateFrom != null && dateTo != null && dateFrom.after(dateTo)) {
             var nothing = dateFrom;
             dateFrom = dateTo;
