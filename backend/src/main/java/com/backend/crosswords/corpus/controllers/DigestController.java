@@ -89,15 +89,21 @@ public class DigestController {
     @Operation(summary = "Get all digests", description = "This endpoint lets get all digests.\n P.S. this method is for mobile, also, Mathew, remind me to remind you about snake_case)))")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "You successfully get all digests", content = @Content(schema = @Schema(implementation = DigestsDTO.class))),
-            @ApiResponse(responseCode = "401", description = "You are trying to get all digests while not authenticated")
     })
     @GetMapping
-    public ResponseEntity<?> getAllDigests(
+    public ResponseEntity<?> getAllAvailableDigests(
             @RequestParam(required = false, name = "page_number") Integer pageNumber,
             @RequestParam(required = false, name = "matches_per_page") Integer matchesPerPage) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
-        var digests = digestService.getAllDigests(crosswordUserDetails.getUser(), pageNumber, matchesPerPage);
+        User user;
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+            user = crosswordUserDetails.getUser();
+        } catch (ClassCastException e) {
+            user = null;
+        }
+
+        var digests = digestService.getAllAvailableDigests(user, pageNumber, matchesPerPage);
         return ResponseEntity.ok(digests);
     }
 
@@ -169,7 +175,7 @@ public class DigestController {
             @ApiResponse(responseCode = "401", description = "You are trying to updated a digest subscription's settings while not authenticated"),
             @ApiResponse(responseCode = "404", description = "There is no digests with such id, there is no such digest subscription or you are trying to edit private subscription while not its follower"),
     })
-    @PutMapping("/{id}/subscription/settings")
+    @PutMapping("/{id}/subscription/settings/update")
     public ResponseEntity<?> updateDigestSubscriptionSettingsForUserByDigestId(@PathVariable String id, @RequestBody DigestSubscriptionSettingsDTO subscriptionSettingsDTO) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();

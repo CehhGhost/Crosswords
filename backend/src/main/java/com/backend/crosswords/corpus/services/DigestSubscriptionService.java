@@ -302,6 +302,9 @@ public class DigestSubscriptionService {
                 subscribeOptionsDTO.setSubscribed(true);
             }
         } else {
+            if (!subscription.getIsPublic()) {
+                throw new IllegalAccessException("You are not an owner of this private subscription!");
+            }
             subscriptionWithDigestsDTO.setIsAuthed(false);
             subscriptionWithDigestsDTO.setIsOwner(false);
         }
@@ -316,12 +319,13 @@ public class DigestSubscriptionService {
         subscriptionWithDigestsDTO.setDigests(new ArrayList<>());
         for (var digest : subscription.getDigests()) {
             var core = digest.getCore();
-            double averageDigestCoresRating = ratingService.getCoresAverageRating(core);
-            if (averageDigestCoresRating != 0) {
+            SubscriptionsDigestDTO subscriptionsDigestDTO;
+            Double averageDigestCoresRating = ratingService.getCoresAverageRating(core);
+            if (averageDigestCoresRating != null) {
                 ++notNullCounter;
                 sumAverage += averageDigestCoresRating;
             }
-            SubscriptionsDigestDTO subscriptionsDigestDTO = new SubscriptionsDigestDTO(digest.getId().toString(), averageDigestCoresRating, core.getDate(), core.getText());
+            subscriptionsDigestDTO = new SubscriptionsDigestDTO(digest.getId().toString(), averageDigestCoresRating, core.getDate(), core.getText());
             subscriptionWithDigestsDTO.getDigests().add(subscriptionsDigestDTO);
         }
         subscriptionWithDigestsDTO.setAverageRating(sumAverage / notNullCounter);

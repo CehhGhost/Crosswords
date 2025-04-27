@@ -56,6 +56,9 @@ public class DigestService {
     protected DigestCore createNewDigestCore(DigestTemplate template) {
         template = templateService.getTemplateFromId(template.getUuid()); // необходимо, чтобы сделать полную загрузку данных, избегаю ленивую
         var docMetas = docService.getAllDocsByTemplate(template);
+        if (docMetas.size() == 0) {
+            return null;
+        }
         DigestCore core = new DigestCore();
         core.setDate(new Timestamp(System.currentTimeMillis()));
         core.setDocs(docMetas);
@@ -78,13 +81,15 @@ public class DigestService {
         while (!templates.isEmpty()) {
             var template = templates.poll();
             var core = this.createNewDigestCore(template);
-            for (var subscription : subscriptionService.getAllDigestSubscriptionsByTemplate(template)) {
-                var coreId = core.getId();
-                var subscriptionId = subscription.getId();
-                Digest digest = new Digest(new DigestId(coreId, subscriptionId), core, subscription);
-                digests.add(digest);
-                String digestESId = coreId + "-" + subscriptionId;
-                digestsES.add(new DigestES(digestESId, subscriptionService.getDigestSubscriptionsTitle(subscriptionId), core.getDate()));
+            if (core != null) {
+                for (var subscription : subscriptionService.getAllDigestSubscriptionsByTemplate(template)) {
+                    var coreId = core.getId();
+                    var subscriptionId = subscription.getId();
+                    Digest digest = new Digest(new DigestId(coreId, subscriptionId), core, subscription);
+                    digests.add(digest);
+                    String digestESId = coreId + "-" + subscriptionId;
+                    digestsES.add(new DigestES(digestESId, subscriptionService.getDigestSubscriptionsTitle(subscriptionId), core.getDate()));
+                }
             }
         }
         digestRepository.saveAll(digests);
