@@ -33,7 +33,7 @@ public class DigestSubscriptionController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "You successfully created a new subscription and subscribed users on it"),
             @ApiResponse(responseCode = "401", description = "You are trying to create a digest subscription while not authenticated"),
-            @ApiResponse(responseCode = "400", description = "At least one source has an incorrect name"),
+            @ApiResponse(responseCode = "400", description = "At least one source or tag has an incorrect name and the lists of them can't be null or empty"),
             @ApiResponse(responseCode = "404", description = "At least one subscriber cant be found in the DB")
     })
     @PostMapping("/create")

@@ -47,6 +47,12 @@ public class DigestSubscriptionService {
 
     @Transactional
     public void createDigestSubscription(User owner, CreateDigestSubscriptionDTO createDigestSubscriptionDTO) {
+        if (createDigestSubscriptionDTO.getSources() == null || createDigestSubscriptionDTO.getSources().isEmpty()) {
+            throw new IllegalArgumentException("Subscription's sources can't be null or empty!");
+        }
+        if (createDigestSubscriptionDTO.getTags() == null || createDigestSubscriptionDTO.getTags().isEmpty()) {
+            throw new IllegalArgumentException("Subscription's tags can't be null or empty!");
+        }
         owner = userService.loadUserById(owner.getId());
 
         var subscription = modelMapper.map(createDigestSubscriptionDTO, DigestSubscription.class);
