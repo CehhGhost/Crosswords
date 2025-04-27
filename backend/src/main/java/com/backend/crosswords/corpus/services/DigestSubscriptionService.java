@@ -298,11 +298,11 @@ public class DigestSubscriptionService {
             subscriptionWithDigestsDTO.setIsAuthed(true);
             if (subscription.getOwner().getId().equals(user.getId())) {
                 subscriptionWithDigestsDTO.setIsOwner(true);
-            } else if (!subscription.getIsPublic()) {
-                throw new IllegalAccessException("You are not an owner of this private subscription!");
             }
             if (this.extractSubscribersEmailsFromSubscription(subscription).contains(user.getEmail())) {
                 subscribeOptionsDTO.setSubscribed(true);
+            } else if (!subscription.getIsPublic()) {
+                throw new IllegalAccessException("You are not a follower of this private subscription!");
             }
         } else {
             if (!subscription.getIsPublic()) {

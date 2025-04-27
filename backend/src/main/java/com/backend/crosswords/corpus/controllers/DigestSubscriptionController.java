@@ -189,7 +189,7 @@ public class DigestSubscriptionController {
     @Operation(summary = "Get subscription's digests", description = "This endpoint lets you get subscription's digests")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "You successfully get subscription's digests", content = @Content(schema = @Schema(implementation = SubscriptionWithDigestsWrapperDTO.class))),
-            @ApiResponse(responseCode = "403", description = "You are trying to get private subscription's digests while not owning it"),
+            @ApiResponse(responseCode = "403", description = "You are trying to get private subscription's digests but you are not its subscriber"),
             @ApiResponse(responseCode = "404", description = "There is no subscriptions with such id")
     })
     @GetMapping("/{id}/digests")

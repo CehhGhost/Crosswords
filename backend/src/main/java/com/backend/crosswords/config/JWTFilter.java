@@ -62,7 +62,7 @@ public class JWTFilter extends OncePerRequestFilter {
             try {
                 this.validateJWTAndAuthenticate(accessToken, request);
             } catch (UsernameNotFoundException | JWTVerificationException exception) {
-                refreshUser(oldRefreshToken, request, response, filterChain);
+                refreshUser(oldRefreshToken, request, response);
             } catch (IllegalAccessException e) {
                 this.setCookies(response, "", "");
                 AnonymousAuthenticationToken anonymousToken = new AnonymousAuthenticationToken(
@@ -70,7 +70,7 @@ public class JWTFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(anonymousToken);
             }
         } else {
-            refreshUser(oldRefreshToken, request, response, filterChain);
+            refreshUser(oldRefreshToken, request, response);
         }
         filterChain.doFilter(request, response);
     }
@@ -100,7 +100,7 @@ public class JWTFilter extends OncePerRequestFilter {
         System.out.println("New access token: " + accessToken);
     }
 
-    private void refreshUser(String oldToken, HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+    private void refreshUser(String oldToken, HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         try {
             if (oldToken != null && !oldToken.isBlank()) {
                 String ipAddress = request.getHeader("X-Forwarded-For");
