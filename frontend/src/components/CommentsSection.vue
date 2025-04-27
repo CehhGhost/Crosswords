@@ -121,7 +121,7 @@ export default {
           console.error(error)
           this.$q.notify({
             message: error.message,
-            color: 'negative',
+            type: 'negative',
             position: 'top',
           })
         })
@@ -169,7 +169,7 @@ export default {
           console.error(error)
           this.$q.notify({
             message: error.message,
-            color: 'negative',
+            type: 'negative',
             position: 'top',
           })
         })
@@ -223,7 +223,7 @@ export default {
       console.error(error)
       this.$q.notify.create({
         message: error.message,
-        color: 'negative',
+        type: 'negative',
         position: 'top',
       })
     })
@@ -258,7 +258,7 @@ export default {
           console.error(error)
           this.$q.notify.create({
             message: error.message,
-            color: 'negative',
+            type: 'negative',
             position: 'top',
           })
         })

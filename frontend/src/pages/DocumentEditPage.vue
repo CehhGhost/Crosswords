@@ -251,7 +251,7 @@ export default {
       } catch (err) {
         $q.notify({
           message: err.message,
-          color: 'negative',
+          type: 'negative',
           position: 'top',
         })
       }
@@ -315,13 +315,15 @@ export default {
 
         $q.notify({
           message: 'Изменения успешно сохранены!',
-          color: 'positive',
+          type: 'positive',
           position: 'top',
+          badgeColor: 'yellow',
+          badgeTextColor: 'dark',
         })
       } catch (err) {
         $q.notify({
           message: err.message,
-          color: 'negative',
+          type: 'negative',
           position: 'top',
         })
       } finally {

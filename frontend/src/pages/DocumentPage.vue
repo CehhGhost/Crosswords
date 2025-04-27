@@ -319,7 +319,6 @@ watch(
         console.log('delete-annotation')
         try {
           const response = await fetch(
-            //`http://your-backend/documents/${documentData.value.id}/annotations/${annotation.id}`,
             //'https://8be73c6cb1434fa6a55467ff489377b5.api.mockbin.io/',
             backendURL + `documents/${newDocument.id}/annotate/${annotation.id}`,
             {

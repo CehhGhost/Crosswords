@@ -104,7 +104,7 @@
           unelevated
           :loading="isDigestLoading"
           class="col-auto search-btn"
-          @click="fetchDigests"
+          @click="onSearch"
         />
       </div>
       <!-- даты -->
@@ -181,7 +181,6 @@
             dense
             clearable
             class="q-my-sm"
-            @clear="clearSelection('tags')"
           />
         </div>
 
@@ -231,6 +230,9 @@
         />
       </div>
     </div>
+    <div class="q-mt-md q-mb-md flex flex-center" v-if="next_page !== -1">
+      <q-btn label="Показать еще" color="primary" no-caps text-color="dark" @click="onLoadMore" />
+    </div>
   </q-page>
 </template>
 
@@ -266,6 +268,7 @@ export default {
       activeFeaturedSlide: '0',
       is_authed: false,
       autoplay: true,
+      next_page: 0,
 
       // это из lookups.js
       availableTags,
@@ -336,9 +339,22 @@ export default {
         backgroundColor: this.digestColors[digest.id],
       }
     },
-    async fetchDigests() {
-      this.isDigestLoading = true
+    onSearch() {
+      this.next_page = 0
+      this.matches_per_page = 20
+      this.fetchDigests({ reset: true })
+    },
+    onLoadMore() {
+      // Если next_page уже -1, то кнопка не должна была показаться,
+      // но на всякий случай проверим
+      if (this.next_page === -1) return
 
+      // Загружаем следующую страницу
+      this.fetchDigests({ reset: false })
+    },
+
+    async fetchDigests({ reset }) {
+      this.matches_per_page = 20
       try {
         const params = new URLSearchParams()
 
@@ -357,16 +373,18 @@ export default {
         // Теги
         if (this.selected_tags && this.selected_tags.length) {
           this.selected_tags.forEach((tag) => {
-            params.append('tags', tag)
+            params.append('tags', tag.label)
           })
         }
 
         if (this.selected_sources && this.selected_sources.length) {
           this.selected_sources.forEach((source) => {
-            params.append('sources', source)
+            params.append('sources', source.label)
           })
         }
         params.append('subscribe_only', this.subscribeOnly ? 'true' : 'false')
+        params.append('page_number', this.next_page)
+        params.append('matches_per_page', this.matches_per_page)
         //console.log(backendURL)
         const response = await fetch(
           backendURL + `digests/search?${params.toString()}`,
@@ -390,7 +408,15 @@ export default {
         // {
         //   "digests": [ ... ]
         // }
-        this.digests = data.digests || []
+        if (reset) {
+            // При новом поиске полностью заменяем массив
+            this.digests = data.digests || []
+          } else {
+            // При "Show more" добавляем новые документы к старым
+            this.digests = [...this.digests, ...data.digests]
+          }
+        this.next_page = data.next_page
+        console.log("PAGE NUMBER", this.next_page)
         this.is_authed = data.is_authed
       } catch (error) {
         console.error(error)
@@ -403,6 +429,7 @@ export default {
         const response = await fetch(`https://d0ef77d78d0747daa591ac2497df51ed.api.mockbin.io/`, {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include'
         })
         if (!response.ok) {
           throw new Error('Ошибка при получении featured дайджестов')
@@ -428,7 +455,7 @@ export default {
     try {
       await Promise.all([
         this.fetchFeaturedDigests(),
-        this.fetchDigests()
+        this.fetchDigests({ reset: false })
       ]);
     } catch (error) {
       console.error("Ошибка при загрузке дайджестов:", error);

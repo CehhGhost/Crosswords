@@ -32,14 +32,14 @@
             ]"
           >
             "{{ digestData?.description }}"
-        </p>
+          </p>
         </div>
 
         <div v-if="digestData?.is_authed" class="q-my-sm">
           <div class="q-mb-xs">
             Оцените качество этого дайджетса:
             <q-rating
-              v-model="digestData.rating_classification"
+              v-model="digestData.user_rating"
               max="5"
               color="primary"
               icon="star"
@@ -70,7 +70,7 @@
             >
               {{ source.title }}
             </router-link>
-            : 
+            :
             <a
               :href="source.url"
               target="_blank"
@@ -149,8 +149,9 @@ import SubscriptionButton from '../components/SubscriptionButton.vue'
 import BackButton from 'src/components/BackButton.vue'
 import { fasCrown } from '@quasar/extras/fontawesome-v6'
 import { backendURL } from 'src/data/lookups'
+import { useQuasar } from 'quasar'
 
-
+const $q = useQuasar()
 const route = useRoute()
 const router = useRouter()
 const digestData = ref(null)
@@ -162,9 +163,10 @@ const showAdmin = ref(false)
 onMounted(async () => {
   try {
     const id = route.params.id
-    const response = await fetch(`${backendURL}digests/${id}`,
-    {credentials: 'include'}
-     // `https://93442d81ece6495b95e185b5215b36f8.api.mockbin.io/`
+    const response = await fetch(
+      `${backendURL}digests/${id}`,
+      { credentials: 'include' },
+      // `https://93442d81ece6495b95e185b5215b36f8.api.mockbin.io/`
     )
     if (!response.ok) {
       if (response.status === 401) {
@@ -174,9 +176,10 @@ onMounted(async () => {
       } else {
         console.error('Ошибка HTTP:', response.status)
       }
-      return;
+      return
     }
     digestData.value = await response.json()
+    console.log(digestData.value)
     // Инициализация дополнительных данных, если необходимо
   } catch (error) {
     console.error('Ошибка при загрузке документа:', error)
@@ -188,18 +191,31 @@ onMounted(async () => {
 async function onRatingChange(newRating) {
   try {
     const id = route.params.id
-    const postResponse = await fetch(`http://localhost:3000/digests/${id}/rating`, {
-      method: 'POST',
+    const postResponse = await fetch(backendURL + `digests/${id}/rate`, {
+      method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rating: newRating }),
+      credentials: 'include',
+      body: JSON.stringify({ digest_core_rating: newRating }),
     })
     if (!postResponse.ok) {
+      $q.notify({
+        message: 'Не удалось сохранить рейтинг',
+        type: 'negative',
+        position: 'top',
+      })
       if (postResponse.status === 401) {
         router.replace('/login')
       }
       console.error('Ошибка при отправке рейтинга:', postResponse.status)
     } else {
-      digestData.value.rating_classification = newRating
+      digestData.value.user_rating = newRating
+      $q.notify({
+        message: 'Рейтинг успешно обновлен',
+        type: 'positive',
+        position: 'top',
+        badgeColor: 'yellow',
+        badgeTextColor: 'dark',
+      })
     }
   } catch (err) {
     console.error('Ошибка при отправке рейтинга:', err)
@@ -224,6 +240,7 @@ async function onDeleteConfirm() {
   try {
     const response = await fetch(`http://localhost:3000/documents/${currentId}`, {
       method: 'DELETE',
+      credentials: 'include'
     })
     if (!response.ok) {
       if (response.status === 401) {

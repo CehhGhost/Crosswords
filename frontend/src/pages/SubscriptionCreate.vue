@@ -255,7 +255,7 @@ export default {
         public: this.isPublic,
         followers: this.addedEmails.map((email) => email.email),
       }
-      console.log(JSON.stringify(requestData))
+      console.log("creating digest", JSON.stringify(requestData))
 
       // Отправляем данные на сервер
       fetch(backendURL + 'subscriptions/create', {

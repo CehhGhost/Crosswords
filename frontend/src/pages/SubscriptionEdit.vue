@@ -295,6 +295,7 @@
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(requestData),
+        credentials: 'include'
       })
         .then((response) => response.json())
         .then((data) => {
