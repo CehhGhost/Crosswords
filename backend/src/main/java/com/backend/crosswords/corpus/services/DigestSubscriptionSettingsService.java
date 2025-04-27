@@ -27,13 +27,19 @@ public class DigestSubscriptionSettingsService {
 
     @Transactional
     public void setSubscribersForSubscription(List<String> subscribers, DigestSubscription subscription) {
-        User user = subscription.getOwner();
+        User owner = subscription.getOwner();
+        User user = owner;
         List<DigestSubscriptionSettings> userSettingsList = new ArrayList<>();
         for (int i = -1; i < subscribers.size(); ++i) {
             if (i != -1) {
                 user = userService.getUserByUsername(subscribers.get(i));
+                if (!owner.getId().equals(user.getId())) {
+                    userSettingsList.add(this.setParametersForSubscriptionSettingsAndReturn(subscription, user));
+                }
+            } else {
+                userSettingsList.add(this.setPersonalParametersForSubscriptionSettingsAndReturn(subscription, user));
             }
-            userSettingsList.add(this.setParametersForSubscriptionSettingsAndReturn(subscription, user));
+
         }
         subscriptionSettingsRepository.saveAll(userSettingsList);
     }
@@ -100,6 +106,15 @@ public class DigestSubscriptionSettingsService {
         subscriptionSettingsRepository.saveAll(userSettingsList);
     }
 
+    private DigestSubscriptionSettings setPersonalParametersForSubscriptionSettingsAndReturn(DigestSubscription subscription, User user) {
+        var userSettings = new DigestSubscriptionSettings();
+        userSettings.setId(new DigestSubscriptionSettingsId(subscription.getId(), user.getId()));
+        userSettings.setSubscriber(user);
+        userSettings.setDigestSubscription(subscription);
+        userSettings.setMobileNotifications(user.getPersonalMobileNotifications() ? subscription.getMobileNotifications() : false);
+        userSettings.setSendToMail(user.getPersonalSendToMail() ? subscription.getSendToMail() : false);
+        return userSettings;
+    }
     private DigestSubscriptionSettings setParametersForSubscriptionSettingsAndReturn(DigestSubscription subscription, User user) {
         var userSettings = new DigestSubscriptionSettings();
         userSettings.setId(new DigestSubscriptionSettingsId(subscription.getId(), user.getId()));
@@ -115,7 +130,7 @@ public class DigestSubscriptionSettingsService {
         var checkSubscriptionSettings = subscriptionSettingsRepository.findById(new DigestSubscriptionSettingsId(subscription.getId(), user.getId()));
         if (checkSubscriptionSettings.isEmpty()) {
             if (subscription.getIsPublic()) {
-                subscriptionSettings = subscriptionSettingsRepository.save(this.setParametersForSubscriptionSettingsAndReturn(subscription, user));
+                subscriptionSettings = subscriptionSettingsRepository.save(this.setPersonalParametersForSubscriptionSettingsAndReturn(subscription, user));
             } else {
                 throw new NoSuchElementException("There is no settings between these user and subscription which is not public!");
             }
