@@ -47,4 +47,9 @@ public class DigestId implements Serializable {
     public void setSubscriptionId(Long subscriptionId) {
         this.subscriptionId = subscriptionId;
     }
+
+    @Override
+    public String toString() {
+        return coreId + "-" + subscriptionId;
+    }
 }

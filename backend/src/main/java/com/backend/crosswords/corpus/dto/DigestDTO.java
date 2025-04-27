@@ -10,7 +10,7 @@ import java.util.List;
 
 @Schema(description = "DTO to get digest")
 public class DigestDTO {
-    @Schema(example = "1#1")
+    @Schema(example = "1-1")
     private String id;
     @Schema(example = "Нечто страшное")
     private String title;

@@ -4,6 +4,7 @@ import com.backend.crosswords.admin.models.User;
 import jakarta.persistence.*;
 
 import java.sql.Timestamp;
+import java.util.List;
 
 @Table(name = "_digest_subscriptions")
 @Entity
@@ -29,6 +30,8 @@ public class DigestSubscription {
 
     @Column(name = "created_at")
     private Timestamp createdAt;
+    @OneToMany(mappedBy = "subscription")
+    private List<Digest> digests;
 
     public Long getId() {
         return id;
@@ -93,5 +96,13 @@ public class DigestSubscription {
 
     public void setTemplate(DigestTemplate template) {
         this.template = template;
+    }
+
+    public List<Digest> getDigests() {
+        return digests;
+    }
+
+    public void setDigests(List<Digest> digests) {
+        this.digests = digests;
     }
 }

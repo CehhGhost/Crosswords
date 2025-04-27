@@ -17,6 +17,8 @@ public class DigestCore {
     private Long id;
     @Column(name = "date")
     private Timestamp date;
+    @Column(name = "text", columnDefinition = "TEXT")
+    private String text;
     @ManyToOne(cascade = {CascadeType.MERGE})
     @JoinColumn(name = "digest_template_id")
     private DigestTemplate template;
@@ -64,5 +66,13 @@ public class DigestCore {
 
     public void setRatings(List<DigestCoreRating> ratings) {
         this.ratings = ratings;
+    }
+
+    public String getText() {
+        return text;
+    }
+
+    public void setText(String text) {
+        this.text = text;
     }
 }

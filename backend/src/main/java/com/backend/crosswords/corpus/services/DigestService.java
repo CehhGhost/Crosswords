@@ -4,7 +4,6 @@ import com.backend.crosswords.admin.models.User;
 import com.backend.crosswords.admin.services.UserService;
 import com.backend.crosswords.corpus.dto.*;
 import com.backend.crosswords.corpus.models.*;
-import com.backend.crosswords.corpus.repositories.elasticsearch.DigestCoreSearchRepository;
 import com.backend.crosswords.corpus.repositories.elasticsearch.DigestSearchRepository;
 import com.backend.crosswords.corpus.repositories.jpa.DigestCoreRepository;
 import com.backend.crosswords.corpus.repositories.jpa.DigestRepository;
@@ -33,14 +32,13 @@ public class DigestService {
     private final DigestRepository digestRepository;
     private final DigestSearchRepository digestSearchRepository;
     private final DocService docService;
-    private final DigestCoreSearchRepository coreSearchRepository;
     private final DigestRatingService ratingService;
     private final UserService userService;
     private final RestTemplate restTemplate;
     private final TagService tagService;
     private final ElasticsearchOperations elasticsearchOperations;
     private final Queue<DigestTemplate> templates = new LinkedList<>();
-    public DigestService(DigestCoreRepository digestCoreRepository, DigestSubscriptionService subscriptionService, DigestSubscriptionSettingsService subscriptionSettingsService, DigestTemplateService templateService, DigestRepository digestRepository, DigestSearchRepository digestSearchRepository, DocService docService, DigestCoreSearchRepository coreSearchRepository, DigestRatingService ratingService, UserService userService, RestTemplate restTemplate, TagService tagService, ElasticsearchOperations elasticsearchOperations) {
+    public DigestService(DigestCoreRepository digestCoreRepository, DigestSubscriptionService subscriptionService, DigestSubscriptionSettingsService subscriptionSettingsService, DigestTemplateService templateService, DigestRepository digestRepository, DigestSearchRepository digestSearchRepository, DocService docService, DigestRatingService ratingService, UserService userService, RestTemplate restTemplate, TagService tagService, ElasticsearchOperations elasticsearchOperations) {
         this.coreRepository = digestCoreRepository;
         this.subscriptionService = subscriptionService;
         this.subscriptionSettingsService = subscriptionSettingsService;
@@ -48,7 +46,6 @@ public class DigestService {
         this.digestRepository = digestRepository;
         this.digestSearchRepository = digestSearchRepository;
         this.docService = docService;
-        this.coreSearchRepository = coreSearchRepository;
         this.ratingService = ratingService;
         this.userService = userService;
         this.restTemplate = restTemplate;
@@ -66,15 +63,13 @@ public class DigestService {
 
         core = coreRepository.save(core);
         docService.setCoreForDocs(core, docMetas);
-        core = coreRepository.save(core);
 
         StringBuilder docsText = new StringBuilder();
         for (var docMeta : docMetas) {
             docsText.append(docService.getDocTextByDocId(docMeta.getId()));
         }
-        DigestCoreES digestCoreES = new DigestCoreES(core.getId(), docsText.toString()); // TODO добавить подключение к сервису создания дайджестов и получать текст от него
-        coreSearchRepository.save(digestCoreES);
-
+        core.setText(docsText.toString()); // TODO добавить подключение к сервису создания дайджестов и получать текст от него
+        core = coreRepository.save(core);
         return core;
     }
     private void createNewDigests() {
@@ -119,7 +114,6 @@ public class DigestService {
         CertainDigestDTO certainDigestDTO = new CertainDigestDTO();
         var digest = this.getDigestById(digestId);
         var core = digest.getCore();
-        var coreES = coreSearchRepository.findById(core.getId()).orElseThrow(() -> new NoSuchElementException("There is no digest cores with such id!"));
         var subscription = digest.getSubscription();
         var subscriptionES = subscriptionService.getDigestSubscriptionESById(subscription.getId());
         var template = templateService.getTemplateFromId(core.getTemplate().getUuid());
@@ -153,7 +147,7 @@ public class DigestService {
         }
 
         certainDigestDTO.setDescription(subscription.getDescription());
-        certainDigestDTO.setText(coreES.getText());
+        certainDigestDTO.setText(core.getText());
 
         certainDigestDTO.setDate(core.getDate());
 
@@ -176,7 +170,7 @@ public class DigestService {
         return certainDigestDTO;
     }
 
-    public DigestsDTO getAllDigests(User user, Integer pageNumber, Integer matchesPerPage) {
+    public DigestsDTO getAllAvailableDigests(User user, Integer pageNumber, Integer matchesPerPage) {
         pageNumber = pageNumber == null || pageNumber < 0 ? 0 : pageNumber;
         matchesPerPage = matchesPerPage == null || matchesPerPage <= 0 ? 20 : matchesPerPage;
         Sort sort = Sort.by(Sort.Direction.DESC, "core.date");
@@ -254,7 +248,6 @@ public class DigestService {
         digestsDTO.setNextPage(nextPage);
         for (var digest : digests) {
             var core = digest.getCore();
-            var coreES = coreSearchRepository.findById(core.getId()).orElseThrow(() -> new NoSuchElementException("There is no digest cores with such id!"));
             var subscription = digest.getSubscription();
             var subscriptionES = subscriptionService.getDigestSubscriptionESById(subscription.getId());
             var template = templateService.getTemplateFromId(core.getTemplate().getUuid());
@@ -287,7 +280,7 @@ public class DigestService {
             }
 
             digestDTO.setDescription(subscription.getDescription());
-            digestDTO.setText(coreES.getText());
+            digestDTO.setText(core.getText());
 
             digestDTO.setDate(core.getDate());
 

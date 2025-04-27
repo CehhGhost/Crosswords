@@ -29,8 +29,9 @@ public class DigestSubscriptionService {
     private final DigestSubscriptionSettingsService subscriptionSettingsService;
     private final DigestTemplateService templateService;
     private final ElasticsearchOperations elasticsearchOperations;
+    private final DigestRatingService ratingService;
 
-    public DigestSubscriptionService(UserService userService, ModelMapper modelMapper, DigestSubscriptionRepository subscriptionRepository, DigestSubscriptionSearchRepository subscriptionSearchRepository, TagService tagService, DigestSubscriptionSettingsService subscriptionSettingsService, DigestTemplateService templateService, ElasticsearchOperations elasticsearchOperations) {
+    public DigestSubscriptionService(UserService userService, ModelMapper modelMapper, DigestSubscriptionRepository subscriptionRepository, DigestSubscriptionSearchRepository subscriptionSearchRepository, TagService tagService, DigestSubscriptionSettingsService subscriptionSettingsService, DigestTemplateService templateService, ElasticsearchOperations elasticsearchOperations, DigestRatingService ratingService) {
         this.userService = userService;
         this.modelMapper = modelMapper;
         this.subscriptionRepository = subscriptionRepository;
@@ -39,6 +40,7 @@ public class DigestSubscriptionService {
         this.subscriptionSettingsService = subscriptionSettingsService;
         this.templateService = templateService;
         this.elasticsearchOperations = elasticsearchOperations;
+        this.ratingService = ratingService;
     }
 
     @Transactional
@@ -262,5 +264,68 @@ public class DigestSubscriptionService {
     public String getDigestSubscriptionsTitle(Long subscriptionId) {
         var subscriptionES = subscriptionSearchRepository.findById(subscriptionId).orElseThrow(() -> new NoSuchElementException("There is no subscriptions with such id!"));
         return subscriptionES.getTitle();
+    }
+
+    private List<String> extractSubscribersEmailsFromSubscription(DigestSubscription subscription) {
+        List<String> subscribersEmails = new ArrayList<>();
+        var subscriptionSettings = subscriptionSettingsService.getAllDigestSubscriptionSettingsByDigestSubscription(subscription);
+        for (var subscriptionSetting : subscriptionSettings) {
+            subscribersEmails.add(subscriptionSetting.getSubscriber().getEmail());
+        }
+        return subscribersEmails;
+    }
+
+    public SubscriptionWithDigestsWrapperDTO getDigestSubscriptionsDigestsByIdAndConvertIntoDTO(Long id, User user) throws IllegalAccessException {
+        var subscription = this.getDigestSubscriptionById(id);
+        var subscriptionES = this.getDigestSubscriptionESById(id);
+        var template = subscription.getTemplate();
+        SubscriptionWithDigestsDTO subscriptionWithDigestsDTO = new SubscriptionWithDigestsDTO();
+
+        subscriptionWithDigestsDTO.setId(subscription.getId());
+        subscriptionWithDigestsDTO.setDate(subscription.getCreatedAt());
+        subscriptionWithDigestsDTO.setTitle(subscriptionES.getTitle());
+        subscriptionWithDigestsDTO.setDescription(subscription.getDescription());
+
+        GetSubscribeOptionsDTO subscribeOptionsDTO = new GetSubscribeOptionsDTO();
+        subscribeOptionsDTO.setMobileNotifications(subscription.getMobileNotifications());
+        subscribeOptionsDTO.setSendToMail(subscription.getSendToMail());
+        subscribeOptionsDTO.setSubscribed(false);
+
+        if (user != null) {
+            subscriptionWithDigestsDTO.setIsAuthed(true);
+            if (subscription.getOwner().getId().equals(user.getId())) {
+                subscriptionWithDigestsDTO.setIsOwner(true);
+            } else if (!subscription.getIsPublic()) {
+                throw new IllegalAccessException("You are not an owner of this private subscription!");
+            }
+            if (this.extractSubscribersEmailsFromSubscription(subscription).contains(user.getEmail())) {
+                subscribeOptionsDTO.setSubscribed(true);
+            }
+        } else {
+            subscriptionWithDigestsDTO.setIsAuthed(false);
+            subscriptionWithDigestsDTO.setIsOwner(false);
+        }
+        subscriptionWithDigestsDTO.setSubscribeOptions(subscribeOptionsDTO);
+
+        var sourcesAndTagsNames = templateService.getSourcesNamesAndTagsNamesFromTemplate(template);
+        subscriptionWithDigestsDTO.setSources(sourcesAndTagsNames.getFirst());
+        subscriptionWithDigestsDTO.setTags(sourcesAndTagsNames.getSecond());
+
+        double sumAverage = 0;
+        int notNullCounter = 0;
+        subscriptionWithDigestsDTO.setDigests(new ArrayList<>());
+        for (var digest : subscription.getDigests()) {
+            var core = digest.getCore();
+            double averageDigestCoresRating = ratingService.getCoresAverageRating(core);
+            if (averageDigestCoresRating != 0) {
+                ++notNullCounter;
+                sumAverage += averageDigestCoresRating;
+            }
+            SubscriptionsDigestDTO subscriptionsDigestDTO = new SubscriptionsDigestDTO(digest.getId().toString(), averageDigestCoresRating, core.getDate(), core.getText());
+            subscriptionWithDigestsDTO.getDigests().add(subscriptionsDigestDTO);
+        }
+        subscriptionWithDigestsDTO.setAverageRating(sumAverage / notNullCounter);
+
+        return new SubscriptionWithDigestsWrapperDTO(subscriptionWithDigestsDTO);
     }
 }

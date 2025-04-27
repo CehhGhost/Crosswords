@@ -11,11 +11,9 @@ import org.springframework.stereotype.Service;
 @Service
 public class DigestRatingService {
     private final DigestCoreRatingRepository ratingRepository;
-    private final UserService userService;
 
-    public DigestRatingService(DigestCoreRatingRepository ratingRepository, UserService userService) {
+    public DigestRatingService(DigestCoreRatingRepository ratingRepository) {
         this.ratingRepository = ratingRepository;
-        this.userService = userService;
     }
 
     public Double getCoresAverageRating(DigestCore core) {

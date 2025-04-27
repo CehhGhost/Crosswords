@@ -1,6 +1,7 @@
 package com.backend.crosswords.corpus.controllers;
 
 import com.backend.crosswords.admin.models.CrosswordUserDetails;
+import com.backend.crosswords.admin.models.User;
 import com.backend.crosswords.corpus.dto.*;
 import com.backend.crosswords.corpus.services.DigestSubscriptionService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -181,5 +182,26 @@ public class DigestSubscriptionController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
         return ResponseEntity.ok(HttpStatus.OK);
+    }
+    @Operation(summary = "Get subscription's digests", description = "This endpoint lets you get subscription's digests")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully get subscription's digests", content = @Content(schema = @Schema(implementation = SubscriptionWithDigestsWrapperDTO.class))),
+            @ApiResponse(responseCode = "403", description = "You are trying to get private subscription's digests while not owning it")
+    })
+    @GetMapping("/{id}/digests")
+    public ResponseEntity<?> getDigestSubscriptionsDigests(@PathVariable Long id) {
+        User user;
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+            user = crosswordUserDetails.getUser();
+        } catch (ClassCastException e) {
+            user = null;
+        }
+        try {
+            return ResponseEntity.ok(digestSubscriptionService.getDigestSubscriptionsDigestsByIdAndConvertIntoDTO(id, user));
+        } catch (IllegalAccessException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        }
     }
 }
