@@ -178,15 +178,13 @@ public class DigestService {
     }
 
     public DigestsDTO getAllAvailableDigests(User user, Integer pageNumber, Integer matchesPerPage) {
+        if (user == null) {
+           return this.getAllPublicDigests(pageNumber, matchesPerPage);
+        }
         pageNumber = pageNumber == null || pageNumber < 0 ? 0 : pageNumber;
         matchesPerPage = matchesPerPage == null || matchesPerPage <= 0 ? 20 : matchesPerPage;
         Pageable pageable = PageRequest.of(pageNumber, matchesPerPage);
-        Slice<Digest> digestPage;
-        if (user == null) {
-            digestPage = digestRepository.findAllPublicDigests(pageable);
-        } else {
-            digestPage = digestRepository.findAllUsersDigests(user.getId(), pageable);
-        }
+        Slice<Digest> digestPage = digestRepository.findAllUsersDigests(user.getId(), pageable);
         return this.transformDigestsIntoDigestsDTO(digestPage.getContent(), user, digestPage.hasNext() ? pageNumber + 1 : -1);
     }
 
@@ -370,8 +368,24 @@ public class DigestService {
         subscriptionService.changeDigestSubscriptionsOwner(user, subscriptionId, owner);
     }
 
-    public Object checkUsersAccessToDigestByIdAndConvertIntoDTO(String id, User user) {
+    public CheckAccessDTO checkUsersAccessToDigestByIdAndConvertIntoDTO(String id, User user) {
         var digest = this.getDigestById(id);
         return subscriptionService.checkUsersAccessToSubscriptionByIdAndConvertIntoDTO(digest.getSubscription().getId(), user);
+    }
+
+    public DigestsDTO getAllPublicDigests(Integer pageNumber, Integer matchesPerPage) {
+        pageNumber = pageNumber == null || pageNumber < 0 ? 0 : pageNumber;
+        matchesPerPage = matchesPerPage == null || matchesPerPage <= 0 ? 20 : matchesPerPage;
+        Pageable pageable = PageRequest.of(pageNumber, matchesPerPage);
+        Slice<Digest> digestPage = digestRepository.findAllPublicDigests(pageable);
+        return this.transformDigestsIntoDigestsDTO(digestPage.getContent(), null, digestPage.hasNext() ? pageNumber + 1 : -1);
+    }
+
+    public DigestsDTO getAllUsersPrivateDigests(User user, Integer pageNumber, Integer matchesPerPage) {
+        pageNumber = pageNumber == null || pageNumber < 0 ? 0 : pageNumber;
+        matchesPerPage = matchesPerPage == null || matchesPerPage <= 0 ? 20 : matchesPerPage;
+        Pageable pageable = PageRequest.of(pageNumber, matchesPerPage);
+        Slice<Digest> digestPage = digestRepository.findAllPrivateUsersDigests(user.getId(), pageable);
+        return this.transformDigestsIntoDigestsDTO(digestPage.getContent(), user, digestPage.hasNext() ? pageNumber + 1 : -1);
     }
 }

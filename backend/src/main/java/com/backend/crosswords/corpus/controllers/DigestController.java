@@ -278,4 +278,27 @@ public class DigestController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
+    @Operation(summary = "Get all public digests", description = "This endpoint lets get only all public digests.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully get all public digests", content = @Content(schema = @Schema(implementation = DigestsDTO.class))),
+    })
+    @GetMapping("/public")
+    public ResponseEntity<?> getAllPublicDigests(
+            @RequestParam(required = false, name = "next_page") Integer pageNumber,
+            @RequestParam(required = false, name = "matches_per_page") Integer matchesPerPage) {
+        return ResponseEntity.ok(digestService.getAllPublicDigests(pageNumber, matchesPerPage));
+    }
+    @Operation(summary = "Get all user's private digests", description = "This endpoint lets get only all user's private digests.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully get all user's private digests", content = @Content(schema = @Schema(implementation = DigestsDTO.class))),
+            @ApiResponse(responseCode = "401", description = "You are trying to  get all user's private digests, while not authenticated", content = @Content(schema = @Schema(implementation = DigestsDTO.class)))
+    })
+    @GetMapping("/private")
+    public ResponseEntity<?> getAllPrivateDigests(
+            @RequestParam(required = false, name = "next_page") Integer pageNumber,
+            @RequestParam(required = false, name = "matches_per_page") Integer matchesPerPage) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+        return ResponseEntity.ok(digestService.getAllUsersPrivateDigests(crosswordUserDetails.getUser(), pageNumber, matchesPerPage));
+    }
 }

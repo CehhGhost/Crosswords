@@ -40,4 +40,20 @@ public interface DigestRepository extends JpaRepository<Digest, DigestId> {
     ORDER BY d.core.date DESC
 """)
     Slice<Digest> findAllUsersDigests(@Param("userId") Long userId, Pageable pageable);
+    @Query("""
+    SELECT d
+    FROM Digest d
+    WHERE d.id IN (
+        SELECT DISTINCT di.id
+        FROM Digest di
+        LEFT JOIN di.subscription ds
+        LEFT JOIN ds.subscriptionSettings dss
+        WHERE
+            (ds.isPublic = false)
+            AND
+            (dss.subscriber.id = :userId)
+    )
+    ORDER BY d.core.date DESC
+""")
+    Slice<Digest> findAllPrivateUsersDigests(@Param("userId") Long userId, Pageable pageable);
 }
