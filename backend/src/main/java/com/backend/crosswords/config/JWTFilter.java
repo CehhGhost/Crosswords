@@ -97,7 +97,7 @@ public class JWTFilter extends OncePerRequestFilter {
         if (SecurityContextHolder.getContext().getAuthentication() == null) {
             SecurityContextHolder.getContext().setAuthentication(authToken);
         }
-        System.out.println("New access token: " + accessToken);
+        System.out.println("Access token is valid: " + accessToken);
     }
 
     private void refreshUser(String oldToken, HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {

@@ -41,8 +41,9 @@ public class RefreshTokenService {
             refreshTokenRepository.delete(oldToken);
             throw new TokenExpiredException("Your refresh token is expired!", oldToken.getExpiryDate());
         }
+        User user = oldToken.getUser();
         refreshTokenRepository.delete(oldToken);
-        return this.generateRefreshToken(ipAddress, userAgent, oldToken.getUser());
+        return this.generateRefreshToken(ipAddress, userAgent, user);
     }
 
     public Optional<RefreshToken> checkExistingRefreshToken(String ipAddress, String userAgent, User user) {
