@@ -36,7 +36,6 @@
         <div class="text-h4 ellipsis">{{ truncatedTitle }}</div>
         <subscription-button
           :digest="digest"
-          :ownerChangeBackendUrl="ownerChangeBackendUrl"
           triggeredFrom="subscriptions"
         />
       </div>
@@ -52,8 +51,16 @@
           </span>
         </div>
       </q-card-section>
-      <q-card-section v-if="digest.is_owner" class="row justify-start q-pt-none">
-      <q-btn
+      <q-card-section class="row justify-start q-pt-none">
+        <q-btn
+        label="Посмотреть"
+        no-caps
+        text-color="secondary"
+        color="primary"
+        @click="onViewClick"
+        class="q-mr-sm"
+      />
+      <q-btn v-if="digest.is_owner"
         icon-right="edit"
         label="Редактировать"
         no-caps
@@ -86,12 +93,7 @@ export default {
       required: true,
     },
   },
-  data() {
-    return {
-      ownerChangeBackendUrl: "TODO connect backend endpoint ownerChangeBackendUrl",
-      subscriptionUpdateBackendUrl: "TODO connect backend endpoint subscriptionUpdateBackendUrl"
-    };
-  },
+
   computed: {
     truncatedTitle() {
       return this.digest.title.length > 22
@@ -108,6 +110,12 @@ export default {
     onEditClick() {
       this.$router.push({
         name: 'subscription-edit',
+        params: { id: this.digest.id }
+      });
+    },
+    onViewClick() {
+      this.$router.push({
+        name: 'subscription-view',
         params: { id: this.digest.id }
       });
     },

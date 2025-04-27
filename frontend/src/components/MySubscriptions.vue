@@ -116,6 +116,7 @@ export default {
           throw new Error('Ошибка при получении подписок')
         }
         const data = await response.json()
+        console.log("THIS DIGEST IS SUPPOSED TO BE SUBBED",data)
         this.subscriptions = data.digest_subscriptions || []
       } catch (err) {
         console.error(err)

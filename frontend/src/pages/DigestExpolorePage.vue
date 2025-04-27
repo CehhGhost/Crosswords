@@ -367,9 +367,10 @@ export default {
           })
         }
         params.append('subscribe_only', this.subscribeOnly ? 'true' : 'false')
+        //console.log(backendURL)
         const response = await fetch(
           backendURL + `digests/search?${params.toString()}`,
-          //`https://38eb0762b63f400b81812fc5431695d1.api.mockbin.io/`,
+          // `https://38eb0762b63f400b81812fc5431695d1.api.mockbin.io/`,
           {
             method: 'GET',
             headers: {

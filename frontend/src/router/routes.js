@@ -46,6 +46,11 @@ const routes = [
         meta: { requiresAuth: true, subscriptionOwner: true }
       },
       {
+        path: 'subscriptions/:id',
+        name: 'subscription-view',
+        component: () => import('../pages/SubscriptionPage.vue'),
+      },
+      {
         path: 'digests',
         name: 'digests',
         component: () => import('../pages/DigestExpolorePage.vue'),
