@@ -21,9 +21,10 @@
     <template v-else-if="subscriptions.length > 0">
       <div>
         <subscription-card
-          v-for="(digest, index) in displayedSubscriptions"
-          :key="index"
+          v-for="digest in displayedSubscriptions"
+          :key="digest.id"
           :digest="digest"
+          @subscription-removed="onSubscriptionRemoved"
         />
       </div>
 
@@ -92,6 +93,9 @@ export default {
     },
   },
   methods: {
+    onSubscriptionRemoved(id) {
+      this.subscriptions = this.subscriptions.filter((d) => d.id !== id)
+    },
     toggleShowAll() {
       this.showAll = !this.showAll
     },
@@ -116,7 +120,7 @@ export default {
           throw new Error('Ошибка при получении подписок')
         }
         const data = await response.json()
-        console.log("THIS DIGEST IS SUPPOSED TO BE SUBBED",data)
+        console.log('THIS DIGEST IS SUPPOSED TO BE SUBBED', data)
         this.subscriptions = data.digest_subscriptions || []
       } catch (err) {
         console.error(err)

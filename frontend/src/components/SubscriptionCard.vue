@@ -37,6 +37,7 @@
         <subscription-button
           :digest="digest"
           triggeredFrom="subscriptions"
+          @remove-subscription="handleRemove"
         />
       </div>
   
@@ -107,6 +108,9 @@ export default {
     },
   },
   methods: {
+    handleRemove(id) {
+      this.$emit('subscription-removed', id);
+    },
     onEditClick() {
       this.$router.push({
         name: 'subscription-edit',

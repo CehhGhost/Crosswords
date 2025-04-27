@@ -122,10 +122,18 @@ export default {
       this.subscribed = true
       const success = await this.sendSubscriptionUpdate()
       if (!success) {
+        this.$q.notify({
+        message: 'Не удалось подписаться. Доступ к подписке закрыт или она была удалена.',
+        type: 'negative',
+        position: 'top',
+        badgeColor: 'yellow',
+        badgeTextColor: 'dark',
+      })
         this.subscribed = false
       }
       this.loadingSubscription = false
     },
+
     async toggleCheckbox(type) {
       // Сохраняем предыдущее значение чекбокса
       const originalValue = this[type]
@@ -172,21 +180,25 @@ export default {
       await this.executeUnsubscribe()
     },
     async executeUnsubscribe() {
-      // Сохраняем исходное состояние
-      const originalsend_to_mail = this.send_to_mail
-      const originalmobile_notifications = this.mobile_notifications
-      // Обновляем локальное состояние для формирования payload
-      this.send_to_mail = null
-      this.mobile_notifications = null
-      this.subscribed = false
-      const success = await this.sendSubscriptionUpdate()
-      if (!success) {
-        // Если запрос не удался – откатываем состояние
-        this.send_to_mail = originalsend_to_mail
-        this.mobile_notifications = originalmobile_notifications
-        this.subscribed = true
+      const origMail = this.send_to_mail;
+      const origMobile = this.mobile_notifications;
+      this.send_to_mail = null;
+      this.mobile_notifications = null;
+      this.subscribed = false;
+
+      const data = await this.sendSubscriptionUpdate();
+      if (!data) {
+        // если не удалось – откатываем
+        this.send_to_mail = origMail;
+        this.mobile_notifications = origMobile;
+        this.subscribed = true;
+      } else if (this.triggeredFrom === 'subscriptions') {
+        // если приватная или удалена на сервере – удаляем карточку
+        if (!this.digest.public || data.deleted) {
+          this.$emit('remove-subscription', this.digest.id);
+        }
       }
-      this.loadingDropdown = false
+      this.loadingDropdown = false;
     },
     async handleOwnerTransferConfirm(newOwnerEmail) {
       this.transferLoading = true
@@ -228,41 +240,37 @@ export default {
         subscribed: this.subscribed,
         send_to_mail: this.send_to_mail,
         mobile_notifications: this.mobile_notifications,
-      }
+      };
 
       try {
-        console.log(this.getUpdateUrl())
-        const response = await fetch(
-          //'https://d41ad2c28576472aacba47ad07e4bf5b.api.mockbin.io/'
-          this.getUpdateUrl(),
-          {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify(payload),
-          },
-        )
+        const response = await fetch(this.getUpdateUrl(), {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(payload),
+        });
+
         if (!response.ok) {
           if (response.status === 401) {
-            this.$router.replace('/login')
+            this.$router.replace('/login');
           } else {
-            console.error('Ошибка при изменении настроек подписки')
-            console.log(await response.text())
+            console.error('Ошибка при изменении настроек подписки');
           }
-          return false
+          return false;
         }
-        // Если запрос успешен – обновляем значения из ответа
-        const data = await response.json()
-        console.log(data)
-        console.log('Payload:', JSON.stringify(payload))
-        this.send_to_mail = data.send_to_mail
-        this.mobile_notifications = data.mobile_notifications
-        return true
+
+        const data = await response.json();
+        // обновляем локальное состояние из ответа
+        this.subscribed = data.subscribed;
+        this.send_to_mail = data.send_to_mail;
+        this.mobile_notifications = data.mobile_notifications;
+        return data;
       } catch (error) {
-        console.error('Ошибка запроса:', error)
-        return false
+        console.error('Ошибка запроса:', error);
+        return false;
       }
     },
+
     getRightUrlPart() {
       if ((this.triggeredFrom === "subscription_page") || (this.triggeredFrom === "subscriptions")) {
         return "subscriptions"
