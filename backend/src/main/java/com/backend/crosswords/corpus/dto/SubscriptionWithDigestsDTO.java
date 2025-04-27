@@ -8,6 +8,8 @@ import java.sql.Timestamp;
 import java.util.List;
 
 public class SubscriptionWithDigestsDTO {
+    @Schema(example = "admin")
+    private String owner;
     @Schema(example = "1")
     private Long id;
     @Schema(example = "Нечто страшное")
@@ -139,10 +141,19 @@ public class SubscriptionWithDigestsDTO {
         this.id = id;
     }
 
+    public String getOwner() {
+        return owner;
+    }
+
+    public void setOwner(String owner) {
+        this.owner = owner;
+    }
+
     @Override
     public String toString() {
         return "SubscriptionWithDigestsDTO{" +
-                "id=" + id +
+                "owner='" + owner + '\'' +
+                ", id=" + id +
                 ", description='" + description + '\'' +
                 ", title='" + title + '\'' +
                 ", averageRating=" + averageRating +

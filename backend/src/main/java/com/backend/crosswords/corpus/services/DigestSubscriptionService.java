@@ -287,6 +287,7 @@ public class DigestSubscriptionService {
         subscriptionWithDigestsDTO.setDate(subscription.getCreatedAt());
         subscriptionWithDigestsDTO.setTitle(subscriptionES.getTitle());
         subscriptionWithDigestsDTO.setDescription(subscription.getDescription());
+        subscriptionWithDigestsDTO.setOwner(subscription.getOwner().getEmail());
 
         GetSubscribeOptionsDTO subscribeOptionsDTO = new GetSubscribeOptionsDTO();
         subscribeOptionsDTO.setMobileNotifications(subscription.getMobileNotifications());
@@ -330,7 +331,8 @@ public class DigestSubscriptionService {
             subscriptionsDigestDTO = new SubscriptionsDigestDTO(digest.getId().toString(), averageDigestCoresRating, core.getDate(), core.getText());
             subscriptionWithDigestsDTO.getDigests().add(subscriptionsDigestDTO);
         }
-        subscriptionWithDigestsDTO.setAverageRating(sumAverage / notNullCounter);
+        double subscriptionRating = notNullCounter > 0 ? sumAverage / notNullCounter : -1;
+        subscriptionWithDigestsDTO.setAverageRating(subscriptionRating);
 
         return new SubscriptionWithDigestsWrapperDTO(subscriptionWithDigestsDTO);
     }
