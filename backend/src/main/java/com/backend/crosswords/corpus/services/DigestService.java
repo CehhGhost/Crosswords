@@ -363,4 +363,9 @@ public class DigestService {
         var subscriptionId = digest.getSubscription().getId();
         subscriptionService.changeDigestSubscriptionsOwner(user, subscriptionId, owner);
     }
+
+    public Object checkUsersAccessToDigestByIdAndConvertIntoDTO(String id, User user) {
+        var digest = this.getDigestById(id);
+        return subscriptionService.checkUsersAccessToSubscriptionByIdAndConvertIntoDTO(digest.getSubscription().getId(), user);
+    }
 }

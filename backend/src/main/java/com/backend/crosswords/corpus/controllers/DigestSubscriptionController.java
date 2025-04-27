@@ -207,4 +207,25 @@ public class DigestSubscriptionController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
+    @Operation(summary = "Check an access to the digest subscription", description = "This endpoint lets check an access to the digest subscription")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully checked an access to the digest subscription", content = @Content(schema = @Schema(implementation = CheckAccessDTO.class))),
+            @ApiResponse(responseCode = "404", description = "There is no subscriptions with such id")
+    })
+    @GetMapping("/{id}/check_access")
+    public ResponseEntity<?> checkUsersAccessToDigestSubscription(@PathVariable Long id) {
+        User user;
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+            user = crosswordUserDetails.getUser();
+        } catch (ClassCastException e) {
+            user = null;
+        }
+        try {
+            return ResponseEntity.ok(digestSubscriptionService.checkUsersAccessToSubscriptionByIdAndConvertIntoDTO(id, user));
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
 }

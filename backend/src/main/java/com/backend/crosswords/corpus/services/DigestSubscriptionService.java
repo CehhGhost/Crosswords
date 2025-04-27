@@ -332,4 +332,15 @@ public class DigestSubscriptionService {
 
         return new SubscriptionWithDigestsWrapperDTO(subscriptionWithDigestsDTO);
     }
+
+    public CheckAccessDTO checkUsersAccessToSubscriptionByIdAndConvertIntoDTO(Long id, User user) {
+        var subscription = this.getDigestSubscriptionById(id);
+        boolean isAvailable = false;
+        if (subscription.getIsPublic()) {
+            isAvailable = true;
+        } else if (user != null){
+            isAvailable = subscription.getOwner().getId().equals(user.getId());
+        }
+        return new CheckAccessDTO(isAvailable);
+    }
 }

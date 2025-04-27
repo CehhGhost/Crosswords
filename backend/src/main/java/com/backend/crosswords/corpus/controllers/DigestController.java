@@ -254,4 +254,25 @@ public class DigestController {
         digestService.scheduledDigestCreation();
         return ResponseEntity.ok(HttpStatus.OK);
     }
+    @Operation(summary = "Check an access to the digest", description = "This endpoint lets check an access to the digest")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully checked an access to the digest", content = @Content(schema = @Schema(implementation = CheckAccessDTO.class))),
+            @ApiResponse(responseCode = "404", description = "There is no digests with such id")
+    })
+    @GetMapping("/{id}/check_access")
+    public ResponseEntity<?> checkUsersAccessToDigest(@PathVariable String id) {
+        User user;
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+            user = crosswordUserDetails.getUser();
+        } catch (ClassCastException e) {
+            user = null;
+        }
+        try {
+            return ResponseEntity.ok(digestService.checkUsersAccessToDigestByIdAndConvertIntoDTO(id, user));
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
 }

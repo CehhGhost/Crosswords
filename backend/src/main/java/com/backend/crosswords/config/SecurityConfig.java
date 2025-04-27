@@ -64,6 +64,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET,"/subscriptions/**").permitAll()
                         .requestMatchers("/subscriptions/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/digests").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/digests/{id}/check_access").permitAll()
                         .requestMatchers(HttpMethod.GET, "/digests/search").permitAll()
                         .requestMatchers("/digests/**").authenticated()
                         .requestMatchers("/documents/{id}/annotate/**").authenticated()
