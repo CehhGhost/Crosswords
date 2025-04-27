@@ -32,6 +32,8 @@ public class DigestSubscription {
     private Timestamp createdAt;
     @OneToMany(mappedBy = "subscription")
     private List<Digest> digests;
+    @OneToMany(mappedBy = "digestSubscription")
+    private List<DigestSubscriptionSettings> subscriptionSettings;
 
     public Long getId() {
         return id;
@@ -104,5 +106,13 @@ public class DigestSubscription {
 
     public void setDigests(List<Digest> digests) {
         this.digests = digests;
+    }
+
+    public List<DigestSubscriptionSettings> getSubscriptionSettings() {
+        return subscriptionSettings;
+    }
+
+    public void setSubscriptionSettings(List<DigestSubscriptionSettings> subscriptionSettings) {
+        this.subscriptionSettings = subscriptionSettings;
     }
 }

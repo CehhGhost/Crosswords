@@ -180,9 +180,13 @@ public class DigestService {
     public DigestsDTO getAllAvailableDigests(User user, Integer pageNumber, Integer matchesPerPage) {
         pageNumber = pageNumber == null || pageNumber < 0 ? 0 : pageNumber;
         matchesPerPage = matchesPerPage == null || matchesPerPage <= 0 ? 20 : matchesPerPage;
-        Sort sort = Sort.by(Sort.Direction.DESC, "core.date");
-        Pageable pageable = PageRequest.of(pageNumber, matchesPerPage, sort);
-        Slice<Digest> digestPage = digestRepository.findAll(pageable);
+        Pageable pageable = PageRequest.of(pageNumber, matchesPerPage);
+        Slice<Digest> digestPage;
+        if (user == null) {
+            digestPage = digestRepository.findAllPublicDigests(pageable);
+        } else {
+            digestPage = digestRepository.findAllUsersDigests(user.getId(), pageable);
+        }
         return this.transformDigestsIntoDigestsDTO(digestPage.getContent(), user, digestPage.hasNext() ? pageNumber + 1 : -1);
     }
 
