@@ -13,7 +13,7 @@
     stack-label
     clearable
     class="full-width"
-    :required="required && selected.length === 0"
+    :required="required && (selected?.length || 0) === 0"
   >
     <template v-slot:no-option>
       <q-item>

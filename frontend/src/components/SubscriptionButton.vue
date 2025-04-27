@@ -93,10 +93,6 @@ export default {
       type: Object,
       required: true,
     },
-    ownerChangeBackendUrl: {
-      type: String,
-      required: true,
-    },
     triggeredFrom: {
       type: String,
       required: true,
@@ -254,6 +250,7 @@ export default {
         }
         // Если запрос успешен – обновляем значения из ответа
         const data = await response.json()
+        console.log(data)
         console.log('Payload:', JSON.stringify(payload))
         this.send_to_mail = data.send_to_mail
         this.mobile_notifications = data.mobile_notifications

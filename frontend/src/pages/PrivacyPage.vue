@@ -93,21 +93,32 @@
     <div>
       <h4 class="q-mb-none caption">Настройки уведомлений</h4>
       <div class="q-gutter-md q-mt-sm">
-        <q-toggle v-model="sendToMail" label="Разрешить уведомления на почту" />
-        <q-toggle v-model="mobileNotifications" label="Разрешить мобильные уведомления" />
+        <q-toggle
+          v-model="personal_send_to_mail"
+          @update:model-value="updateSubscriptions"
+          label="Разрешить уведомления на почту"
+        />
+        <q-toggle
+          v-model="personal_mobile_notifications"
+          @update:model-value="updateSubscriptions"
+          label="Разрешить мобильные уведомления"
+        />
         <q-checkbox
           v-model="allowForeignSubs"
           label="Разрешить другим пользователями добавлять вас в рассылку дайджестов"
+          @update:model-value="updateSubscriptions"
         />
 
         <div v-if="allowForeignSubs" class="q-ml-lg q-gutter-md">
           <q-toggle
-            v-model="foreignSendToMail"
+            v-model="send_to_mail"
             label="Разрешить посторонние уведомления на почту"
+            @update:model-value="updateSubscriptions"
           />
           <q-toggle
-            v-model="foreignMobileNotifications"
+            v-model="mobile_notifications"
             label="Разрешить посторонние мобильные уведомления"
+            @update:model-value="updateSubscriptions"
           />
         </div>
       </div>
@@ -135,11 +146,11 @@ export default {
     const static_email = ref('')
     const oldPassword = ref('')
     const newPassword = ref('')
-    const mobileNotifications = ref(false)
-    const sendToMail = ref(false)
+    const personal_mobile_notifications = ref(false)
+    const personal_send_to_mail = ref(false)
     const allowForeignSubs = ref(false)
-    const foreignMobileNotifications = ref(false)
-    const foreignSendToMail = ref(false)
+    const mobile_notifications = ref(false)
+    const send_to_mail = ref(false)
     const router = useRouter()
 
     onMounted(async () => {
@@ -156,10 +167,10 @@ export default {
         email.value = data.email
         static_email.value = data.email
         allowForeignSubs.value = data.subscribable
-        mobileNotifications.value = data.personal_mobile_notifications
-        sendToMail.value = data.personal_send_to_mail
-        foreignMobileNotifications.value = data.mobile_notifications
-        foreignSendToMail.value = data.send_to_mail
+        personal_mobile_notifications.value = data.personal_mobile_notifications
+        personal_send_to_mail.value = data.personal_send_to_mail
+        mobile_notifications.value = data.mobile_notifications
+        send_to_mail.value = data.send_to_mail
       } catch (error) {
         console.error('Error fetching user details:', error)
         $q.notify({
@@ -169,6 +180,41 @@ export default {
         })
       }
     })
+
+    const updateSubscriptions = async () => {
+      try {
+        const payload = {
+          subscribable: allowForeignSubs.value,
+          send_to_mail: send_to_mail.value,
+          mobile_notifications: mobile_notifications.value,
+          personal_send_to_mail: personal_send_to_mail.value,
+          personal_mobile_notifications: personal_mobile_notifications.value,
+        }
+        const response = await fetch(`${backendURL}users/subscription_settings/set`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(payload),
+        })
+        if (!response.ok) {
+          throw new Error(`Status ${response.status}`)
+        }
+        $q.notify({
+          type: 'positive',
+          message: 'Настройки уведомлений сохранены',
+          position: 'top',
+          badgeColor: 'yellow',
+          badgeTextColor: 'dark',
+        })
+      } catch (err) {
+        console.error('Ошибка при сохранении уведомлений', err)
+        $q.notify({
+          type: 'negative',
+          message: 'Не удалось сохранить настройки уведомлений',
+          position: 'top',
+        })
+      }
+    }
 
     const updateEmail = async () => {
       try {
@@ -344,12 +390,13 @@ export default {
       static_email,
       oldPassword,
       newPassword,
-      mobileNotifications,
-      sendToMail,
+      personal_mobile_notifications,
+      personal_send_to_mail,
       allowForeignSubs,
-      foreignMobileNotifications,
-      foreignSendToMail,
+      mobile_notifications,
+      send_to_mail,
       updateEmail,
+      updateSubscriptions,
       updatePassword,
       toggleDrawer,
       logout,

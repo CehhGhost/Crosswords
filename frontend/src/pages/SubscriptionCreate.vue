@@ -24,7 +24,7 @@
           :options="availableSources"
           :required=true
         />
-        <FilterSelector v-model="selectedTags" :label="'Теги'" :options="availableTags" />
+        <FilterSelector v-model="selectedTags" :label="'Теги'" :options="availableTags" :required=true />
       </div>
 
       <q-input

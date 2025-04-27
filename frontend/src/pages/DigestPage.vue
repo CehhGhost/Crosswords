@@ -20,7 +20,6 @@
           <subscription-button
             v-if="digestData?.is_authed"
             :digest="digestData"
-            :ownerChangeBackendUrl="ownerChangeBackendUrl"
             triggeredFrom="digests"
           />
         </div>
@@ -160,14 +159,11 @@ const showEditDialog = ref(false)
 const showDeleteDialog = ref(false)
 const showAdmin = ref(false)
 
-// URL для изменения настроек подписки, который передаётся в SubscriptionButton
-const ownerChangeBackendUrl = 'TODO connect backend endpoint ownerChangeBackendUrl'
-
-
 onMounted(async () => {
   try {
     const id = route.params.id
-    const response = await fetch(`${backendURL}digests/${id}`
+    const response = await fetch(`${backendURL}digests/${id}`,
+    {credentials: 'include'}
      // `https://93442d81ece6495b95e185b5215b36f8.api.mockbin.io/`
     )
     if (!response.ok) {
