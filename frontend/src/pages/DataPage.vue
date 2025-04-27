@@ -99,7 +99,7 @@
   // Загрузка списка папок с бекенда
   const fetchFolders = async () => {
     try {
-      const response = await fetch('https://da60a9bd46b9478585c028e21b6b5e71.api.mockbin.io/')
+      const response = await fetch('https://da60a9bd46b9478585c028e21b6b5e71.api.mockbin.io/', {credentials: 'include'})
       const data = await response.json()
       folders.value = data.folders.map(name => ({
         name,
@@ -146,7 +146,8 @@
       const response = await fetch('https://8be73c6cb1434fa6a55467ff489377b5.api.mockbin.io/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ oldName: folder.name, newName })
+        body: JSON.stringify({ oldName: folder.name, newName }),
+        credentials: 'include'
       })
       folder.loading = false
       if (!response.ok) {
@@ -173,6 +174,7 @@
     try {
       const response = await fetch('/api/downloadFolder', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ folderName, include_annotations: includeAnnotations.value })
       })
@@ -218,7 +220,8 @@
         const response = await fetch('/api/deleteFolder', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ folderName: folder.name })
+          body: JSON.stringify({ folderName: folder.name }),
+          credentials: 'include'
         })
         if (!response.ok) {
           throw new Error('Ошибка удаления')

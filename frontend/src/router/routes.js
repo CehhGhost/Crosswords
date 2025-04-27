@@ -49,6 +49,7 @@ const routes = [
         path: 'subscriptions/:id',
         name: 'subscription-view',
         component: () => import('../pages/SubscriptionPage.vue'),
+        meta: { checkSubViewPermission: true }
       },
       {
         path: 'digests',
@@ -59,6 +60,7 @@ const routes = [
         path: 'digests/:id',
         name: 'digest-view',
         component: () => import('../pages/DigestPage.vue'),
+        meta: { checkDigestViewPermission: true }
       },
       {
         path: 'stats',

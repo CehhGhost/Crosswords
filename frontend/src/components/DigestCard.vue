@@ -5,16 +5,14 @@
         <div><b>ID:</b> {{ digest.id }}</div>
         <div class="row items-center">
           <!-- Рейтинг -->
-          <template v-if="digest.average_rating != null">
+          <div>
             <b class="q-mr-sm">
               <q-icon name="star" color="primary" />
               {{ displayRating }}
             </b>
-          </template>
-          <!-- Нет оценок или рейтинг не передан -->
-          <template v-else>
-            <b class="q-mr-sm">Нет оценок</b>
-          </template>
+          </div>
+          
+          
 
           <!-- Статус подписки -->
           <b v-if="is_authed && hasSubscribeOptions">
@@ -62,6 +60,7 @@
 </template>
 
 <script>
+import { backendURL } from 'src/data/lookups';
 import DocumentTags from '../components/DocumentTags.vue'
 
 export default {
@@ -114,10 +113,32 @@ export default {
       console.log(`/digests/${this.digest.id}`)
     },
 
-    downloadPdf() {
-      console.log('Скачать PDF для документа', this.digest.id)
-      // window.open(pdfUrl, "_blank");
-    },
+    async downloadPdf() {
+    try {
+      const response = await fetch(`${backendURL}digests/${this.digest.id}/pdf`, {
+        credentials: "include"
+      });
+      if (!response.ok) {
+        throw new Error(`Сервер вернул ${response.status}`);
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${this.digest.title}_${this.digest.id}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Ошибка при скачивании PDF:', err);
+      this.$q.notify({
+        message: 'Ошибка скачивания PDF',
+        type: 'negative',
+        position: 'top',
+      })
+    }
+  },
   },
 }
 </script>

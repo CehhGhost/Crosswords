@@ -19,7 +19,7 @@
         </div>
         <subscription-button
           :digest="subscription"
-          triggeredFrom="subscriptions"
+          triggeredFrom="subscription_page"
         />
       </div>
       <div v-if="subscription.description">
@@ -111,9 +111,12 @@ import { fasCrown } from '@quasar/extras/fontawesome-v6'
 import DocumentTags from "src/components/DocumentTags.vue";
 import BackButton from 'src/components/BackButton.vue'
 import SubscriptionButton from 'src/components/SubscriptionButton.vue'
+import { backendURL } from 'src/data/lookups'
+import { useRoute } from 'vue-router'
 
 // Quasar-переменные
 const $q = useQuasar()
+const route = useRoute()
 // Состояние
 const isLoading = ref(true)
 const subscription = ref({
@@ -139,13 +142,18 @@ const displayRating = computed(() => {
 
 async function fetchSubscription() {
   try {
-    // Подставьте нужный URL вашего API
-    const response = await fetch('https://6d9e7a119e7c45aa8ba0100093e326f9.api.mockbin.io/')
+    const id = route.params.id
+    console.log(backendURL + `subscriptions/${id}/digests`)
+    const response = await fetch(
+      //'https://6d9e7a119e7c45aa8ba0100093e326f9.api.mockbin.io/'
+      backendURL + `subscriptions/${id}/digests`,
+      {credentials: 'include'}
+    )
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`)
     }
     const { subscription: sub } = await response.json()
-
+    console.log(sub)
     // Заполняем реактивные данные
     subscription.value = sub
     digests.value = sub.digests || []
@@ -155,6 +163,7 @@ async function fetchSubscription() {
     $q.notify({
       type: 'negative',
       message: 'Не удалось загрузить подписку',
+      position: 'top'
     })
   } finally {
     isLoading.value = false

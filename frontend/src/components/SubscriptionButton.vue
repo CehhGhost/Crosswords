@@ -112,19 +112,17 @@ export default {
       showOwnerTransferDialog: false,
       transferLoading: false,
       transferError: '',
-      backendURL
+      backendURL,
     }
   },
   methods: {
     async onSubscribeClick() {
       if (this.loadingSubscription) return
       this.loadingSubscription = true
-
+      this.subscribed = true
       const success = await this.sendSubscriptionUpdate()
       if (!success) {
         this.subscribed = false
-      } else {
-        this.subscribed = true
       }
       this.loadingSubscription = false
     },
@@ -153,17 +151,20 @@ export default {
         try {
           const response = await fetch(
             // "https://3faa0d5a1c344675acdf7cae9c36a1f8.api.mockbin.io/"
-            this.backendURL + this.triggeredFrom + `/${this.digest.id}/followers`, {credentials: 'include',})
+            this.backendURL + this.getRightUrlPart() + `/${this.digest.id}/followers`,
+            { credentials: 'include' },
+          )
           const result = await response.json()
-          if (result && result.length) {
-            this.subscriberEmails = result
+          if (result && result.followers.length) {
+            console.log("triggered!!!!!")
+            this.subscriberEmails = result.followers
             this.showOwnerTransferDialog = true
             this.loadingDropdown = false
             return
           }
           if (response.status === 401) {
-              this.$router.replace('/login')
-            }
+            this.$router.replace('/login')
+          }
         } catch (error) {
           console.error('Ошибка получения списка подписчиков:', error)
         }
@@ -172,20 +173,18 @@ export default {
     },
     async executeUnsubscribe() {
       // Сохраняем исходное состояние
-      const originalSubscribed = this.subscribed
       const originalsend_to_mail = this.send_to_mail
       const originalmobile_notifications = this.mobile_notifications
       // Обновляем локальное состояние для формирования payload
       this.send_to_mail = null
       this.mobile_notifications = null
+      this.subscribed = false
       const success = await this.sendSubscriptionUpdate()
-      if (success) {
-        this.subscribed = false
-      } else {
+      if (!success) {
         // Если запрос не удался – откатываем состояние
         this.send_to_mail = originalsend_to_mail
         this.mobile_notifications = originalmobile_notifications
-        this.subscribed = originalSubscribed
+        this.subscribed = true
       }
       this.loadingDropdown = false
     },
@@ -193,9 +192,9 @@ export default {
       this.transferLoading = true
       this.transferError = ''
       try {
-        const response = await fetch(
-          'https://6c42bdb2e6e94c5094cbc38dbd534d3f.api.mockbin.io/', {
-          method: 'POST',
+        const response = await fetch(backendURL + `subscriptions/${this.digest.id}/change_owner`, {
+          method: 'PATCH',
+          credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             id: this.digest.id,
@@ -232,19 +231,23 @@ export default {
       }
 
       try {
+        console.log(this.getUpdateUrl())
         const response = await fetch(
           //'https://d41ad2c28576472aacba47ad07e4bf5b.api.mockbin.io/'
-          this.backendURL + this.triggeredFrom + `/${this.digest.id}/settings/update`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify(payload),
-        })
+          this.getUpdateUrl(),
+          {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(payload),
+          },
+        )
         if (!response.ok) {
           if (response.status === 401) {
             this.$router.replace('/login')
           } else {
             console.error('Ошибка при изменении настроек подписки')
+            console.log(await response.text())
           }
           return false
         }
@@ -259,6 +262,21 @@ export default {
         console.error('Ошибка запроса:', error)
         return false
       }
+    },
+    getRightUrlPart() {
+      if ((this.triggeredFrom === "subscription_page") || (this.triggeredFrom === "subscriptions")) {
+        return "subscriptions"
+      } else {
+        return "digests"
+      }
+    },
+    getUpdateUrl() {
+      let update_url =
+        this.backendURL + 'digests' + `/${this.digest.id}/subscription/settings/update`
+      if (this.triggeredFrom === 'subscriptions' || this.triggeredFrom === 'subscriptionPage') {
+        update_url = this.backendURL + 'subscriptions' + `/${this.digest.id}/settings/update`
+      }
+      return update_url
     },
   },
 }

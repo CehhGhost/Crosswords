@@ -1,37 +1,64 @@
 import { defineRouter } from '#q-app/wrappers'
-import { createRouter, createMemoryHistory, createWebHistory, createWebHashHistory } from 'vue-router'
+import {
+  createRouter,
+  createMemoryHistory,
+  createWebHistory,
+  createWebHashHistory,
+} from 'vue-router'
 import routes from './routes'
 import { backendURL } from 'src/data/lookups'
 
 export default defineRouter(function (/* { store, ssrContext } */) {
   const createHistory = process.env.SERVER
     ? createMemoryHistory
-    : (process.env.VUE_ROUTER_MODE === 'history' ? createWebHistory : createWebHashHistory)
+    : process.env.VUE_ROUTER_MODE === 'history'
+      ? createWebHistory
+      : createWebHashHistory
 
   const Router = createRouter({
     scrollBehavior: () => ({ left: 0, top: 0 }),
     routes,
-    history: createHistory(process.env.VUE_ROUTER_BASE)
+    history: createHistory(process.env.VUE_ROUTER_BASE),
   })
 
   // Глобальный guard для проверки авторизации и прав доступа
   Router.beforeEach((to, from, next) => {
-    // Если маршрут не требует авторизации, продолжаем навигацию
+    if (to.meta.checkSubViewPermission || to.meta.checkDigestViewPermission) {
+      const url = to.meta.checkDigestViewPermission
+        ? backendURL + `digests/${to.params.id}/check_access`
+        : backendURL + `subscriptions/${to.params.id}/check_access`
+      fetch(url, { credentials: 'include' })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error('Not authorized')
+          }
+          return response.json()
+        })
+        .then((data) => {
+          if (data.available) {
+            return next()
+          }
+          return next({ name: '404' })
+        })
+        .catch(() => next({ name: 'home' }))
+        return
+    }
+    
     if (!to.meta.requiresAuth) {
       return next()
     }
 
     // Запрашиваем данные о пользователе. HttpOnly cookie отправляются автоматически
-    fetch(backendURL + "users/check_auth", { credentials: 'include' })
-      .then(response => {
+    fetch(backendURL + 'users/check_auth', { credentials: 'include' })
+      .then((response) => {
         if (!response.ok) {
           throw new Error('Not authenticated')
         }
         return response.json()
       })
-      .then(user => {
+      .then((user) => {
         // Если маршрут требует права модератора, проверяем наличие разрешения "edit_docs"
-        if (to.meta.moderatorOnly && !user.authorities.includes("edit_delete_docs")) {
+        if (to.meta.moderatorOnly && !user.authorities.includes('edit_delete_docs')) {
           return next({ name: 'home' })
         }
         // Если маршрут требует проверки владельца подписки, выполняем дополнительный запрос
@@ -39,16 +66,17 @@ export default defineRouter(function (/* { store, ssrContext } */) {
           fetch(
             // `/api/subscriptions/${to.params.id}/check-owner`,
             backendURL + `subscriptions/${to.params.id}/check_ownership`,
-             { credentials: 'include' })
-            .then(response => {
+            { credentials: 'include' },
+          )
+            .then((response) => {
               if (!response.ok) {
-                console.log("response not ok")
+                console.log('response not ok')
                 throw new Error('Not authorized')
               }
               console.log(`/subscriptions/${to.params.id}/check_ownership`)
               return response.json() // вот тут
             })
-            .then(data => {
+            .then((data) => {
               if (data.is_owner) {
                 return next()
               }
