@@ -1,9 +1,22 @@
 package com.backend.crosswords.corpus.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class DigestSubscriptionSettingsDTO {
     private Boolean subscribed;
-    private Boolean send_to_mail;
-    private Boolean mobile_notifications;
+    @JsonProperty("send_to_mail")
+    private Boolean sendToMail;
+    @JsonProperty("mobile_notifications")
+    private Boolean mobileNotifications;
+
+    public DigestSubscriptionSettingsDTO() {
+    }
+
+    public DigestSubscriptionSettingsDTO(Boolean subscribed, Boolean sendToMail, Boolean mobileNotifications) {
+        this.subscribed = subscribed;
+        this.sendToMail = sendToMail;
+        this.mobileNotifications = mobileNotifications;
+    }
 
     public Boolean getSubscribed() {
         return subscribed;
@@ -13,19 +26,19 @@ public class DigestSubscriptionSettingsDTO {
         this.subscribed = subscribed;
     }
 
-    public Boolean getSend_to_mail() {
-        return send_to_mail;
+    public Boolean getSendToMail() {
+        return sendToMail;
     }
 
-    public void setSend_to_mail(Boolean send_to_mail) {
-        this.send_to_mail = send_to_mail;
+    public void setSendToMail(Boolean sendToMail) {
+        this.sendToMail = sendToMail;
     }
 
-    public Boolean getMobile_notifications() {
-        return mobile_notifications;
+    public Boolean getMobileNotifications() {
+        return mobileNotifications;
     }
 
-    public void setMobile_notifications(Boolean mobile_notifications) {
-        this.mobile_notifications = mobile_notifications;
+    public void setMobileNotifications(Boolean mobileNotifications) {
+        this.mobileNotifications = mobileNotifications;
     }
 }

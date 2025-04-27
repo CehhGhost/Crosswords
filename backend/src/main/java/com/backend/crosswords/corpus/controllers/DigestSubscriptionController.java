@@ -2,6 +2,7 @@ package com.backend.crosswords.corpus.controllers;
 
 import com.backend.crosswords.admin.models.CrosswordUserDetails;
 import com.backend.crosswords.admin.models.User;
+import com.backend.crosswords.config.Pair;
 import com.backend.crosswords.corpus.dto.*;
 import com.backend.crosswords.corpus.services.DigestSubscriptionService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -79,13 +80,15 @@ public class DigestSubscriptionController {
     public ResponseEntity<?> updateDigestSubscriptionSettingsForUser(@PathVariable Long id, @RequestBody DigestSubscriptionSettingsDTO subscriptionSettingsDTO) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
-        boolean deleted;
+        Pair<DigestSubscriptionSettingsDTO, Boolean> result;
         try {
-            deleted = digestSubscriptionService.updateDigestSubscriptionSettingsForUser(id, subscriptionSettingsDTO, crosswordUserDetails.getUser());
+            result = digestSubscriptionService.updateDigestSubscriptionSettingsForUser(id, subscriptionSettingsDTO, crosswordUserDetails.getUser());
         } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
-        return ResponseEntity.ok(new UpdatedDigestSubscriptionSettingsDTO(subscriptionSettingsDTO.getSubscribed(), subscriptionSettingsDTO.getSend_to_mail(), subscriptionSettingsDTO.getMobile_notifications(), deleted));
+        var newSubscriptionSettingsDTO = result.getFirst();
+        var deleted = result.getSecond();
+        return ResponseEntity.ok(new UpdatedDigestSubscriptionSettingsDTO(newSubscriptionSettingsDTO.getSubscribed(), newSubscriptionSettingsDTO.getSendToMail(), newSubscriptionSettingsDTO.getMobileNotifications(), deleted));
     }
     @Operation(summary = "Get all users from the subscription", description = "This endpoint lets you get all users from the subscription except the owner")
     @ApiResponses({

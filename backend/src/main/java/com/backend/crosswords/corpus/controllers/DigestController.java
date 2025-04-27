@@ -2,6 +2,7 @@ package com.backend.crosswords.corpus.controllers;
 
 import com.backend.crosswords.admin.models.CrosswordUserDetails;
 import com.backend.crosswords.admin.models.User;
+import com.backend.crosswords.config.Pair;
 import com.backend.crosswords.corpus.dto.*;
 import com.backend.crosswords.corpus.models.Digest;
 import com.backend.crosswords.corpus.services.DigestService;
@@ -179,13 +180,15 @@ public class DigestController {
     public ResponseEntity<?> updateDigestSubscriptionSettingsForUserByDigestId(@PathVariable String id, @RequestBody DigestSubscriptionSettingsDTO subscriptionSettingsDTO) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
-        boolean deleted;
+        Pair<DigestSubscriptionSettingsDTO, Boolean> result;
         try {
-            deleted = digestService.updateDigestSubscriptionSettingsForUserByDigestId(id, subscriptionSettingsDTO, crosswordUserDetails.getUser());
+            result = digestService.updateDigestSubscriptionSettingsForUserByDigestId(id, subscriptionSettingsDTO, crosswordUserDetails.getUser());
         } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
-        return ResponseEntity.ok(new UpdatedDigestSubscriptionSettingsDTO(subscriptionSettingsDTO.getSubscribed(), subscriptionSettingsDTO.getSend_to_mail(), subscriptionSettingsDTO.getMobile_notifications(), deleted));
+        var newSubscriptionSettingsDTO = result.getFirst();
+        var deleted = result.getSecond();
+        return ResponseEntity.ok(new UpdatedDigestSubscriptionSettingsDTO(newSubscriptionSettingsDTO.getSubscribed(), newSubscriptionSettingsDTO.getSendToMail(), newSubscriptionSettingsDTO.getMobileNotifications(), deleted));
     }
     @Operation(summary = "Get digest subscription by digest's id", description = "This endpoint lets you get digest subscription by digest's id")
     @ApiResponses({

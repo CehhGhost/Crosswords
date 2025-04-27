@@ -2,6 +2,7 @@ package com.backend.crosswords.corpus.services;
 
 import com.backend.crosswords.admin.models.User;
 import com.backend.crosswords.admin.services.UserService;
+import com.backend.crosswords.config.Pair;
 import com.backend.crosswords.corpus.dto.*;
 import com.backend.crosswords.corpus.enums.Source;
 import com.backend.crosswords.corpus.models.*;
@@ -116,10 +117,11 @@ public class DigestSubscriptionService {
         return false;
     }
 
-    public boolean updateDigestSubscriptionSettingsForUser(Long id, DigestSubscriptionSettingsDTO subscriptionSettingsDTO, User user) {
+    public Pair<DigestSubscriptionSettingsDTO, Boolean> updateDigestSubscriptionSettingsForUser(Long id, DigestSubscriptionSettingsDTO subscriptionSettingsDTO, User user) {
         var subscription = subscriptionRepository.findById(id).orElseThrow(() -> new NoSuchElementException("There is no subscriptions with such id!"));
-        var deletedSettings = subscriptionSettingsService.updateDigestSubscriptionSettingsForUser(subscription, user, subscriptionSettingsDTO);
-        return this.checkDigestSubscriptionDeletion(deletedSettings, subscription, user);
+        var resultPair = subscriptionSettingsService.updateDigestSubscriptionSettingsForUser(subscription, user, subscriptionSettingsDTO);
+        resultPair.setSecond(this.checkDigestSubscriptionDeletion(resultPair.getSecond(), subscription, user));
+        return resultPair;
     }
 
     public List<String> getAllDigestSubscriptionsUsersExceptOwner(Long id) {

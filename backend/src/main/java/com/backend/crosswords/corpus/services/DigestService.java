@@ -2,6 +2,7 @@ package com.backend.crosswords.corpus.services;
 
 import com.backend.crosswords.admin.models.User;
 import com.backend.crosswords.admin.services.UserService;
+import com.backend.crosswords.config.Pair;
 import com.backend.crosswords.corpus.dto.*;
 import com.backend.crosswords.corpus.models.*;
 import com.backend.crosswords.corpus.repositories.elasticsearch.DigestSearchRepository;
@@ -345,11 +346,12 @@ public class DigestService {
         return first && second;
     }
 
-    public boolean updateDigestSubscriptionSettingsForUserByDigestId(String id, DigestSubscriptionSettingsDTO subscriptionSettingsDTO, User user) {
+    public Pair<DigestSubscriptionSettingsDTO, Boolean> updateDigestSubscriptionSettingsForUserByDigestId(String id, DigestSubscriptionSettingsDTO subscriptionSettingsDTO, User user) {
         var digest = this.getDigestById(id);
         var subscription = digest.getSubscription();
-        var deleteSettings = subscriptionSettingsService.updateDigestSubscriptionSettingsForUser(subscription, user, subscriptionSettingsDTO);
-        return subscriptionService.checkDigestSubscriptionDeletion(deleteSettings, subscription, user);
+        var resultPair = subscriptionSettingsService.updateDigestSubscriptionSettingsForUser(subscription, user, subscriptionSettingsDTO);
+        resultPair.setSecond(subscriptionService.checkDigestSubscriptionDeletion(resultPair.getSecond(), subscription, user));
+        return resultPair;
     }
 
     public List<String> getAllDigestSubscriptionsUsersExceptOwner(String id) {

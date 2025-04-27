@@ -2,6 +2,7 @@ package com.backend.crosswords.corpus.services;
 
 import com.backend.crosswords.admin.models.User;
 import com.backend.crosswords.admin.services.UserService;
+import com.backend.crosswords.config.Pair;
 import com.backend.crosswords.corpus.dto.DigestSubscriptionSettingsDTO;
 import com.backend.crosswords.corpus.dto.FollowerDTO;
 import com.backend.crosswords.corpus.dto.UpdateDigestSubscriptionDTO;
@@ -109,7 +110,7 @@ public class DigestSubscriptionSettingsService {
         return userSettings;
     }
 
-    public boolean updateDigestSubscriptionSettingsForUser(DigestSubscription subscription, User user, DigestSubscriptionSettingsDTO subscriptionSettingsDTO) {
+    public Pair<DigestSubscriptionSettingsDTO, Boolean> updateDigestSubscriptionSettingsForUser(DigestSubscription subscription, User user, DigestSubscriptionSettingsDTO subscriptionSettingsDTO) {
         DigestSubscriptionSettings subscriptionSettings;
         var checkSubscriptionSettings = subscriptionSettingsRepository.findById(new DigestSubscriptionSettingsId(subscription.getId(), user.getId()));
         if (checkSubscriptionSettings.isEmpty()) {
@@ -122,14 +123,14 @@ public class DigestSubscriptionSettingsService {
             subscriptionSettings = checkSubscriptionSettings.get();
         }
         if (subscriptionSettingsDTO.getSubscribed()) {
-            subscriptionSettings.setSendToMail(subscriptionSettings.getSendToMail() == null ? user.getPersonalSendToMail() : subscriptionSettings.getSendToMail());
-            subscriptionSettings.setMobileNotifications(subscriptionSettings.getMobileNotifications() == null ? user.getPersonalMobileNotifications() : subscriptionSettings.getMobileNotifications());
+            subscriptionSettings.setSendToMail(subscriptionSettingsDTO.getSendToMail() == null ? user.getPersonalSendToMail() : subscriptionSettingsDTO.getSendToMail());
+            subscriptionSettings.setMobileNotifications(subscriptionSettingsDTO.getMobileNotifications() == null ? user.getPersonalMobileNotifications() : subscriptionSettingsDTO.getMobileNotifications());
             subscriptionSettings.setEdited(true);
             subscriptionSettingsRepository.save(subscriptionSettings);
-            return false;
+            return new Pair<>(new DigestSubscriptionSettingsDTO(true, subscriptionSettings.getSendToMail(), subscriptionSettings.getMobileNotifications()), false);
         } else {
             subscriptionSettingsRepository.delete(subscriptionSettings);
-            return true;
+            return new Pair<>(new DigestSubscriptionSettingsDTO(false, false, false), true);
         }
     }
 
