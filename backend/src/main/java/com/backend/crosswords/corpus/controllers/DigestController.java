@@ -243,4 +243,9 @@ public class DigestController {
         }
         return ResponseEntity.ok(HttpStatus.OK);
     }
+    @PostMapping("/create")
+    public ResponseEntity<?> createDigests() {
+        digestService.scheduledDigestCreation();
+        return ResponseEntity.ok(HttpStatus.OK);
+    }
 }
