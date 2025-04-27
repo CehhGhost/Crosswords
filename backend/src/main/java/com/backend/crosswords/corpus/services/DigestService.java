@@ -142,7 +142,8 @@ public class DigestService {
 
         certainDigestDTO.setTitle(subscriptionES.getTitle());
 
-        certainDigestDTO.setAverageRating(ratingService.getCoresAverageRating(core));
+        var avrRating = ratingService.getCoresAverageRating(core);
+        certainDigestDTO.setAverageRating(avrRating == null ? -1 : avrRating);
         certainDigestDTO.setUserRating(ratingService.getCoresUsersRating(core, user));
 
         for (var source : template.getSources()) {
@@ -182,8 +183,7 @@ public class DigestService {
         Sort sort = Sort.by(Sort.Direction.DESC, "core.date");
         Pageable pageable = PageRequest.of(pageNumber, matchesPerPage, sort);
         Slice<Digest> digestPage = digestRepository.findAll(pageable);
-        int nextPage = digestPage.hasNext() ? pageNumber + 1 : -1;
-        return this.transformDigestsIntoDigestsDTO(digestPage.getContent(), user, nextPage);
+        return this.transformDigestsIntoDigestsDTO(digestPage.getContent(), user, digestPage.hasNext() ? pageNumber + 1 : -1);
     }
 
     public void rateDigestCoreByDigestId(String id, Integer digestCoreRating, User user) {
