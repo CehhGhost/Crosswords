@@ -93,7 +93,7 @@ public class DigestController {
     })
     @GetMapping
     public ResponseEntity<?> getAllAvailableDigests(
-            @RequestParam(required = false, name = "page_number") Integer pageNumber,
+            @RequestParam(required = false, name = "next_page") Integer pageNumber,
             @RequestParam(required = false, name = "matches_per_page") Integer matchesPerPage) {
         User user;
         try {
@@ -142,7 +142,7 @@ public class DigestController {
             @RequestParam(required = false) List<String> tags,
             @RequestParam(required = false) List<String> sources,
             @RequestParam(required = false, defaultValue = "false", name = "subscribe_only") Boolean subscribeOnly,
-            @RequestParam(required = false, name = "page_number") Integer pageNumber,
+            @RequestParam(required = false, name = "next_page") Integer pageNumber,
             @RequestParam(required = false, name = "matches_per_page") Integer matchesPerPage) {
         User user;
         try {

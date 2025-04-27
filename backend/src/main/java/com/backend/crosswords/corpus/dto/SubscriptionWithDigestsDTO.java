@@ -8,6 +8,9 @@ import java.sql.Timestamp;
 import java.util.List;
 
 public class SubscriptionWithDigestsDTO {
+    @Schema(example = "1")
+    @JsonProperty("next_page")
+    private Long nextPage;
     @Schema(example = "admin")
     private String owner;
     @Schema(example = "1")
@@ -149,10 +152,19 @@ public class SubscriptionWithDigestsDTO {
         this.owner = owner;
     }
 
+    public Long getNextPage() {
+        return nextPage;
+    }
+
+    public void setNextPage(Long nextPage) {
+        this.nextPage = nextPage;
+    }
+
     @Override
     public String toString() {
         return "SubscriptionWithDigestsDTO{" +
-                "owner='" + owner + '\'' +
+                "nextPage=" + nextPage +
+                ", owner='" + owner + '\'' +
                 ", id=" + id +
                 ", description='" + description + '\'' +
                 ", title='" + title + '\'' +

@@ -193,7 +193,10 @@ public class DigestSubscriptionController {
             @ApiResponse(responseCode = "404", description = "There is no subscriptions with such id")
     })
     @GetMapping("/{id}/digests")
-    public ResponseEntity<?> getDigestSubscriptionsDigests(@PathVariable Long id) {
+    public ResponseEntity<?> getDigestSubscriptionsDigests(
+            @PathVariable Long id,
+            @RequestParam(required = false, name = "next_page") Integer pageNumber,
+            @RequestParam(required = false, name = "matches_per_page") Integer matchesPerPage) {
         User user;
         try {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -203,7 +206,7 @@ public class DigestSubscriptionController {
             user = null;
         }
         try {
-            return ResponseEntity.ok(digestSubscriptionService.getDigestSubscriptionsDigestsByIdAndConvertIntoDTO(id, user));
+            return ResponseEntity.ok(digestSubscriptionService.getDigestSubscriptionsDigestsByIdAndConvertIntoDTO(id, user, pageNumber, matchesPerPage));
         } catch (IllegalAccessException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         } catch (NoSuchElementException e) {

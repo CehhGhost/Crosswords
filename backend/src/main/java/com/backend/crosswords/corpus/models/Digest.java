@@ -4,7 +4,12 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
-@Table(name = "_digests")
+@Table(name = "_digests", indexes = {
+        @Index(
+                name = "idx_digest_subscription_date",
+                columnList = "digest_subscription_id, digest_core_id DESC"
+        )
+})
 @Entity
 public class Digest {
     @EmbeddedId

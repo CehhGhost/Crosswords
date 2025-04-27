@@ -4,6 +4,8 @@ import com.backend.crosswords.corpus.models.Digest;
 import com.backend.crosswords.corpus.models.DigestCore;
 import com.backend.crosswords.corpus.models.DigestId;
 import com.backend.crosswords.corpus.models.DigestSubscription;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

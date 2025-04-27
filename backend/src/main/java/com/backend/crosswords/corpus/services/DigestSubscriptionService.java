@@ -12,6 +12,7 @@ import org.modelmapper.ModelMapper;
 import org.opensearch.data.client.orhlc.NativeSearchQueryBuilder;
 import org.opensearch.index.query.QueryBuilder;
 import org.opensearch.index.query.QueryBuilders;
+import org.springframework.data.domain.*;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import org.springframework.stereotype.Service;
@@ -277,7 +278,9 @@ public class DigestSubscriptionService {
         return subscribersEmails;
     }
 
-    public SubscriptionWithDigestsWrapperDTO getDigestSubscriptionsDigestsByIdAndConvertIntoDTO(Long id, User user) throws IllegalAccessException {
+    public SubscriptionWithDigestsWrapperDTO getDigestSubscriptionsDigestsByIdAndConvertIntoDTO(Long id, User user, Integer pageNumber, Integer matchesPerPage) throws IllegalAccessException {
+        pageNumber = pageNumber == null || pageNumber < 0 ? 0 : pageNumber;
+        matchesPerPage = matchesPerPage == null || matchesPerPage <= 0 ? 20 : matchesPerPage;
         var subscription = this.getDigestSubscriptionById(id);
         var subscriptionES = this.getDigestSubscriptionESById(id);
         var template = subscription.getTemplate();
@@ -317,22 +320,24 @@ public class DigestSubscriptionService {
         subscriptionWithDigestsDTO.setSources(sourcesAndTagsNames.getFirst());
         subscriptionWithDigestsDTO.setTags(sourcesAndTagsNames.getSecond());
 
-        double sumAverage = 0;
-        int notNullCounter = 0;
+        Pageable pageable = PageRequest.of(pageNumber, matchesPerPage);
+
+        Slice<Digest> digestPage = subscriptionRepository.findDigestsBySubscriptionId(
+                subscription.getId(),
+                pageable
+        );
         subscriptionWithDigestsDTO.setDigests(new ArrayList<>());
-        for (var digest : subscription.getDigests()) {
+        var digests = digestPage.getContent();
+        for (var digest : digests) {
             var core = digest.getCore();
             SubscriptionsDigestDTO subscriptionsDigestDTO;
             Double averageDigestCoresRating = ratingService.getCoresAverageRating(core);
-            if (averageDigestCoresRating != null) {
-                ++notNullCounter;
-                sumAverage += averageDigestCoresRating;
-            }
             subscriptionsDigestDTO = new SubscriptionsDigestDTO(digest.getId().toString(), averageDigestCoresRating, core.getDate(), core.getText());
             subscriptionWithDigestsDTO.getDigests().add(subscriptionsDigestDTO);
         }
-        double subscriptionRating = notNullCounter > 0 ? sumAverage / notNullCounter : -1;
-        subscriptionWithDigestsDTO.setAverageRating(subscriptionRating);
+        Double averageRating = subscriptionRepository.calculateAverageRating(subscription.getId());
+        subscriptionWithDigestsDTO.setAverageRating(averageRating != null ? averageRating : -1);
+        subscriptionWithDigestsDTO.setNextPage(digestPage.hasNext() ? pageNumber + 1 : -1L);
 
         return new SubscriptionWithDigestsWrapperDTO(subscriptionWithDigestsDTO);
     }
