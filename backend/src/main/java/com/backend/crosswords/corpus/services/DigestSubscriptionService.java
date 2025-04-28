@@ -186,12 +186,19 @@ public class DigestSubscriptionService {
         return this.transformSubscriptionSettingsIntoUsersDigestSubscriptionsDTO(user, usersSubscriptions, false);
     }
 
-    public DigestSubscriptionDTO getDigestSubscriptionByIdAndTransformIntoDTO(Long id) {
+    public DigestSubscriptionDTO getDigestSubscriptionByIdAndTransformIntoDTO(Long id, User user) {
         var subscription = this.getDigestSubscriptionById(id);
         var subscriptionES = subscriptionSearchRepository.findById(subscription.getId()).orElseThrow(() -> new NoSuchElementException("There is no subscriptions with such id!"));
         var subscriptionDTO = modelMapper.map(subscription, DigestSubscriptionDTO.class);
         subscriptionDTO.setTitle(subscriptionES.getTitle());
         subscriptionDTO.setOwnersUsername(subscription.getOwner().getUsername());
+        if (user != null) {
+            subscriptionDTO.setIsOwner(subscription.getOwner().getUsername().equals(user.getUsername()));
+        } else {
+            subscriptionDTO.setIsOwner(false);
+        }
+
+        subscriptionDTO.setCreationDate(subscription.getCreatedAt());
 
         subscriptionDTO.setSources(new ArrayList<>());
         subscriptionDTO.setTags(new ArrayList<>());
@@ -205,6 +212,7 @@ public class DigestSubscriptionService {
         }
 
         subscriptionDTO.setFollowers(new ArrayList<>());
+        subscriptionDTO.setSubscribed(false);
         var subscriptionSettings = subscriptionSettingsService.getAllDigestSubscriptionSettingsByDigestSubscription(subscription);
         for (var subscriptionSetting : subscriptionSettings) {
             DigestSubscriptionFollowerDTO digestSubscriptionFollowerDTO = new DigestSubscriptionFollowerDTO();
@@ -212,6 +220,9 @@ public class DigestSubscriptionService {
             digestSubscriptionFollowerDTO.setMobileNotifications(subscriptionSetting.getMobileNotifications());
             digestSubscriptionFollowerDTO.setSendToMail(subscriptionSetting.getSendToMail());
             subscriptionDTO.getFollowers().add(digestSubscriptionFollowerDTO);
+            if (user != null && subscriptionSetting.getSubscriber().getId().equals(user.getId())) {
+                subscriptionDTO.setSubscribed(true);
+            }
         }
 
         subscriptionDTO.setSubscribeOptions(new SetSubscribeOptionsDTO(subscription.getSendToMail(), subscription.getMobileNotifications()));

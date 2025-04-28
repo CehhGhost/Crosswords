@@ -139,9 +139,17 @@ public class DigestSubscriptionController {
     })
     @GetMapping("/{id}")
     public ResponseEntity<?> getDigestSubscriptionById(@PathVariable Long id) {
+        User user;
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+            user = crosswordUserDetails.getUser();
+        } catch (ClassCastException e) {
+            user = null;
+        }
         DigestSubscriptionDTO subscription;
         try {
-            subscription = digestSubscriptionService.getDigestSubscriptionByIdAndTransformIntoDTO(id);
+            subscription = digestSubscriptionService.getDigestSubscriptionByIdAndTransformIntoDTO(id, user);
         } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }

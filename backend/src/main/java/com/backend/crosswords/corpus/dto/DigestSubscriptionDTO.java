@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,6 +35,11 @@ public class DigestSubscriptionDTO {
     @Schema(example = "admin")
     @JsonProperty("owner")
     private String ownersUsername;
+    private Boolean subscribed;
+    @JsonProperty("is_owner")
+    private Boolean isOwner;
+    @JsonProperty("creation_date")
+    private Timestamp creationDate;
 
     private List<DigestSubscriptionFollowerDTO> followers;
 
@@ -109,6 +115,30 @@ public class DigestSubscriptionDTO {
         this.followers = followers;
     }
 
+    public Boolean getSubscribed() {
+        return subscribed;
+    }
+
+    public void setSubscribed(Boolean subscribed) {
+        this.subscribed = subscribed;
+    }
+
+    public Boolean getIsOwner() {
+        return isOwner;
+    }
+
+    public void setIsOwner(Boolean isOwner) {
+        this.isOwner = isOwner;
+    }
+
+    public Timestamp getCreationDate() {
+        return creationDate;
+    }
+
+    public void setCreationDate(Timestamp creationDate) {
+        this.creationDate = creationDate;
+    }
+
     @Override
     public String toString() {
         return "DigestSubscriptionDTO{" +
@@ -120,6 +150,9 @@ public class DigestSubscriptionDTO {
                 ", subscribeOptions=" + subscribeOptions +
                 ", isPublic=" + isPublic +
                 ", ownersUsername='" + ownersUsername + '\'' +
+                ", subscribed=" + subscribed +
+                ", isOwner=" + isOwner +
+                ", creationDate=" + creationDate +
                 ", followers=" + followers +
                 '}';
     }
