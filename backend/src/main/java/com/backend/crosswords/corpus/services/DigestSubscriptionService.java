@@ -196,7 +196,7 @@ public class DigestSubscriptionService {
         var subscriptionDTO = modelMapper.map(subscription, DigestSubscriptionDTO.class);
 
         subscriptionDTO.setFollowers(new ArrayList<>());
-        subscriptionDTO.setSubscribed(false);
+        boolean subscribed = false;
         var subscriptionSettings = subscriptionSettingsService.getAllDigestSubscriptionSettingsByDigestSubscription(subscription);
         for (var subscriptionSetting : subscriptionSettings) {
             DigestSubscriptionFollowerDTO digestSubscriptionFollowerDTO = new DigestSubscriptionFollowerDTO();
@@ -205,10 +205,10 @@ public class DigestSubscriptionService {
             digestSubscriptionFollowerDTO.setSendToMail(subscriptionSetting.getSendToMail());
             subscriptionDTO.getFollowers().add(digestSubscriptionFollowerDTO);
             if (userIsNotNull && subscriptionSetting.getSubscriber().getId().equals(user.getId())) {
-                subscriptionDTO.setSubscribed(true);
+                subscribed = true;
             }
         }
-        if (!subscriptionDTO.getSubscribed() && !subscription.getIsPublic()) {
+        if (!subscribed && !subscription.getIsPublic()) {
             throw new IllegalAccessException("This is not yours private subscription!");
         }
 
@@ -233,7 +233,7 @@ public class DigestSubscriptionService {
             }
         }
 
-        subscriptionDTO.setSubscribeOptions(new SetSubscribeOptionsDTO(subscription.getSendToMail(), subscription.getMobileNotifications()));
+        subscriptionDTO.setSubscribeOptions(new GetSubscribeOptionsDTO(subscription.getSendToMail(), subscription.getMobileNotifications(), subscribed));
         return subscriptionDTO;
     }
 

@@ -27,7 +27,7 @@ public class DigestSubscriptionDTO {
 
     @JsonProperty("subscribe_options")
     @Schema(description = "Subscription options for the digest")
-    private SetSubscribeOptionsDTO subscribeOptions;
+    private GetSubscribeOptionsDTO subscribeOptions;
 
     @JsonProperty("public")
     @Schema(description = "Indicates if the digest is public", example = "true")
@@ -36,7 +36,6 @@ public class DigestSubscriptionDTO {
     @Schema(example = "admin")
     @JsonProperty("owner")
     private String ownersUsername;
-    private Boolean subscribed;
     @JsonProperty("is_owner")
     private Boolean isOwner;
     @JsonProperty("creation_date")
@@ -85,11 +84,11 @@ public class DigestSubscriptionDTO {
         this.tags = tags;
     }
 
-    public SetSubscribeOptionsDTO getSubscribeOptions() {
+    public GetSubscribeOptionsDTO getSubscribeOptions() {
         return subscribeOptions;
     }
 
-    public void setSubscribeOptions(SetSubscribeOptionsDTO subscribeOptions) {
+    public void setSubscribeOptions(GetSubscribeOptionsDTO subscribeOptions) {
         this.subscribeOptions = subscribeOptions;
     }
 
@@ -115,14 +114,6 @@ public class DigestSubscriptionDTO {
 
     public void setFollowers(List<DigestSubscriptionFollowerDTO> followers) {
         this.followers = followers;
-    }
-
-    public Boolean getSubscribed() {
-        return subscribed;
-    }
-
-    public void setSubscribed(Boolean subscribed) {
-        this.subscribed = subscribed;
     }
 
     public Boolean getIsOwner() {
@@ -152,7 +143,6 @@ public class DigestSubscriptionDTO {
                 ", subscribeOptions=" + subscribeOptions +
                 ", isPublic=" + isPublic +
                 ", ownersUsername='" + ownersUsername + '\'' +
-                ", subscribed=" + subscribed +
                 ", isOwner=" + isOwner +
                 ", creationDate=" + creationDate +
                 ", followers=" + followers +
