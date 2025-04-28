@@ -194,7 +194,8 @@ public class DigestController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "You successfully get digest subscription by digest's id", content = @Content(schema = @Schema(implementation = DigestSubscriptionDTO.class))),
             @ApiResponse(responseCode = "401", description = "You are trying to get digest subscription by digest's id while not authenticated"),
-            @ApiResponse(responseCode = "404", description = "There is no digests or subscriptions with such id")
+            @ApiResponse(responseCode = "404", description = "There is no digests or subscriptions with such id"),
+            @ApiResponse(responseCode = "403", description = "This subscription is private and this user isn't its subscriber")
     })
     @GetMapping("/{id}/subscription")
     public ResponseEntity<?> getDigestSubscriptionByDigestId(@PathVariable String id) {
@@ -217,6 +218,8 @@ public class DigestController {
             subscription = subscriptionService.getDigestSubscriptionByIdAndTransformIntoDTO(digest.getSubscription().getId(), user);
         } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (IllegalAccessException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         }
         return ResponseEntity.ok(subscription);
     }

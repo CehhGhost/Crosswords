@@ -186,13 +186,35 @@ public class DigestSubscriptionService {
         return this.transformSubscriptionSettingsIntoUsersDigestSubscriptionsDTO(user, usersSubscriptions, false);
     }
 
-    public DigestSubscriptionDTO getDigestSubscriptionByIdAndTransformIntoDTO(Long id, User user) {
+    public DigestSubscriptionDTO getDigestSubscriptionByIdAndTransformIntoDTO(Long id, User user) throws IllegalAccessException {
+        boolean userIsNotNull = user != null;
         var subscription = this.getDigestSubscriptionById(id);
+        if (!userIsNotNull && !subscription.getIsPublic()) {
+            throw new IllegalAccessException("This is not yours private subscription!");
+        }
         var subscriptionES = subscriptionSearchRepository.findById(subscription.getId()).orElseThrow(() -> new NoSuchElementException("There is no subscriptions with such id!"));
         var subscriptionDTO = modelMapper.map(subscription, DigestSubscriptionDTO.class);
+
+        subscriptionDTO.setFollowers(new ArrayList<>());
+        subscriptionDTO.setSubscribed(false);
+        var subscriptionSettings = subscriptionSettingsService.getAllDigestSubscriptionSettingsByDigestSubscription(subscription);
+        for (var subscriptionSetting : subscriptionSettings) {
+            DigestSubscriptionFollowerDTO digestSubscriptionFollowerDTO = new DigestSubscriptionFollowerDTO();
+            digestSubscriptionFollowerDTO.setEmail(subscriptionSetting.getSubscriber().getEmail());
+            digestSubscriptionFollowerDTO.setMobileNotifications(subscriptionSetting.getMobileNotifications());
+            digestSubscriptionFollowerDTO.setSendToMail(subscriptionSetting.getSendToMail());
+            subscriptionDTO.getFollowers().add(digestSubscriptionFollowerDTO);
+            if (userIsNotNull && subscriptionSetting.getSubscriber().getId().equals(user.getId())) {
+                subscriptionDTO.setSubscribed(true);
+            }
+        }
+        if (!subscriptionDTO.getSubscribed() && !subscription.getIsPublic()) {
+            throw new IllegalAccessException("This is not yours private subscription!");
+        }
+
         subscriptionDTO.setTitle(subscriptionES.getTitle());
         subscriptionDTO.setOwnersUsername(subscription.getOwner().getUsername());
-        if (user != null) {
+        if (userIsNotNull) {
             subscriptionDTO.setIsOwner(subscription.getOwner().getUsername().equals(user.getUsername()));
         } else {
             subscriptionDTO.setIsOwner(false);
@@ -208,20 +230,6 @@ public class DigestSubscriptionService {
             }
             for (var tag : subscription.getTemplate().getTags()) {
                 subscriptionDTO.getTags().add(tag.getName());
-            }
-        }
-
-        subscriptionDTO.setFollowers(new ArrayList<>());
-        subscriptionDTO.setSubscribed(false);
-        var subscriptionSettings = subscriptionSettingsService.getAllDigestSubscriptionSettingsByDigestSubscription(subscription);
-        for (var subscriptionSetting : subscriptionSettings) {
-            DigestSubscriptionFollowerDTO digestSubscriptionFollowerDTO = new DigestSubscriptionFollowerDTO();
-            digestSubscriptionFollowerDTO.setEmail(subscriptionSetting.getSubscriber().getEmail());
-            digestSubscriptionFollowerDTO.setMobileNotifications(subscriptionSetting.getMobileNotifications());
-            digestSubscriptionFollowerDTO.setSendToMail(subscriptionSetting.getSendToMail());
-            subscriptionDTO.getFollowers().add(digestSubscriptionFollowerDTO);
-            if (user != null && subscriptionSetting.getSubscriber().getId().equals(user.getId())) {
-                subscriptionDTO.setSubscribed(true);
             }
         }
 

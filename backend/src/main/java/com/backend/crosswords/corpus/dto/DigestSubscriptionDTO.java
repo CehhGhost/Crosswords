@@ -1,5 +1,6 @@
 package com.backend.crosswords.corpus.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -39,6 +40,7 @@ public class DigestSubscriptionDTO {
     @JsonProperty("is_owner")
     private Boolean isOwner;
     @JsonProperty("creation_date")
+    @JsonFormat(pattern = "dd/MM/yyyy")
     private Timestamp creationDate;
 
     private List<DigestSubscriptionFollowerDTO> followers;
