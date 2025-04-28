@@ -99,7 +99,6 @@ public class DocService {
         docSearchRepository.save(docES);
     }
 
-    // TODO документы должны возвращаться в порядке устаревания дат
     public List<DocDTO> getAllDocs() {
         List<DocDTO> result = new ArrayList<>();
         for (var docMeta : docMetaRepository.findAll()) {
@@ -238,7 +237,7 @@ public class DocService {
         packageService.removeDocFromPackages(docMeta);
 
         docMetaRepository.delete(docMeta);
-        // TODO учесть, что ES не понимает @Transactional и в случае ошибки не откатит изменения обратно, поэтому может произойти повреждение данных в ES
+        // учесть, что ES не понимает @Transactional и в случае ошибки не откатит изменения обратно, поэтому может произойти повреждение данных в ES
         var checkDocEs = docSearchRepository.findById(id);
         if (checkDocEs.isEmpty()) {
             throw new NoSuchElementException("There is no documents in ES with such id!");
