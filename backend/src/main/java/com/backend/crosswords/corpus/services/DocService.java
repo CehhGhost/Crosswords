@@ -15,6 +15,7 @@ import org.opensearch.data.client.orhlc.NativeSearchQueryBuilder;
 import org.opensearch.index.query.QueryBuilder;
 import org.opensearch.index.query.QueryBuilders;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.IndexOperations;
 import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
@@ -94,10 +95,8 @@ public class DocService {
 
         docMeta = docMetaRepository.save(docMeta);
         var docES = modelMapper.map(createDocDTO, DocES.class);
-        System.out.println("Количество символов принятого документа " + docES.getTitle() + ": " + docES.getText().length());
         docES.setId(docMeta.getId());
-        docES = docSearchRepository.save(docES);
-        System.out.println("Количество символов сохраненного документа: " + docES.getTitle() + ": " + docES.getText().length());
+        docSearchRepository.save(docES);
     }
 
     // TODO документы должны возвращаться в порядке устаревания дат
@@ -186,6 +185,7 @@ public class DocService {
         int matchesPerPage = searchDocDTO.getMatchesPerPage() == null ? 10 : searchDocDTO.getMatchesPerPage();
         var searchQuery = searchQueryBuilder
                 .withPageable(PageRequest.of(pageNumber, matchesPerPage))
+                .withSort(Sort.by(Sort.Order.desc("date")))
                 .build();
         try {
             var searchHits = elasticsearchOperations.search(searchQuery, DocES.class, IndexCoordinates.of("document"));
