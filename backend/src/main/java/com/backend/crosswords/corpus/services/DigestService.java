@@ -19,11 +19,9 @@ import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestTemplate;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;
-import java.time.ZonedDateTime;
 import java.util.*;
 
 @Service
@@ -37,13 +35,13 @@ public class DigestService {
     private final DocService docService;
     private final DigestRatingService ratingService;
     private final UserService userService;
-    private final RestTemplate restTemplate;
     private final TagService tagService;
     private final ElasticsearchOperations elasticsearchOperations;
+    private final MailManService mailManService;
     private final Queue<DigestTemplate> templates = new LinkedList<>();
     public static Timestamp startOfDay;
     public static Timestamp endOfDay;
-    public DigestService(DigestCoreRepository digestCoreRepository, DigestSubscriptionService subscriptionService, DigestSubscriptionSettingsService subscriptionSettingsService, DigestTemplateService templateService, DigestRepository digestRepository, DigestSearchRepository digestSearchRepository, DocService docService, DigestRatingService ratingService, UserService userService, RestTemplate restTemplate, TagService tagService, ElasticsearchOperations elasticsearchOperations) {
+    public DigestService(DigestCoreRepository digestCoreRepository, DigestSubscriptionService subscriptionService, DigestSubscriptionSettingsService subscriptionSettingsService, DigestTemplateService templateService, DigestRepository digestRepository, DigestSearchRepository digestSearchRepository, DocService docService, DigestRatingService ratingService, UserService userService, TagService tagService, ElasticsearchOperations elasticsearchOperations, MailManService mailManService) {
         this.coreRepository = digestCoreRepository;
         this.subscriptionService = subscriptionService;
         this.subscriptionSettingsService = subscriptionSettingsService;
@@ -53,9 +51,9 @@ public class DigestService {
         this.docService = docService;
         this.ratingService = ratingService;
         this.userService = userService;
-        this.restTemplate = restTemplate;
         this.tagService = tagService;
         this.elasticsearchOperations = elasticsearchOperations;
+        this.mailManService = mailManService;
     }
     @Transactional
     protected DigestCore createNewDigestCore(DigestTemplate template) {
@@ -83,6 +81,7 @@ public class DigestService {
     private void createNewDigests() {
         List<Digest> digests = new ArrayList<>();
         List<DigestES> digestsES = new ArrayList<>();
+        var mailmanIsAvailable = mailManService.checkServiceAvailability().block();
         while (!templates.isEmpty()) {
             var template = templates.poll();
             var core = this.createNewDigestCore(template);
@@ -93,7 +92,23 @@ public class DigestService {
                     Digest digest = new Digest(new DigestId(coreId, subscriptionId), core, subscription);
                     digests.add(digest);
                     String digestESId = coreId + "-" + subscriptionId;
-                    digestsES.add(new DigestES(digestESId, subscriptionService.getDigestSubscriptionsTitle(subscriptionId), core.getDate()));
+                    var digestES = new DigestES(digestESId, subscriptionService.getDigestSubscriptionsTitle(subscriptionId), core.getDate());
+                    digestsES.add(digestES);
+                    if (mailmanIsAvailable != null && mailmanIsAvailable) {
+                        SendDigestByEmailsDTO sendDigestByEmailsDTO = new SendDigestByEmailsDTO();
+                        sendDigestByEmailsDTO.setTitle(digestES.getTitle());
+                        sendDigestByEmailsDTO.setText(core.getText());
+                        sendDigestByEmailsDTO.setWebLink("http://localhost:9000/digests/{id}");
+                        for (var subscriptionSettings : subscription.getSubscriptionSettings()) {
+                            var user = subscriptionSettings.getSubscriber();
+                            if (subscriptionSettings.getSendToMail()) {
+                                sendDigestByEmailsDTO.getRecipients().add(user.getEmail());
+                            }
+                        }
+                        if (!sendDigestByEmailsDTO.getRecipients().isEmpty()) {
+                            mailManService.sendEmail(sendDigestByEmailsDTO).block();
+                        }
+                    }
                 }
             }
         }
