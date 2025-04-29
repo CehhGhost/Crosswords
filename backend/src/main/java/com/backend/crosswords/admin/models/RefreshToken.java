@@ -24,6 +24,9 @@ public class RefreshToken {
     @Column(name = "expiry_date")
     private Instant expiryDate;
 
+    @Version
+    private Long version;
+
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
@@ -85,5 +88,13 @@ public class RefreshToken {
 
     public void setExpiryDate(Instant expiryDate) {
         this.expiryDate = expiryDate;
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
     }
 }

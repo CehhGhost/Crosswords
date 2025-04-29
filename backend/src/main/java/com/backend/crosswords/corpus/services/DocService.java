@@ -167,17 +167,17 @@ public class DocService {
                     resultHits.add(this.getDocByIdAndTransformIntoDTO(Long.parseLong(searchDocDTO.getSearchTerm())));
                     return this.formSearchResultDTO(searchDocDTO.getPageNumber(), resultHits);
                 }
-                case "semantic" -> {
+                case "semantic", "syntax" -> {
                     if (searchDocDTO.getMatchesPerPage() <= 0) {
                         return this.formSearchResultDTO(searchDocDTO.getPageNumber(), resultHits);
                     }
                     queryBuilder = QueryBuilders.boolQuery()
                             .should(QueryBuilders.matchQuery("text", searchDocDTO.getSearchTerm()).fuzziness(Fuzziness.AUTO))
                             .should(QueryBuilders.matchPhraseQuery("text", searchDocDTO.getSearchTerm())).boost(2.0F);
-                    float percentage = searchDocDTO.getApprovalPercentage() == null ? 0.5F : searchDocDTO.getApprovalPercentage();
-                    minScore = searchDocDTO.getSearchTerm().split(" ").length * percentage;
+                    /*float percentage = searchDocDTO.getApprovalPercentage() == null ? 0.5F : searchDocDTO.getApprovalPercentage();
+                    minScore = searchDocDTO.getSearchTerm().split(" ").length * percentage;*/
                 }
-                case "certain" -> {
+                case "certain", "exact" -> {
                     queryBuilder = QueryBuilders.matchPhraseQuery("text", searchDocDTO.getSearchTerm());
                 }
                 default -> throw new IllegalArgumentException("There is no such search modes!");

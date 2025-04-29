@@ -42,7 +42,8 @@ public class RefreshTokenService {
             throw new TokenExpiredException("Your refresh token is expired!", oldToken.getExpiryDate());
         }
         User user = oldToken.getUser();
-        refreshTokenRepository.delete(oldToken);
+        refreshTokenRepository.deleteById(oldToken.getId());
+        refreshTokenRepository.flush();
         return this.generateRefreshToken(ipAddress, userAgent, user);
     }
 

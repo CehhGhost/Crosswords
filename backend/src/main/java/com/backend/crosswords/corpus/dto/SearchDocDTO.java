@@ -54,13 +54,6 @@ public class SearchDocDTO {
     private Integer matchesPerPage;
 
     @Schema(
-            description = "The experimental argument, it gives a percentage of the effect on scoring hits in ES, by the numbers of the search terms. The higher value, the more accurate the results",
-            example = "0.5"
-    )
-    @JsonProperty("approval_percentage")
-    private Float approvalPercentage;
-
-    @Schema(
             description = "The list of probable languages, if document's language contains in them, then it gets through",
             example = "[\"RU\"]"
     )
@@ -163,14 +156,6 @@ public class SearchDocDTO {
         this.tags = tags;
     }
 
-    public Float getApprovalPercentage() {
-        return approvalPercentage;
-    }
-
-    public void setApprovalPercentage(Float approvalPercentage) {
-        this.approvalPercentage = approvalPercentage;
-    }
-
     public List<String> getFolders() {
         return folders;
     }
@@ -188,7 +173,6 @@ public class SearchDocDTO {
                 ", dateTo=" + dateTo +
                 ", pageNumber=" + pageNumber +
                 ", matchesPerPage=" + matchesPerPage +
-                ", approvalPercentage=" + approvalPercentage +
                 ", language=" + language +
                 ", sources=" + sources +
                 ", tags=" + tags +

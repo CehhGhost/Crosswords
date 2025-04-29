@@ -12,6 +12,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.AuthorityUtils;
@@ -118,6 +119,8 @@ public class JWTFilter extends OncePerRequestFilter {
                         "anonymous", "anonymousUser", AuthorityUtils.createAuthorityList("ROLE_ANONYMOUS"));
                 SecurityContextHolder.getContext().setAuthentication(anonymousToken);
             }
+        }catch (ObjectOptimisticLockingFailureException ex) {
+            refreshUser(oldToken, request, response);
         } catch (TokenExpiredException | NoSuchElementException | SecurityException | IllegalAccessException e) {
             AnonymousAuthenticationToken anonymousToken = new AnonymousAuthenticationToken(
                     "anonymous", "anonymousUser", AuthorityUtils.createAuthorityList("ROLE_ANONYMOUS"));
