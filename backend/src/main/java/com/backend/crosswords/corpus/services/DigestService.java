@@ -71,15 +71,17 @@ public class DigestService {
 
         core = coreRepository.save(core);
         docService.setCoreForDocs(core, docMetas);
-
-        GenerateDigestDTO generateDigestDTO = new GenerateDigestDTO();
+        StringBuilder docMetasText = new StringBuilder();
+        // GenerateDigestDTO generateDigestDTO = new GenerateDigestDTO();
         for (var docMeta : docMetas) {
             var text = docService.getDocTextByDocId(docMeta.getId());
             var summary = docMeta.getSummary();
-            GenerateDigestsDocumentsDTO generateDigestsDocumentsDTO =  new GenerateDigestsDocumentsDTO(text, summary);
-            generateDigestDTO.getDocuments().add(generateDigestsDocumentsDTO);
+            docMetasText.append(text);
+            /*GenerateDigestsDocumentsDTO generateDigestsDocumentsDTO =  new GenerateDigestsDocumentsDTO(text, summary);
+            generateDigestDTO.getDocuments().add(generateDigestsDocumentsDTO);*/
         }
-        var digestText = generatorService.generateDigest(generateDigestDTO).block();
+        //var digestText = generatorService.generateDigest(generateDigestDTO).block();
+        var digestText = docMetasText.toString();
         core.setText(digestText); // TODO добавить подключение к сервису создания дайджестов и получать текст от него
         core = coreRepository.save(core);
         return core;
@@ -87,7 +89,7 @@ public class DigestService {
     private void createNewDigests() {
         List<Digest> digests = new ArrayList<>();
         List<DigestES> digestsES = new ArrayList<>();
-        var mailmanIsAvailable = mailManService.checkServiceAvailability().block();
+        // var mailmanIsAvailable = mailManService.checkServiceAvailability().block();
         while (!templates.isEmpty()) {
             var template = templates.poll();
             var core = this.createNewDigestCore(template);
@@ -100,7 +102,7 @@ public class DigestService {
                     String digestESId = coreId + "-" + subscriptionId;
                     var digestES = new DigestES(digestESId, subscriptionService.getDigestSubscriptionsTitle(subscriptionId), core.getDate());
                     digestsES.add(digestES);
-                    if (mailmanIsAvailable != null && mailmanIsAvailable) {
+                    /*if (mailmanIsAvailable != null && mailmanIsAvailable) {
                         SendDigestByEmailsDTO sendDigestByEmailsDTO = new SendDigestByEmailsDTO();
                         sendDigestByEmailsDTO.setTitle(digestES.getTitle());
                         sendDigestByEmailsDTO.setText(core.getText());
@@ -114,7 +116,7 @@ public class DigestService {
                         if (!sendDigestByEmailsDTO.getRecipients().isEmpty()) {
                             mailManService.sendEmail(sendDigestByEmailsDTO).block();
                         }
-                    }
+                    }*/
                 }
             }
         }
