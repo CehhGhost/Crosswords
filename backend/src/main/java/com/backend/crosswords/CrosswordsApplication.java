@@ -1,5 +1,6 @@
 package com.backend.crosswords;
 
+import com.backend.crosswords.config.DigestGeneratorProperties;
 import com.backend.crosswords.config.MailmanProperties;
 import io.netty.channel.ChannelOption;
 import org.modelmapper.ModelMapper;
@@ -20,9 +21,11 @@ import java.time.Duration;
 @SpringBootApplication(exclude = {ElasticsearchDataAutoConfiguration.class})
 public class CrosswordsApplication {
 	private final MailmanProperties mailmanProperties;
+	private final DigestGeneratorProperties digestGeneratorProperties;
 
-	public CrosswordsApplication(MailmanProperties mailmanProperties) {
+	public CrosswordsApplication(MailmanProperties mailmanProperties, DigestGeneratorProperties digestGeneratorProperties) {
 		this.mailmanProperties = mailmanProperties;
+		this.digestGeneratorProperties = digestGeneratorProperties;
 	}
 
 	public static void main(String[] args) {
@@ -51,5 +54,15 @@ public class CrosswordsApplication {
 				))
 				.build();
 	}
-	
+	@Bean
+	public WebClient digestGeneratorWebClient(WebClient.Builder webClientBuilder) {
+		return webClientBuilder
+				.baseUrl(digestGeneratorProperties.getUrl())
+				.clientConnector(new ReactorClientHttpConnector(
+						HttpClient.create()
+								.responseTimeout(Duration.ofMillis(digestGeneratorProperties.getResponseTimeout()))
+								.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, digestGeneratorProperties.getConnectTimeout())
+				))
+				.build();
+	}
 }

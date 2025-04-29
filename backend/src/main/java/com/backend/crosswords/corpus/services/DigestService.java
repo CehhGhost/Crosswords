@@ -38,10 +38,11 @@ public class DigestService {
     private final TagService tagService;
     private final ElasticsearchOperations elasticsearchOperations;
     private final MailManService mailManService;
+    private final DigestGeneratorService generatorService;
     private final Queue<DigestTemplate> templates = new LinkedList<>();
     public static Timestamp startOfDay;
     public static Timestamp endOfDay;
-    public DigestService(DigestCoreRepository digestCoreRepository, DigestSubscriptionService subscriptionService, DigestSubscriptionSettingsService subscriptionSettingsService, DigestTemplateService templateService, DigestRepository digestRepository, DigestSearchRepository digestSearchRepository, DocService docService, DigestRatingService ratingService, UserService userService, TagService tagService, ElasticsearchOperations elasticsearchOperations, MailManService mailManService) {
+    public DigestService(DigestCoreRepository digestCoreRepository, DigestSubscriptionService subscriptionService, DigestSubscriptionSettingsService subscriptionSettingsService, DigestTemplateService templateService, DigestRepository digestRepository, DigestSearchRepository digestSearchRepository, DocService docService, DigestRatingService ratingService, UserService userService, TagService tagService, ElasticsearchOperations elasticsearchOperations, MailManService mailManService, DigestGeneratorService generatorService) {
         this.coreRepository = digestCoreRepository;
         this.subscriptionService = subscriptionService;
         this.subscriptionSettingsService = subscriptionSettingsService;
@@ -54,6 +55,7 @@ public class DigestService {
         this.tagService = tagService;
         this.elasticsearchOperations = elasticsearchOperations;
         this.mailManService = mailManService;
+        this.generatorService = generatorService;
     }
     @Transactional
     protected DigestCore createNewDigestCore(DigestTemplate template) {
@@ -70,11 +72,15 @@ public class DigestService {
         core = coreRepository.save(core);
         docService.setCoreForDocs(core, docMetas);
 
-        StringBuilder docsText = new StringBuilder();
+        GenerateDigestDTO generateDigestDTO = new GenerateDigestDTO();
         for (var docMeta : docMetas) {
-            docsText.append(docService.getDocTextByDocId(docMeta.getId()));
+            var text = docService.getDocTextByDocId(docMeta.getId());
+            var summary = docMeta.getSummary();
+            GenerateDigestsDocumentsDTO generateDigestsDocumentsDTO =  new GenerateDigestsDocumentsDTO(text, summary);
+            generateDigestDTO.getDocuments().add(generateDigestsDocumentsDTO);
         }
-        core.setText(docsText.toString()); // TODO добавить подключение к сервису создания дайджестов и получать текст от него
+        var digestText = generatorService.generateDigest(generateDigestDTO).block();
+        core.setText(digestText); // TODO добавить подключение к сервису создания дайджестов и получать текст от него
         core = coreRepository.save(core);
         return core;
     }
