@@ -115,6 +115,7 @@ public class DigestSubscriptionSettingsService {
         userSettings.setSendToMail(user.getPersonalSendToMail() ? subscription.getSendToMail() : false);
         return userSettings;
     }
+
     private DigestSubscriptionSettings setParametersForSubscriptionSettingsAndReturn(DigestSubscription subscription, User user) {
         var userSettings = new DigestSubscriptionSettings();
         userSettings.setId(new DigestSubscriptionSettingsId(subscription.getId(), user.getId()));
