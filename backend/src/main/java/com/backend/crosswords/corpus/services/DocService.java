@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.util.*;
 
 @Service
@@ -88,7 +89,11 @@ public class DocService {
     public void createDoc(CreateDocDTO createDocDTO) {
         var docMeta = modelMapper.map(createDocDTO, DocMeta.class);
         docMeta.setSource(Source.fromRussianName(createDocDTO.getRusSource()));
-        docMeta.setLastEdit(new Timestamp(System.currentTimeMillis()));
+        Timestamp timeNow = new Timestamp(System.currentTimeMillis());
+        if (createDocDTO.getDate() == null) {
+            docMeta.setDate(timeNow);
+        }
+        docMeta.setLastEdit(timeNow);
 
         docMetaRepository.save(docMeta);
         tagService.getTagsInNamesAndSaveForDoc(createDocDTO.getTagDTOs(), docMeta);
@@ -420,9 +425,9 @@ public class DocService {
         docMetaRepository.save(docMeta);
     }
 
-    public List<DocMeta> getAllDocsByTemplate(DigestTemplate template) {
+    public List<DocMeta> getAllDocsByTemplateForToday(DigestTemplate template) {
         List<DocMeta> docs = new ArrayList<>();
-        for (var doc : docMetaRepository.findAllWithTags()) {
+        for (var doc : docMetaRepository.findAllWithTagsForToday(DigestService.startOfDay, DigestService.endOfDay)) {
             Boolean first = (template.getTags().isEmpty() || tagService.getSetOfTagsNames(doc.getTags()).containsAll(tagService.getSetOfTagsNames(template.getTags())));
             Boolean second = (template.getSources().isEmpty() || template.getSources().contains(doc.getSource()));
             if (first && second) {

@@ -1,7 +1,9 @@
 package com.backend.crosswords.corpus.dto;
 
+import com.backend.crosswords.config.RawTimestampDeserializer;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.sql.Timestamp;
@@ -18,6 +20,7 @@ public class CreateDocDTO {
             description = "The date of creation in the ISO format",
             example = "2025-02-26T14:20:00Z"
     )
+    @JsonDeserialize(using = RawTimestampDeserializer.class)
     private Timestamp date;
 
     @Schema(

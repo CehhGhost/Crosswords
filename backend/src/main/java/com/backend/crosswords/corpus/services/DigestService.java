@@ -22,6 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.util.*;
 
 @Service
@@ -39,6 +41,8 @@ public class DigestService {
     private final TagService tagService;
     private final ElasticsearchOperations elasticsearchOperations;
     private final Queue<DigestTemplate> templates = new LinkedList<>();
+    public static Timestamp startOfDay;
+    public static Timestamp endOfDay;
     public DigestService(DigestCoreRepository digestCoreRepository, DigestSubscriptionService subscriptionService, DigestSubscriptionSettingsService subscriptionSettingsService, DigestTemplateService templateService, DigestRepository digestRepository, DigestSearchRepository digestSearchRepository, DocService docService, DigestRatingService ratingService, UserService userService, RestTemplate restTemplate, TagService tagService, ElasticsearchOperations elasticsearchOperations) {
         this.coreRepository = digestCoreRepository;
         this.subscriptionService = subscriptionService;
@@ -56,7 +60,7 @@ public class DigestService {
     @Transactional
     protected DigestCore createNewDigestCore(DigestTemplate template) {
         template = templateService.getTemplateFromId(template.getUuid()); // необходимо, чтобы сделать полную загрузку данных, избегаю ленивую
-        var docMetas = docService.getAllDocsByTemplate(template);
+        var docMetas = docService.getAllDocsByTemplateForToday(template);
         if (docMetas.size() == 0) {
             return null;
         }
@@ -99,6 +103,8 @@ public class DigestService {
 
     @Scheduled(cron = "${scheduler.cron}")
     public void scheduledDigestCreation() {
+        startOfDay = Timestamp.valueOf(LocalDate.now().atStartOfDay());
+        endOfDay = Timestamp.valueOf(LocalDate.now().plusDays(1).atStartOfDay());
         System.out.println("The start of creating digests");
         templates.addAll(templateService.getAllTemplates());
         this.createNewDigests();
