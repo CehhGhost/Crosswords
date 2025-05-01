@@ -53,7 +53,7 @@ public class DigestSubscriptionController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "You successfully updated a digest subscription and managed subscribers on it"),
             @ApiResponse(responseCode = "401", description = "You are trying to updated a digest subscription while not authenticated"),
-            @ApiResponse(responseCode = "400", description = "At least one source has an incorrect name"),
+            @ApiResponse(responseCode = "400", description = "At least one source has an incorrect name, or sources or tags are null"),
             @ApiResponse(responseCode = "404", description = "At least one subscriber, one digest subscription or one subscription's settings, cant be found in the DB"),
             @ApiResponse(responseCode = "403", description = "You are trying to updated a digest subscription while not owning it")
     })
@@ -63,6 +63,8 @@ public class DigestSubscriptionController {
         CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
         try {
             digestSubscriptionService.updateDigestSubscription(crosswordUserDetails.getUser(), id, updateDigestSubscriptionDTO);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         } catch (IllegalAccessException e) {
