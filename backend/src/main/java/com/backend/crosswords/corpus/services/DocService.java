@@ -252,6 +252,9 @@ public class DocService {
     }
 
     public void rateDocById(Long id, RateDocDTO rateDocDTO) {
+        if (rateDocDTO == null) {
+            return;
+        }
         if (rateDocDTO.getClassificationRating() < 1 || rateDocDTO.getClassificationRating() > 5 || rateDocDTO.getSummaryRating() < 1 || rateDocDTO.getSummaryRating() > 5) {
             throw new IllegalArgumentException("Rating's arguments must be in range of 1 to 5!");
         }
