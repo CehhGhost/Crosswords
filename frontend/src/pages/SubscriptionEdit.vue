@@ -19,11 +19,13 @@
             v-model="selectedSources"
             :label="'Источники'"
             :options="availableSources"
+            required
           />
           <FilterSelector
             v-model="selectedTags"
             :label="'Теги'"
             :options="availableTags"
+            required
           />
         </div>
   
@@ -271,17 +273,15 @@
       const requestData = {
         title: this.title,
         description: this.description,
-        sources: this.selectedSources,
-        tags: this.selectedTags,
+        sources: this.selectedSources.map((source) => source.value),
+        tags: this.selectedTags.map((tag) => tag.value),
         subscribe_options: {
           send_to_mail: this.notificationEmail,
           mobile_notifications: this.notificationMobile,
         },
         public: this.isPublic,
         followers: this.addedEmails.map((email) => ({
-          email: email.email,
-          send_to_mail: email.send_to_mail,
-          mobile_notifications: email.mobile_notifications,
+          username: email.email,
         })),
         owner: this.ownerEmail,  // Передаем новый email владельца
       };
@@ -289,7 +289,7 @@
 
       // Отправка данных на сервер
       const digestId = this.$route.params.id;
-      fetch(backendURL + `subscriptions/${digestId}`, {
+      fetch(backendURL + `subscriptions/${digestId}/update`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -300,6 +300,12 @@
         .then((response) => response.json())
         .then((data) => {
           console.log('Изменения успешно сохранены:', data);
+          this.$q.notify({
+              type: 'positive',
+              message: 'Изменения успешно сохранены',
+              position: 'top',
+            })
+            this.$router.replace('/digests')
         })
         .catch((error) => {
           console.error('Ошибка при сохранении изменений:', error);
