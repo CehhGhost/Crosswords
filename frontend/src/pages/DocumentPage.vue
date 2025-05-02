@@ -389,13 +389,13 @@ watch(
 async function onRatingChange(newRating) {
   try {
     const id = route.params.id
-    const postResponse = await fetch(`http://localhost:3000/documents/${id}/rating`, {
-      method: 'POST',
+    const postResponse = await fetch(backendURL + `documents/${id}/rate`, {
+      method: 'PATCH',
       credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ rating: newRating }),
+      body: JSON.stringify({ classification_rating: newRating, summary_rating: null }),
     })
     if (!postResponse.ok) {
       if (postResponse.status === 401) {

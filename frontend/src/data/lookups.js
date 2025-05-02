@@ -8,6 +8,7 @@ export const availableSources = [
   ];
   
   export const availableTags = [
+    { label: "Не определено", value: "Не определено", color: "#0000FF" },
     { label: "Экономика", value: "Экономика", color: "#1E3A5F", digest_pic: "src/assets/economics.jpg" },
     { label: "Кредит", value: "Кредит", color: "#00FF00" },
     { label: "IT", value: "IT", color: "#0000FF" },
