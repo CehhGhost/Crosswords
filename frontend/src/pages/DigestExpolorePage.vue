@@ -1,6 +1,6 @@
 <template>
-  <ServerResponseSpinner v-if="isLoading"/>
-  <q-page v-if="!isLoading" class="flex flex-center">
+  <ServerResponseSpinner v-if="isLoading" />
+  <q-page v-else class="flex flex-center">
     <div class="full-width q-pa-md page-body">
       <q-carousel
         v-if="featuredDigests.length"
@@ -70,21 +70,22 @@
         </q-carousel-slide>
       </q-carousel>
 
-      <my-subscriptions v-if="is_authed" />
+      <my-subscriptions v-if="isAuthed" />
       <locked-content
-        description="Войдите в аккаунт, чтобы создавать собственные дайджесты или подписываться на существующие"
         v-else
+        description="Войдите в аккаунт, чтобы создавать собственные дайджесты или подписываться на существующие"
       />
+
       <div
-        :class="{ 'text-secondary': !$q.dark.isActive, 'text-white': $q.dark.isActive }"
         class="caption text-h4 text-center q-mt-xl q-mb-md"
+        :class="{ 'text-secondary': !$q.dark.isActive, 'text-white': $q.dark.isActive }"
       >
         Все дайджесты
       </div>
 
       <div class="row items-center q-mb-sm">
         <q-input
-          v-model="search_body"
+          v-model="searchBody"
           filled
           label="Название дайджеста"
           class="col"
@@ -107,12 +108,12 @@
           @click="onSearch"
         />
       </div>
-      <!-- даты -->
+
+      <!-- Даты -->
       <div class="row q-col-gutter-md items-center">
-        <!-- дата (с) -->
         <div class="col-6">
           <q-input
-            v-model="date_from"
+            v-model="dateFrom"
             filled
             dense
             label="Дата (с)"
@@ -123,7 +124,7 @@
               <q-icon name="event" class="cursor-pointer">
                 <q-popup-proxy cover transition-show="scale" transition-hide="scale">
                   <q-date
-                    v-model="date_from"
+                    v-model="dateFrom"
                     title="Искать с"
                     subtitle="Выбор даты"
                     color="secondary"
@@ -139,10 +140,9 @@
           </q-input>
         </div>
 
-        <!-- дата (по) -->
         <div class="col-6">
           <q-input
-            v-model="date_to"
+            v-model="dateTo"
             filled
             dense
             label="Дата (по)"
@@ -153,7 +153,7 @@
               <q-icon name="event" class="cursor-pointer">
                 <q-popup-proxy cover transition-show="scale" transition-hide="scale">
                   <q-date
-                    v-model="date_to"
+                    v-model="dateTo"
                     title="Искать по"
                     subtitle="Выбор даты"
                     color="secondary"
@@ -172,25 +172,24 @@
 
       <!-- Теги и Источники -->
       <div class="row q-col-gutter-md items-center">
-        <!-- теги -->
         <div class="col-6">
           <filter-selector
-            v-model="selected_tags"
+            v-model="selectedTags"
             :options="availableTags"
             label="Тэги"
+            :multiple=true
             dense
             clearable
             class="q-my-sm"
           />
         </div>
-
-        <!-- источники -->
         <div class="col-6">
           <filter-selector
-            v-model="selected_sources"
+            v-model="selectedSources"
             :options="availableSources"
             label="Источники"
             dense
+            :multiple=true
             clearable
             class="q-my-sm"
             @clear="clearSelection('sources')"
@@ -202,7 +201,7 @@
       <div class="row q-col-gutter-md items-center q-mb-md justify-between">
         <div class="col-auto">
           <q-checkbox
-            v-if="is_authed"
+            v-if="isAuthed"
             v-model="subscribeOnly"
             label="Только подписки"
             color="primary"
@@ -223,247 +222,182 @@
       <!-- Список дайджестов -->
       <div>
         <digest-card
-          :is_authed="is_authed"
           v-for="digest in digests"
           :key="digest.id"
           :digest="digest"
+          :is_authed="isAuthed"
         />
       </div>
     </div>
-    <div class="q-mt-md q-mb-md flex flex-center" v-if="next_page !== -1">
+
+    <div class="q-mt-md q-mb-md flex flex-center" v-if="nextPage !== -1">
       <q-btn label="Показать еще" color="primary" no-caps text-color="dark" @click="onLoadMore" />
     </div>
   </q-page>
 </template>
 
-<script>
+<script setup>
+import { ref, reactive, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useQuasar } from 'quasar'
 import DigestCard from '../components/DigestCard.vue'
-import { availableTags, availableSources, backendURL } from '../data/lookups.js'
 import MySubscriptions from '../components/MySubscriptions.vue'
 import FilterSelector from 'src/components/FilterSelector.vue'
 import LockedContent from 'src/components/LockedContent.vue'
 import ServerResponseSpinner from 'src/components/ServerResponseSpinner.vue'
+import { availableTags, availableSources, backendURL } from '../data/lookups.js'
 
-export default {
-  name: 'NewsPage',
-  components: {
-    DigestCard,
-    MySubscriptions,
-    FilterSelector,
-    LockedContent,
-    ServerResponseSpinner,
-  },
-  data() {
-    return {
-      search_body: '',
-      date_from: '',
-      date_to: '',
-      selected_tags: [],
-      selected_sources: [],
-      subscribeOnly: false,
-      digests: [],
-      featuredDigests: [],
-      isDigestLoading: false,
-      isLoading: true,
-      activeFeaturedSlide: '0',
-      is_authed: false,
-      autoplay: true,
-      next_page: 0,
+const $q = useQuasar()
+const router = useRouter()
 
-      // это из lookups.js
-      availableTags,
-      availableSources,
-      colorPalette: [
-        '#072449',
-        '#092449',
-        '#121858',
-        '#151240',
-        '#161E4C',
-        '#1E151C',
-        '#121C18',
-        '#1C1E0D',
-        '#201717',
-        '#351510',
-      ],
+// Reactive state
+const searchBody = ref('')
+const dateFrom = ref('')
+const dateTo = ref('')
+const selectedTags = ref([])
+const selectedSources = ref([])
+const subscribeOnly = ref(false)
+const digests = ref([])
+const featuredDigests = ref([])
+const isDigestLoading = ref(false)
+const isLoading = ref(true)
+const activeFeaturedSlide = ref('0')
+const isAuthed = ref(false)
+const autoplay = ref(true)
+const nextPage = ref(0)
+const matchesPerPage = 20
 
-      // Чтобы при повторном рендере не генерировать другой цвет,
-      // можно хранить цвета для уже встреченных дайджестов в объекте (кэш).
-      digestColors: {},
-    }
-  },
-  methods: {
-    getLimitedSources(sources) {
-      if (sources.length > 3) {
-        return sources.slice(0, 3).join(', ') + ' ...'
-      }
-      return sources.join(', ')
-    },
-    goToDigest(id) {
-      this.$router.push(`/digests/${id}`)
-    },
-    formatToISO(str) {
-      if (!str) return null
-      const [day, month, year] = str.split('/')
-      if (!day || !month || !year) return null
-      const utcDateMs = Date.UTC(+year, +month - 1, +day)
-      const isoDateTime = new Date(utcDateMs).toISOString()
-      return isoDateTime.split('T')[0]
-    },
-    // Берём цепочку тегов, ищем первый digest_pic
-    getDigestPic(digest) {
-      if (!digest.tags || digest.tags.length === 0) {
-        return 'images/default.jpg'
-      }
-      // идём по тегам по порядку
-      for (const tagValue of digest.tags) {
-        // Находим соответствие в availableTags
-        const foundTag = this.availableTags.find((t) => t.value === tagValue)
-        // если нашли и у тега есть digest_pic -> используем его
-        if (foundTag && foundTag.digest_pic) {
-          return foundTag.digest_pic
-        }
-      }
-      // если ни один тег не дал фото -> берём "default"
-      return 'images/default.jpg'
-    },
+// Constants
+const digestColors = reactive({})
+const colorPalette = [
+  '#072449',
+  '#092449',
+  '#121858',
+  '#151240',
+  '#161E4C',
+  '#1E151C',
+  '#121C18',
+  '#1C1E0D',
+  '#201717',
+  '#351510',
+]
 
-    // логика определения цвета (рандом из colorPalette)
-    // При желании, можно брать "случайный цвет" прямо тут, но тогда
-    // при каждом обновлении Vue будет менять цвет. Поэтому обычно кэшируем в digestColors.
-    getLeftStyle(digest) {
-      if (!this.digestColors[digest.id]) {
-        const randomIndex = Math.floor(Math.random() * this.colorPalette.length)
-        this.digestColors[digest.id] = this.colorPalette[randomIndex]
-      }
-      return {
-        backgroundColor: this.digestColors[digest.id],
-      }
-    },
-    onSearch() {
-      this.next_page = 0
-      this.matches_per_page = 20
-      this.fetchDigests({ reset: true })
-    },
-    onLoadMore() {
-      // Если next_page уже -1, то кнопка не должна была показаться,
-      // но на всякий случай проверим
-      if (this.next_page === -1) return
-
-      // Загружаем следующую страницу
-      this.fetchDigests({ reset: false })
-    },
-
-    async fetchDigests({ reset }) {
-      this.matches_per_page = 20
-      try {
-        const params = new URLSearchParams()
-
-        if (this.search_body) {
-          params.append('search_body', this.search_body)
-        }
-
-        // Даты
-        if (this.date_from) {
-          params.append('date_from', this.formatToISO(this.date_from))
-        }
-        if (this.date_to) {
-          params.append('date_to', this.formatToISO(this.date_to))
-        }
-
-        // Теги
-        if (this.selected_tags && this.selected_tags.length) {
-          this.selected_tags.forEach((tag) => {
-            params.append('tags', tag.label)
-          })
-        }
-
-        if (this.selected_sources && this.selected_sources.length) {
-          this.selected_sources.forEach((source) => {
-            params.append('sources', source.label)
-          })
-        }
-        params.append('subscribe_only', this.subscribeOnly ? 'true' : 'false')
-        params.append('page_number', this.next_page)
-        params.append('matches_per_page', this.matches_per_page)
-        //console.log(backendURL)
-        const response = await fetch(
-          backendURL + `digests/search?${params.toString()}`,
-          // `https://38eb0762b63f400b81812fc5431695d1.api.mockbin.io/`,
-          {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-          },
-        )
-        console.log(params.toString())
-        if (!response.ok) {
-          throw new Error('Ошибка при получении дайджестов')
-        }
-        
-        const data = await response.json()
-        console.log(data)
-        // Предполагается, что формат ответа:
-        // {
-        //   "digests": [ ... ]
-        // }
-        if (reset) {
-            // При новом поиске полностью заменяем массив
-            this.digests = data.digests || []
-          } else {
-            // При "Show more" добавляем новые документы к старым
-            this.digests = [...this.digests, ...data.digests]
-          }
-        this.next_page = data.next_page
-        console.log("PAGE NUMBER", this.next_page)
-        this.is_authed = data.is_authed
-      } catch (error) {
-        console.error(error)
-      } finally {
-        this.isDigestLoading = false
-      }
-    },
-    async fetchFeaturedDigests() {
-      try {
-        const response = await fetch(`https://d0ef77d78d0747daa591ac2497df51ed.api.mockbin.io/`, {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include'
-        })
-        if (!response.ok) {
-          throw new Error('Ошибка при получении featured дайджестов')
-        }
-        const data = await response.json()
-        console.log(data)
-        // Ожидаем тот же формат { digests: [...] }
-        this.featuredDigests = data.digests || []
-      } catch (error) {
-        console.error(error)
-      }
-    },
-    resetFilters() {
-      this.selected_sources = []
-      this.selected_tags = []
-      this.date_from = null
-      this.date_to = null
-      this.search_in_text = false
-      this.search_body = ''
-    },
-  },
-  async mounted() {
-    try {
-      await Promise.all([
-        this.fetchFeaturedDigests(),
-        this.fetchDigests({ reset: false })
-      ]);
-    } catch (error) {
-      console.error("Ошибка при загрузке дайджестов:", error);
-    } finally {
-      this.isLoading = false;
-    }
-  },
+// Methods
+const getLimitedSources = (sources) => {
+  return sources.length > 3 ? sources.slice(0, 3).join(', ') + ' ...' : sources.join(', ')
 }
+
+const goToDigest = (id) => {
+  router.push(`/digests/${id}`)
+}
+
+const formatToISO = (str) => {
+  if (!str) return null
+  const [day, month, year] = str.split('/')
+  if (!day || !month || !year) return null
+  const utcDateMs = Date.UTC(+year, +month - 1, +day)
+  return new Date(utcDateMs).toISOString().split('T')[0]
+}
+
+const getDigestPic = (digest) => {
+  if (!digest.tags || !digest.tags.length) {
+    return 'images/default.jpg'
+  }
+  for (const tagValue of digest.tags) {
+    const found = availableTags.find((t) => t.value === tagValue)
+    if (found?.digest_pic) return found.digest_pic
+  }
+  return 'images/default.jpg'
+}
+
+const getLeftStyle = (digest) => {
+  if (!digestColors[digest.id]) {
+    const idx = Math.floor(Math.random() * colorPalette.length)
+    digestColors[digest.id] = colorPalette[idx]
+  }
+  return { backgroundColor: digestColors[digest.id] }
+}
+
+const clearSelection = (type) => {
+  if (type === 'sources') selectedSources.value = []
+  if (type === 'tags') selectedTags.value = []
+}
+
+const fetchDigests = async (reset) => {
+  isDigestLoading.value = true
+  try {
+    const params = new URLSearchParams()
+    if (searchBody.value) params.append('search_body', searchBody.value)
+    if (dateFrom.value) params.append('date_from', formatToISO(dateFrom.value))
+    if (dateTo.value) params.append('date_to', formatToISO(dateTo.value))
+    selectedTags.value.forEach((tag) => params.append('tags', tag.label))
+    selectedSources.value.forEach((src) => params.append('sources', src.label))
+    params.append('subscribe_only', subscribeOnly.value ? 'true' : 'false')
+    params.append('page_number', nextPage.value)
+    params.append('matches_per_page', matchesPerPage)
+
+    const res = await fetch(`${backendURL}digests/search?${params.toString()}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    })
+    if (!res.ok) throw new Error('Ошибка при получении дайджестов')
+    const data = await res.json()
+    if (reset) digests.value = data.digests || []
+    else digests.value = [...digests.value, ...(data.digests || [])]
+    nextPage.value = data.next_page
+    isAuthed.value = data.is_authed
+  } catch (e) {
+    console.error(e)
+  } finally {
+    isDigestLoading.value = false
+  }
+}
+
+const fetchFeaturedDigests = async () => {
+  try {
+    const res = await fetch('https://d0ef77d78d0747daa591ac2497df51ed.api.mockbin.io/', {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    })
+    if (!res.ok) throw new Error('Ошибка при получении featured дайджестов')
+    const data = await res.json()
+    featuredDigests.value = data.digests || []
+  } catch (e) {
+    console.error(e)
+  }
+}
+
+const onSearch = () => {
+  nextPage.value = 0
+  fetchDigests(true)
+}
+
+const onLoadMore = () => {
+  if (nextPage.value === -1) return
+  fetchDigests(false)
+}
+
+const resetFilters = () => {
+  searchBody.value = ''
+  dateFrom.value = null
+  dateTo.value = null
+  selectedTags.value = []
+  selectedSources.value = []
+  subscribeOnly.value = false
+}
+
+// Lifecycle
+onMounted(async () => {
+  try {
+    await Promise.all([fetchFeaturedDigests(), fetchDigests(false)])
+  } catch (e) {
+    console.error('Ошибка при загрузке дайджестов:', e)
+  } finally {
+    isLoading.value = false
+  }
+})
 </script>
 
 <style scoped lang="scss">
@@ -477,7 +411,6 @@ export default {
   font-size: 0.875rem;
 }
 
-/* Для мобильных устройств */
 @media (max-width: 600px) {
   .description {
     -webkit-line-clamp: 3;

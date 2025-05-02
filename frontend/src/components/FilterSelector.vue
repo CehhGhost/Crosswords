@@ -4,7 +4,7 @@
     v-model="innerValue"
     :label="label"
     :options="filteredOptions"
-    multiple
+    :multiple="multiple"
     use-input
     :dense="dense"
     input-debounce="0"
@@ -12,8 +12,8 @@
     :color="$q.dark.isActive ? 'primary' : 'accent'"
     stack-label
     clearable
-    class="full-width"
-    :required="required && (innerValue?.length || 0) === 0"
+    :class="['full-width']"
+    :required="required && (multiple ? (innerValue?.length || 0) === 0 : !innerValue)"
   >
     <template v-slot:no-option>
       <q-item><q-item-section class="text-grey">Нет результатов</q-item-section></q-item>
@@ -25,11 +25,16 @@
 export default {
   name: 'FilterSelector',
   props: {
-    label:      { type: String,  required: true },
-    options:    { type: Array,   required: true },
-    modelValue: { type: Array,   default: () => [] },
-    dense:      { type: Boolean, default: false },
-    required:   { type: Boolean, default: false },
+    label: { type: String, required: true },
+    options: { type: Array, required: true },
+    modelValue: {
+      // now accepts both single and multiple
+      type: [Array, String, Number, Object],
+      default: () => [],
+    },
+    multiple: { type: Boolean, default: false }, // ← new prop
+    dense: { type: Boolean, default: false },
+    required: { type: Boolean, default: false },
   },
   emits: ['update:modelValue'],
   data() {
@@ -44,19 +49,19 @@ export default {
       },
       set(val) {
         this.$emit('update:modelValue', val)
-      }
-    }
+      },
+    },
   },
   watch: {
     options(newOpts) {
       this.filteredOptions = [...newOpts]
-    }
+    },
   },
   methods: {
     filterItems(val, update) {
       update(() => {
-        this.filteredOptions = this.options.filter(option =>
-          option.label.toLowerCase().includes(val.toLowerCase())
+        this.filteredOptions = this.options.filter((option) =>
+          option.label.toLowerCase().includes(val.toLowerCase()),
         )
       })
     },
