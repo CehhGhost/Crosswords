@@ -79,214 +79,197 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useQuasar } from 'quasar'
 import { backendURL } from 'src/data/lookups'
 import OwnerTransferDialog from './OwnerTransferDialog.vue'
 
-export default {
-  name: 'SubscriptionButton',
-  components: {
-    OwnerTransferDialog,
-  },
-  props: {
-    digest: {
-      type: Object,
-      required: true,
-    },
-    triggeredFrom: {
-      type: String,
-      required: true,
-    },
-  },
-  data() {
-    return {
-      dropdown: false,
-      loadingSubscription: false,
-      loadingDropdown: false,
-      // начальное состояние берём из digest.subscribe_options
-      subscribed: this.digest.subscribe_options.subscribed,
-      send_to_mail: this.digest.subscribe_options.send_to_mail,
-      mobile_notifications: this.digest.subscribe_options.mobile_notifications,
-      // данные для диалога передачи прав
-      subscriberEmails: [],
-      showOwnerTransferDialog: false,
-      transferLoading: false,
-      transferError: '',
-      backendURL,
-    }
-  },
-  methods: {
-    async onSubscribeClick() {
-      if (this.loadingSubscription) return
-      this.loadingSubscription = true
-      this.subscribed = true
-      const success = await this.sendSubscriptionUpdate()
-      if (!success) {
-        this.$q.notify({
-        message: 'Не удалось подписаться. Доступ к подписке закрыт или она была удалена.',
-        type: 'negative',
-        position: 'top',
-        badgeColor: 'yellow',
-        badgeTextColor: 'dark',
-      })
-        this.subscribed = false
-      }
-      this.loadingSubscription = false
-    },
+const props = defineProps({
+  digest: { type: Object, required: true },
+  triggeredFrom: { type: String, required: true },
+})
+const emit = defineEmits(['remove-subscription'])
 
-    async toggleCheckbox(type) {
-      // Сохраняем предыдущее значение чекбокса
-      const originalValue = this[type]
-      this[type] = !this[type]
-      const success = await this.sendSubscriptionUpdate()
-      if (!success) {
-        // Если обновление не удалось – возвращаем прежнее значение
-        this[type] = originalValue
-      }
-    },
+const router = useRouter()
+const $q = useQuasar()
 
-    onDropdownShow() {
-      this.backup = {
-        send_to_mail: this.send_to_mail,
-        mobile_notifications: this.mobile_notifications,
-      }
-    },
-    async onUnsubscribeClick() {
-      if (this.loadingDropdown) return
-      this.loadingDropdown = true
-      // Если пользователь является владельцем, проверяем список подписчиков
-      if (this.digest.is_owner) {
-        try {
-          const response = await fetch(
-            // "https://3faa0d5a1c344675acdf7cae9c36a1f8.api.mockbin.io/"
-            this.backendURL + this.getRightUrlPart() + `/${this.digest.id}/followers`,
-            { credentials: 'include' },
-          )
-          const result = await response.json()
-          if (result && result.followers.length) {
-            console.log("triggered!!!!!")
-            this.subscriberEmails = result.followers
-            this.showOwnerTransferDialog = true
-            this.loadingDropdown = false
-            return
-          }
-          if (response.status === 401) {
-            this.$router.replace('/login')
-          }
-        } catch (error) {
-          console.error('Ошибка получения списка подписчиков:', error)
-        }
-      }
-      await this.executeUnsubscribe()
-    },
-    async executeUnsubscribe() {
-      const origMail = this.send_to_mail;
-      const origMobile = this.mobile_notifications;
-      this.send_to_mail = null;
-      this.mobile_notifications = null;
-      this.subscribed = false;
+const dropdown = ref(false)
+const loadingSubscription = ref(false)
+const loadingDropdown = ref(false)
+const subscribed = ref(props.digest.subscribe_options.subscribed)
+const send_to_mail = ref(props.digest.subscribe_options.send_to_mail)
+const mobile_notifications = ref(props.digest.subscribe_options.mobile_notifications)
+const subscriberEmails = ref([])
+const showOwnerTransferDialog = ref(false)
+const transferLoading = ref(false)
+const transferError = ref('')
 
-      const data = await this.sendSubscriptionUpdate();
-      if (!data) {
-        // если не удалось – откатываем
-        this.send_to_mail = origMail;
-        this.mobile_notifications = origMobile;
-        this.subscribed = true;
-      } else if (this.triggeredFrom === 'subscriptions') {
-        // если приватная или удалена на сервере – удаляем карточку
-        if (!this.digest.public || data.deleted) {
-          this.$emit('remove-subscription', this.digest.id);
-        }
-      }
-      this.loadingDropdown = false;
-    },
-    async handleOwnerTransferConfirm(newOwnerEmail) {
-      this.transferLoading = true
-      this.transferError = ''
-      try {
-        const response = await fetch(backendURL + `subscriptions/${this.digest.id}/change_owner`, {
-          method: 'PATCH',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            id: this.digest.id,
-            owner: newOwnerEmail,
-          }),
-        })
-        if (!response.ok) {
-          if (response.status === 401) {
-            this.$router.replace('/login')
-          } else {
-            this.transferError = 'Что-то пошло не так при передаче прав'
-          }
-          return
-        }
-        // После успешной передачи прав выполняем отписку
-        await this.executeUnsubscribe()
-        this.showOwnerTransferDialog = false
-      } catch (error) {
-        console.error('Ошибка запроса:', error)
-        this.transferError = 'Что-то пошло не так при передаче прав'
-      } finally {
-        this.transferLoading = false
-      }
-    },
-    handleOwnerTransferCancel() {
-      console.log('Выбор нового владельца отменён')
-    },
+function getRightUrlPart() {
+  return props.triggeredFrom === 'subscription_page' || props.triggeredFrom === 'subscriptions'
+    ? 'subscriptions'
+    : 'digests'
+}
 
-    async sendSubscriptionUpdate() {
-      const payload = {
-        subscribed: this.subscribed,
-        send_to_mail: this.send_to_mail,
-        mobile_notifications: this.mobile_notifications,
-      };
+function getUpdateUrl() {
+  let url = `${backendURL}digests/${props.digest.id}/subscription/settings/update`
+  if (props.triggeredFrom === 'subscriptions' || props.triggeredFrom === 'subscription_page') {
+    url = `${backendURL}subscriptions/${props.digest.id}/settings/update`
+  }
+  return url
+}
 
-      try {
-        const response = await fetch(this.getUpdateUrl(), {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify(payload),
-        });
-
-        if (!response.ok) {
-          if (response.status === 401) {
-            this.$router.replace('/login');
-          } else {
-            console.error('Ошибка при изменении настроек подписки');
-          }
-          return false;
-        }
-
-        const data = await response.json();
-        // обновляем локальное состояние из ответа
-        this.subscribed = data.subscribed;
-        this.send_to_mail = data.send_to_mail;
-        this.mobile_notifications = data.mobile_notifications;
-        return data;
-      } catch (error) {
-        console.error('Ошибка запроса:', error);
-        return false;
-      }
-    },
-
-    getRightUrlPart() {
-      if ((this.triggeredFrom === "subscription_page") || (this.triggeredFrom === "subscriptions")) {
-        return "subscriptions"
+async function sendSubscriptionUpdate() {
+  const payload = {
+    subscribed: subscribed.value,
+    send_to_mail: send_to_mail.value,
+    mobile_notifications: mobile_notifications.value,
+  }
+  try {
+    console.log(getUpdateUrl())
+    const response = await fetch(getUpdateUrl(), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(payload),
+    })
+    if (!response.ok) {
+      if (response.status === 401) {
+        router.replace('/login')
       } else {
-        return "digests"
+        console.error('Ошибка при изменении настроек подписки')
       }
-    },
-    getUpdateUrl() {
-      let update_url =
-        this.backendURL + 'digests' + `/${this.digest.id}/subscription/settings/update`
-      if (this.triggeredFrom === 'subscriptions' || this.triggeredFrom === 'subscriptionPage') {
-        update_url = this.backendURL + 'subscriptions' + `/${this.digest.id}/settings/update`
+      return false
+    }
+    const data = await response.json()
+    console.log(data)
+    subscribed.value = data.subscribed
+    send_to_mail.value = data.send_to_mail
+    mobile_notifications.value = data.mobile_notifications
+    return data
+  } catch (err) {
+    console.error('Ошибка запроса:', err)
+    return false
+  }
+}
+
+async function onSubscribeClick() {
+  if (loadingSubscription.value) return
+  loadingSubscription.value = true
+  subscribed.value = true
+  const success = await sendSubscriptionUpdate()
+  if (!success) {
+    $q.notify({
+      message: 'Не удалось подписаться. Доступ к подписке закрыт или она была удалена.',
+      type: 'negative',
+      position: 'top',
+      badgeColor: 'yellow',
+      badgeTextColor: 'dark',
+    })
+    subscribed.value = false
+  }
+  loadingSubscription.value = false
+}
+
+async function toggleCheckbox(type) {
+  const original = type === 'send_to_mail' ? send_to_mail.value : mobile_notifications.value
+  if (type === 'send_to_mail') {
+    send_to_mail.value = !send_to_mail.value
+  } else {
+    mobile_notifications.value = !mobile_notifications.value
+  }
+  const success = await sendSubscriptionUpdate()
+  if (!success) {
+    if (type === 'send_to_mail') {
+      send_to_mail.value = original
+    } else {
+      mobile_notifications.value = original
+    }
+  }
+}
+
+function onDropdownShow() {}
+
+async function executeUnsubscribe() {
+  const origMail = send_to_mail.value
+  const origMobile = mobile_notifications.value
+
+  send_to_mail.value = null
+  mobile_notifications.value = null
+  subscribed.value = false
+
+  const data = await sendSubscriptionUpdate()
+  if (!data) {
+    send_to_mail.value = origMail
+    mobile_notifications.value = origMobile
+    subscribed.value = true
+  } else if (props.triggeredFrom === 'subscriptions') {
+    if (!props.digest.public || data.deleted) {
+      emit('remove-subscription', props.digest.id)
+    }
+  }
+
+  loadingDropdown.value = false
+}
+
+async function onUnsubscribeClick() {
+  if (loadingDropdown.value) return
+  loadingDropdown.value = true
+
+  if (props.digest.is_owner) {
+    try {
+      const resp = await fetch(`${backendURL}${getRightUrlPart()}/${props.digest.id}/followers`, {
+        credentials: 'include',
+      })
+      const result = await resp.json()
+      if (result && result.followers.length) {
+        subscriberEmails.value = result.followers
+        showOwnerTransferDialog.value = true
+        loadingDropdown.value = false
+        return
       }
-      return update_url
-    },
-  },
+      if (resp.status === 401) {
+        router.replace('/login')
+      }
+    } catch (err) {
+      console.error('Ошибка получения списка подписчиков:', err)
+    }
+  }
+
+  await executeUnsubscribe()
+}
+
+async function handleOwnerTransferConfirm(newOwnerEmail) {
+  transferLoading.value = true
+  transferError.value = ''
+  try {
+    const resp = await fetch(`${backendURL}subscriptions/${props.digest.id}/change_owner`, {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: props.digest.id, owner: newOwnerEmail }),
+    })
+    if (!resp.ok) {
+      if (resp.status === 401) {
+        router.replace('/login')
+      } else {
+        transferError.value = 'Что-то пошло не так при передаче прав'
+      }
+      return
+    }
+    await executeUnsubscribe()
+    showOwnerTransferDialog.value = false
+  } catch (err) {
+    console.error('Ошибка запроса:', err)
+    transferError.value = 'Что-то пошло не так при передаче прав'
+  } finally {
+    transferLoading.value = false
+  }
+}
+
+function handleOwnerTransferCancel() {
+  console.log('Выбор нового владельца отменён')
 }
 </script>
 

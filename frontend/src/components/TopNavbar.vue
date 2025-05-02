@@ -101,13 +101,11 @@ import TopNavBarButton from '../components/TopNavbarButton.vue'
 import { backendURL } from 'src/data/lookups'
 import { emitter } from 'src/boot/emitter' 
 
-// Флаг открытия/закрытия мобильного меню
 const drawerOpen = ref(false)
 function toggleDrawer() {
   drawerOpen.value = !drawerOpen.value
 }
 
-// Проверка, мобильный ли экран
 const $q = useQuasar()
 const isMobile = computed(() => $q.screen.lt.md)
 const isDark = ref($q.dark.isActive);

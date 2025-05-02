@@ -7,7 +7,8 @@
     >
       Редактирование заказа на дайджест
     </div>
-    <q-form @submit="submitForm" class="q-gutter-md">
+
+    <q-form @submit.prevent="submitForm" class="q-gutter-md">
       <q-input
         v-model="title"
         label="Название"
@@ -20,12 +21,18 @@
       <div class="q-mt-sm row items-center q-gutter-sm">
         <FilterSelector
           v-model="selectedSources"
-          :label="'Источники'"
+          label="Источники"
           :options="availableSources"
+          multiple
           required
-          :multiple=true
         />
-        <FilterSelector v-model="selectedTags" :label="'Теги'" :options="availableTags" required :multiple=true />
+        <FilterSelector
+          v-model="selectedTags"
+          label="Теги"
+          :options="availableTags"
+          multiple
+          required
+        />
       </div>
 
       <q-input
@@ -73,7 +80,7 @@
       <div class="q-mt-sm">
         <q-chip
           v-for="(chip, index) in addedEmails"
-          :key="index"
+          :key="chip.email"
           :label="chip.email"
           :removable="chip.email !== ownerEmail"
           color="primary"
@@ -81,7 +88,12 @@
           @remove="removeChip(index)"
           class="q-mb-xs"
         >
-          <q-icon v-if="chip.send_to_mail" name="mail" color="secondary" class="q-ml-xs">
+          <q-icon
+            v-if="chip.send_to_mail"
+            name="mail"
+            color="secondary"
+            class="q-ml-xs"
+          >
             <q-tooltip
               class="bg-primary text-secondary"
               transition-show="scale"
@@ -104,12 +116,11 @@
               Этот пользователь получает мобильные уведомления
             </q-tooltip>
           </q-icon>
-          <!-- Стрелочка вверх для изменения владельца -->
           <q-icon
             v-if="chip.email !== ownerEmail"
             name="arrow_upward"
             color="secondary"
-            class="q-ml-xs"
+            class="q-ml-xs cursor-pointer"
             @click="openConfirmationPopup(chip.email)"
           >
             <q-tooltip
@@ -120,7 +131,6 @@
               Назначить владельцем
             </q-tooltip>
           </q-icon>
-          <!-- Иконка короны для текущего владельца -->
           <q-icon
             v-if="chip.email === ownerEmail"
             :name="fasCrown"
@@ -148,6 +158,7 @@
         class="q-mt-lg"
       />
     </q-form>
+
     <ConfirmationPopup
       v-model="isPopupOpen"
       title="Подтверждение передачи прав"
@@ -160,188 +171,141 @@
   </q-page>
 </template>
 
-<script>
+<script setup>
+import { ref, onMounted } from 'vue'
+import { useQuasar } from 'quasar'
+import { useRouter, useRoute } from 'vue-router'
 import { availableSources, availableTags, backendURL } from '../data/lookups.js'
 import { fasCrown } from '@quasar/extras/fontawesome-v6'
 import FilterSelector from '../components/FilterSelector.vue'
 import ConfirmationPopup from '../components/ConfirmDialog.vue'
 import BackButton from 'src/components/BackButton.vue'
 
-export default {
-  components: {
-    FilterSelector,
-    ConfirmationPopup,
-    BackButton,
-  },
-  setup() {
-    return {
-      fasCrown,
-    }
-  },
-  data() {
-    return {
-      title: '',
-      description: '',
-      notificationEmail: false,
-      notificationMobile: false,
-      isPublic: false,
-      email: '',
-      addedEmails: [],
-      emailError: false,
-      emailExists: false,
-      selectedSources: [],
-      selectedTags: [],
-      availableSources,
-      availableTags,
-      ownerEmail: '',
-      isPopupOpen: false,
-      popupMessage: '',
-    }
-  },
-  mounted() {
-    const digestId = this.$route.params.id
-    fetch(
-      //`/api/get-digest/${digestId}`
-      //'https://cd38f834d72d4f5abd4105ca6807a70f.api.mockbin.io/'
-      backendURL + `subscriptions/${digestId}`,
-      { credentials: 'include' },
-    )
-      .then((response) => response.json())
-      .then((data) => {
-        console.log('Полученные данные:', data)
-        this.title = data.title
-        this.description = data.description
-        this.selectedSources = this.availableSources.filter((opt) => data.sources.includes(opt.value))
-        this.selectedTags = this.availableTags.filter((opt) => data.tags.includes(opt.value))
-        this.notificationEmail = data.subscribe_options.send_to_mail
-        this.notificationMobile = data.subscribe_options.mobile_notifications
-        this.isPublic = data.public
-        this.ownerEmail = data.owner
-        // Заполняем подписчиков с учетом настроек уведомлений
-        this.addedEmails = data.followers.map((follower) => ({
-          email: follower.email,
-          send_to_mail: follower.send_to_mail,
-          mobile_notifications: follower.mobile_notifications,
-        }))
-      })
-      .catch((error) => console.error('Ошибка при получении данных дайджеста:', error))
-  },
-  methods: {
-    addEmail() {
-      if (
-        this.addedEmails.some((chip) => chip.email === this.email) ||
-        this.email === this.ownerEmail
-      ) {
-        this.emailExists = true
-        return
-      } else {
-        this.emailExists = false
-      }
+const $q = useQuasar()
+const router = useRouter()
+const route = useRoute()
 
-      if (this.email) {
-        fetch(
-          // 'https://a37743da82a54b24895ba26ea5cbc277.api.mockbin.io/'
-          backendURL + `users/subscription_settings/check`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-            body: JSON.stringify({ username: this.email }),
-          },
-        )
-          .then((response) => {
-            if (response.status === 401) {
-              this.$router.replace('/login')
-            }
-            return response.json()
-          })
-          .then((data) => {
-            const { send_to_mail, mobile_notifications } = data
-            if (send_to_mail !== undefined || mobile_notifications !== undefined) {
-              this.emailError = false
-              this.addedEmails.push({
-                email: this.email,
-                send_to_mail,
-                mobile_notifications,
-              })
-              this.email = ''
-            }
-          })
-          .catch((error) => {
-            console.error('Ошибка:', error)
-            this.emailError = true
-          })
-      }
-    },
-    removeChip(index) {
-      this.addedEmails.splice(index, 1)
-    },
-    openConfirmationPopup(email) {
-      this.emailToBeOwner = email
-      this.popupMessage = `Вы уверены, что хотите передать права владельца пользователю с email: ${email}?`
-      this.isPopupOpen = true
-    },
-    closeConfirmationPopup() {
-      this.isPopupOpen = false
-    },
-    setAsOwnerConfirmed() {
-      this.ownerEmail = this.emailToBeOwner
-      this.isPopupOpen = false
-    },
-    setAsOwner(newOwnerEmail) {
-      // Изменяем владельца
-      this.ownerEmail = newOwnerEmail
-    },
-    submitForm() {
-      const requestData = {
-        title: this.title,
-        description: this.description,
-        sources: this.selectedSources.map((source) => source.value),
-        tags: this.selectedTags.map((tag) => tag.value),
-        subscribe_options: {
-          send_to_mail: this.notificationEmail,
-          mobile_notifications: this.notificationMobile,
-        },
-        public: this.isPublic,
-        followers: this.addedEmails.map((email) => ({
-          username: email.email,
-        })),
-        owner: this.ownerEmail, // Передаем новый email владельца
-      }
-      console.log(JSON.stringify(requestData))
+const digestId = route.params.id
 
-      // Отправка данных на сервер
-      const digestId = this.$route.params.id
-      fetch(backendURL + `subscriptions/${digestId}/update`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestData),
-        credentials: 'include',
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          console.log('Изменения успешно сохранены:', data)
-          this.$q.notify({
-            type: 'positive',
-            message: 'Изменения успешно сохранены',
-            position: 'top',
-          })
-          this.$router.replace('/digests')
-        })
-        .catch((error) => {
-          console.error('Ошибка при сохранении изменений:', error)
-        })
+const title = ref('')
+const description = ref('')
+const notificationEmail = ref(false)
+const notificationMobile = ref(false)
+const isPublic = ref(false)
+const email = ref('')
+const addedEmails = ref([])
+const emailError = ref(false)
+const emailExists = ref(false)
+const selectedSources = ref([])
+const selectedTags = ref([])
+const ownerEmail = ref('')
+const isPopupOpen = ref(false)
+const popupMessage = ref('')
+const emailToBeOwner = ref('')
+
+onMounted(async () => {
+  try {
+    const res = await fetch(`${backendURL}subscriptions/${digestId}`, { credentials: 'include' })
+    const data = await res.json()
+    title.value = data.title
+    description.value = data.description
+    selectedSources.value = availableSources.filter(opt => data.sources.includes(opt.value))
+    selectedTags.value = availableTags.filter(opt => data.tags.includes(opt.value))
+    notificationEmail.value = data.subscribe_options.send_to_mail
+    notificationMobile.value = data.subscribe_options.mobile_notifications
+    isPublic.value = data.public
+    ownerEmail.value = data.owner
+    addedEmails.value = data.followers.map(f => ({
+      email: f.email,
+      send_to_mail: f.send_to_mail,
+      mobile_notifications: f.mobile_notifications
+    }))
+  } catch (err) {
+    console.error('Ошибка при получении данных дайджеста:', err)
+    $q.notify({ type: 'negative', message: 'Не удалось загрузить данные', position: 'top' })
+  }
+})
+
+async function addEmail() {
+  if (addedEmails.value.some(chip => chip.email === email.value) || email.value === ownerEmail.value) {
+    emailExists.value = true
+    return
+  }
+  emailExists.value = false
+  if (!email.value) return
+
+  try {
+    const res = await fetch(`${backendURL}users/subscription_settings/check`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ username: email.value })
+    })
+    if (res.status === 401) { router.replace('/login'); return }
+    const data = await res.json()
+    const { send_to_mail, mobile_notifications } = data
+    if (send_to_mail !== undefined || mobile_notifications !== undefined) {
+      emailError.value = false
+      addedEmails.value.push({ email: email.value, send_to_mail, mobile_notifications })
+      email.value = ''
+    }
+  } catch (err) {
+    console.error('Ошибка при добавлении email:', err)
+    emailError.value = true
+  }
+}
+
+function removeChip(index) {
+  addedEmails.value.splice(index, 1)
+}
+
+function openConfirmationPopup(newOwner) {
+  emailToBeOwner.value = newOwner
+  popupMessage.value = `Вы уверены, что хотите передать права владельца пользователю с email: ${newOwner}?`
+  isPopupOpen.value = true
+}
+
+function closeConfirmationPopup() {
+  isPopupOpen.value = false
+}
+
+function setAsOwnerConfirmed() {
+  ownerEmail.value = emailToBeOwner.value
+  isPopupOpen.value = false
+}
+
+async function submitForm() {
+  const payload = {
+    title: title.value,
+    description: description.value,
+    sources: selectedSources.value.map(s => s.value),
+    tags: selectedTags.value.map(t => t.value),
+    subscribe_options: {
+      send_to_mail: notificationEmail.value,
+      mobile_notifications: notificationMobile.value
     },
-  },
+    public: isPublic.value,
+    followers: addedEmails.value.map(ch => ({ username: ch.email })),
+    owner: ownerEmail.value
+  }
+
+  try {
+    const res = await fetch(`${backendURL}subscriptions/${digestId}/update`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(payload)
+    })
+    await res.json()
+    $q.notify({ type: 'positive', message: 'Изменения успешно сохранены', position: 'top' })
+    router.replace('/digests')
+  } catch (err) {
+    console.error('Ошибка при сохранении изменений:', err)
+    $q.notify({ type: 'negative', message: 'Ошибка при сохранении', position: 'top' })
+  }
 }
 </script>
 
 <style scoped>
-.q-mb-xs {
-  margin-bottom: 5px;
-}
+.q-mb-xs { margin-bottom: 5px; }
 </style>

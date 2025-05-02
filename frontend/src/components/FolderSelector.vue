@@ -23,82 +23,87 @@
   </q-select>
 </template>
 
-<script>
+<script setup>
+import { ref, watch } from 'vue'
+import { defineProps, defineEmits } from 'vue'
+import { useRouter } from 'vue-router'
+import { useQuasar } from 'quasar'
 import { backendURL } from 'src/data/lookups'
 
+const $q = useQuasar()
+const router = useRouter()
 
-export default {
-  name: 'FolderSelector',
-  props: {
-    label: {
-      type: String,
-      default: 'Папка',
-    },
-    value: {
-      type: [String, Object, null],
-      default: null,
-    },
+const props = defineProps({
+  label: {
+    type: String,
+    default: 'Папка'
   },
-  data() {
-    return {
-      selected: this.value,
-      options: [],
-      filteredOptions: [],
-      loading: false,
+  value: {
+    type: [String, Object, null],
+    default: null
+  }
+})
+const emit = defineEmits(['input'])
+
+const selected = ref(props.value)
+const options = ref([])
+const filteredOptions = ref([])
+const loading = ref(false)
+
+
+watch(
+  () => props.value,
+  newVal => {
+    selected.value = newVal
+  }
+)
+// Emit updates
+watch(
+  selected,
+  newVal => {
+    emit('input', newVal)
+  }
+)
+
+async function fetchFolders () {
+  loading.value = true
+  try {
+    const response = await fetch(
+      `${backendURL}packages`,
+      { credentials: 'include' }
+    )
+    if (response.status === 401) {
+      router.replace('/login')
+      return
     }
-  },
-  watch: {
-    selected(newVal) {
-      this.$emit('input', newVal)
-    },
-    value(newVal) {
-      this.selected = newVal
-    },
-  },
-  methods: {
-    fetchFolders() {
-      this.loading = true
-      // Запрос к бэкенду для получения папок.
-      // Замените '/api/folders' на нужный URL, если требуется.
-      fetch(
-      // 'https://da60a9bd46b9478585c028e21b6b5e71.api.mockbin.io/', 
-      backendURL + 'packages',
-      { credentials: 'include' })
-        .then((response) => {
-          if (response.status === 401) {
-            this.$router.replace('/login')
-          }
-          return response.json()
-        })
-        .then((data) => {
-          // Преобразуем массив строк в формат { label, value }
-          this.options = data.folders.map((folder) => ({
-            label: folder,
-            value: folder,
-          }))
-          this.filteredOptions = this.options
-        })
-        .catch((err) => {
-          console.error('Ошибка при загрузке папок:', err)
-          this.options = []
-          this.filteredOptions = []
-        })
-        .finally(() => {
-          this.loading = false
-        })
-    },
-    filterItems(val, update) {
-      update(() => {
-        if (val === '') {
-          this.filteredOptions = this.options
-        } else {
-          const needle = val.toLowerCase()
-          this.filteredOptions = this.options.filter((option) =>
-            option.label.toLowerCase().includes(needle),
-          )
-        }
-      })
-    },
-  },
+    const data = await response.json()
+    options.value = data.folders.map(folder => ({ label: folder, value: folder }))
+    filteredOptions.value = options.value
+  } catch (err) {
+    console.error('Ошибка при загрузке папок:', err)
+    options.value = []
+    filteredOptions.value = []
+  } finally {
+    loading.value = false
+  }
+}
+
+function filterItems (val, update) {
+  update(() => {
+    if (!val) {
+      filteredOptions.value = options.value
+    } else {
+      const needle = val.toLowerCase()
+      filteredOptions.value = options.value.filter(option =>
+        option.label.toLowerCase().includes(needle)
+      )
+    }
+  })
 }
 </script>
+
+<style scoped>
+.full-width {
+  width: 100%;
+}
+</style>

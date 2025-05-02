@@ -180,7 +180,6 @@ onMounted(async () => {
     }
     digestData.value = await response.json()
     console.log(digestData.value)
-    // Инициализация дополнительных данных, если необходимо
   } catch (error) {
     console.error('Ошибка при загрузке документа:', error)
   } finally {

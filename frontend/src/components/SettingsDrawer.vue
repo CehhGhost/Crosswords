@@ -25,24 +25,19 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import useDrawer from 'src/composables/useDrawer'
+import { useRouter } from 'vue-router'
 
-export default {
-  setup() {
-    const { drawerOpen, toggleDrawer } = useDrawer()
-    return {
-      drawerOpen,
-      toggleDrawer,
-    }
-  },
-  methods: {
-    onPrivacy() {
-      this.$router.push({ name: 'privacy' });
-    },
-    onExport() {
-      this.$router.push({ name: 'data' });
-    },
-  },
+const router = useRouter()
+const { drawerOpen, toggleDrawer } = useDrawer()
+
+function onPrivacy() {
+  router.push({ name: 'privacy' })
+}
+
+function onExport() {
+  router.push({ name: 'data' })
 }
 </script>
+

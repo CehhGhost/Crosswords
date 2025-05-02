@@ -18,11 +18,10 @@
           filled
           v-model="email"
           label="Email"
-          
+
           class="q-mb-md"
           :color="$q.dark.isActive ? 'primary' : 'accent'"
         />
-        <!-- type="email" добавить выше-->
         <q-input
           filled
           v-model="password"
@@ -51,64 +50,49 @@
   </q-page>
 </template>
 
-<script>
+<script setup>
+import { ref, computed } from 'vue'
+import { useQuasar } from 'quasar'
+import { useRouter } from 'vue-router'
 import lightLogo from '../assets/crosswords_mono.png'
 import darkLogo from '../assets/crosswords_mono_white.png'
 import { backendURL } from 'src/data/lookups'
 import { emitter } from 'src/boot/emitter'
-export default {
-  name: 'LoginPage',
-  data() {
-    return {
-      email: '',
-      password: '',
-    }
-  },
-  computed: {
-    logoSrc() {
-      return this.$q.dark.isActive ? darkLogo : lightLogo
-    },
-  },
-  methods: {
-    login() {
-      const payload = {
-        username: this.email,
-        password: this.password,
+
+const $q = useQuasar()
+const router = useRouter()
+
+const email = ref('')
+const password = ref('')
+
+const logoSrc = computed(() => $q.dark.isActive ? darkLogo : lightLogo)
+
+async function login() {
+  const payload = { username: email.value, password: password.value }
+  try {
+    const response = await fetch(
+      `${backendURL}users/login`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(payload)
       }
-      fetch(
-        backendURL + 'users/login',
-        //'https://60b277858b7d4dbc8347955c8dc89e8e.api.mockbin.io/',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify(payload),
-        },
-      )
-      .then((response) => {
-          if (!response.ok) {
-            console.log(response)
-            this.$q.notify({
-              type: 'negative',
-              message: 'Ошибка входа. Проверьте свои данные.',
-              position: 'top',
-            })
-            throw new Error('Ошибка при входе')
-          }
-          return response.json()
-        })
-        .then((data) => {
-          console.log(data)
-          emitter.emit('auth-changed')
-          this.$router.replace('/')
-        })
-        .catch((error) => {
-          console.error('Ошибка входа:', error)
-        })
-    },
-  },
+    )
+    if (!response.ok) {
+      $q.notify({
+        type: 'negative',
+        message: 'Ошибка входа. Проверьте свои данные.',
+        position: 'top'
+      })
+      throw new Error('Ошибка при входе')
+    }
+    await response.json()
+    emitter.emit('auth-changed')
+    router.replace('/')
+  } catch (error) {
+    console.error('Ошибка входа:', error)
+  }
 }
 </script>
 

@@ -11,25 +11,24 @@
   />
 </template>
 
-<script>
-export default {
-  name: 'DefaultButton',
-  props: {
-    label: {
-      type: String,
-      required: true
-    },
-    to: {
-      type: [String, Object],
-      required: true
-    }
+<script setup>
+import { defineProps } from 'vue'
+
+const { label, to } = defineProps({
+  label: {
+    type: String,
+    required: true
+  },
+  to: {
+    type: [String, Object],
+    required: true
   }
-};
+})
 </script>
 
 <style scoped>
 .default-button {
-  font-weight: 400; /* Толще текст */
+  font-weight: 400;
   padding: 12px 24px;
 }
 </style>

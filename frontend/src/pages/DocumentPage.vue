@@ -173,8 +173,6 @@ const readingTime = computed(() => {
 onMounted(async () => {
   const id = route.params.id
   try {
-    // Заменить URL на реальный эндпоинт
-    // const response = await fetch(`http://localhost:3000/documents/${id}`)
     const response = await fetch(
      //`https://a1561caa2fca4614bc614fc099f6af6e.api.mockbin.io/`
      backendURL + `documents/${id}`, {credentials: 'include'}

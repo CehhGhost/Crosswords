@@ -1,5 +1,5 @@
 <template>
-  <div class="search-section q-pa-md no-shadow" bg-color="primary" >
+  <div class="search-section q-pa-md no-shadow" bg-color="primary">
     <div class="row items-center">
       <q-select
         v-model="search_mode"
@@ -40,7 +40,10 @@
     </div>
 
     <div v-if="search_mode === 'exact'" class="q-my-sm">
-      <q-checkbox v-model="search_in_text" label="Искать в тексте (иначе только по названию)" />
+      <q-checkbox
+        v-model="search_in_text"
+        label="Искать в тексте (иначе только по названию)"
+      />
     </div>
 
     <div v-if="showSources || showTags" class="row q-col-gutter-md">
@@ -51,7 +54,7 @@
           label="Источники"
           dense
           clearable
-          :multiple=true
+          :multiple="true"
           class="q-my-sm"
           @clear="clearSelection('sources')"
         />
@@ -62,7 +65,7 @@
           :options="availableTags"
           label="Тэги"
           dense
-          :multiple=true
+          :multiple="true"
           clearable
           class="q-my-sm"
           @clear="clearSelection('tags')"
@@ -127,119 +130,115 @@
         </template>
       </q-input>
     </div>
+
     <div v-if="showFolder" class="row q-col-gutter-md">
       <div class="col">
         <folder-selector v-model="selected_folder" label="Папка" />
       </div>
     </div>
 
-    <div v-if="search_mode === 'semantic' || search_mode === 'exact'" class="q-mt-sm">
-      <q-btn label="Сбросить фильтры" color="secondary" no-caps @click="resetFilters" />
+    <div
+      v-if="search_mode === 'semantic' || search_mode === 'exact'"
+      class="q-mt-sm"
+    >
+      <q-btn
+        label="Сбросить фильтры"
+        color="secondary"
+        no-caps
+        @click="resetFilters"
+      />
     </div>
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, computed } from 'vue'
 import { availableSources, availableTags } from 'src/data/lookups.js'
 import FilterSelector from './FilterSelector.vue'
 import FolderSelector from './FolderSelector.vue'
 
-export default {
-  name: 'SearchSection',
-  components: {
-    FilterSelector,
-    FolderSelector,
-  },
-  props: {
-    is_authed: {
-      type: Boolean,
-      default: false
-    }
-  },
-  data() {
-    return {
-      searchModes: [
-        { label: 'По смыслу', value: 'semantic' },
-        { label: 'По номеру', value: 'id' },
-        { label: 'Точный', value: 'exact' },
-      ],
-      search_mode: 'semantic',
-      search_body: '',
-      search_in_text: false,
-      selected_sources: [],
-      selected_tags: [],
-      date_from: null,
-      date_to: null,
-      availableSources,
-      availableTags,
-      selected_folder: null,
-    }
-  },
-  computed: {
-    showSources() {
-      return this.search_mode === 'semantic' || this.search_mode === 'exact'
-    },
-    showTags() {
-      return this.search_mode === 'semantic' || this.search_mode === 'exact'
-    },
-    showDateRange() {
-      return this.search_mode === 'semantic' || this.search_mode === 'exact'
-    },
-    showFolder() {
-      return (this.search_mode === 'semantic' || this.search_mode === 'exact') && this.is_authed
-    },
-  },
-  methods: {
-    clearSelection(field) {
-      if (field === 'sources') {
-        this.selected_sources = []
-      } else if (field === 'tags') {
-        this.selected_tags = []
-      }
-    },
-    resetFilters() {
-      this.selected_sources = []
-      this.selected_tags = []
-      this.date_from = null
-      this.date_to = null
-      this.search_in_text = false
-      this.search_body = ''
-      this.selected_folder = null
-    },
-    formatToISO(str) {
-      if (!str) return null
-      const [day, month, year] = str.split('/')
-      if (!day || !month || !year) return null
-      const utcDateMs = Date.UTC(+year, +month - 1, +day)
-      const isoDateTime = new Date(utcDateMs).toISOString()
-      const isoDateOnly = isoDateTime.split('T')[0]
+const props = defineProps({
+  is_authed: { type: Boolean, default: false }
+})
 
-      return isoDateOnly
-    },
-    emitSearch() {
+const emit = defineEmits(['search'])
+
+const searchModes = [
+  { label: 'По смыслу', value: 'semantic' },
+  { label: 'По номеру', value: 'id' },
+  { label: 'Точный', value: 'exact' }
+]
+
+const search_mode = ref('semantic')
+const search_body = ref('')
+const search_in_text = ref(false)
+const selected_sources = ref([])
+const selected_tags = ref([])
+const date_from = ref(null)
+const date_to = ref(null)
+const selected_folder = ref(null)
+
+const showSources = computed(() =>
+  search_mode.value === 'semantic' || search_mode.value === 'exact'
+)
+const showTags = computed(() =>
+  search_mode.value === 'semantic' || search_mode.value === 'exact'
+)
+const showDateRange = computed(() =>
+  search_mode.value === 'semantic' || search_mode.value === 'exact'
+)
+const showFolder = computed(() =>
+  (search_mode.value === 'semantic' || search_mode.value === 'exact') &&
+  props.is_authed
+)
+
+function clearSelection(field) {
+  if (field === 'sources') {
+    selected_sources.value = []
+  } else if (field === 'tags') {
+    selected_tags.value = []
+  }
+}
+
+function resetFilters() {
+  selected_sources.value = []
+  selected_tags.value = []
+  date_from.value = null
+  date_to.value = null
+  search_in_text.value = false
+  search_body.value = ''
+  selected_folder.value = null
+}
+
+function formatToISO(str) {
+  if (!str) return null
+  const [day, month, year] = str.split('/')
+  if (!day || !month || !year) return null
+  const utcMs = Date.UTC(+year, +month - 1, +day)
+  return new Date(utcMs).toISOString().split('T')[0]
+}
+
+function emitSearch() {
   const payload = {
-    search_mode: this.search_mode,
-    search_body: this.search_body,
+    search_mode: search_mode.value,
+    search_body: search_body.value
   }
 
-  if (this.search_mode === 'semantic' || this.search_mode === 'exact') {
-    payload.sources = this.selected_sources.map(source => source.value)
-    payload.tags = this.selected_tags.map(tag => tag.value)
-    payload.date_from = this.formatToISO(this.date_from)
-    payload.date_to = this.formatToISO(this.date_to)
-    if (this.selected_folder) {
-      payload.folders = this.selected_folder.map(folder => folder.value)
+  if (showSources.value) {
+    payload.sources = selected_sources.value.map(s => s.value)
+    payload.tags = selected_tags.value.map(t => t.value)
+    payload.date_from = formatToISO(date_from.value)
+    payload.date_to = formatToISO(date_to.value)
+    if (selected_folder.value) {
+      payload.folders = selected_folder.value.map(f => f.value)
     }
   }
 
-  if (this.search_mode === 'exact') {
-    payload.search_in_text = this.search_in_text
+  if (search_mode.value === 'exact') {
+    payload.search_in_text = search_in_text.value
   }
 
-  this.$emit('search', payload)
-},
-
-  },
+  emit('search', payload)
 }
 </script>
 

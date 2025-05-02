@@ -2,7 +2,7 @@
   <q-card :class="['q-my-sm', { 'no-shadow': $q.dark.isActive }]">
     <q-card-section>
       <div class="row items-center justify-between">
-        <div><b>ID:</b> {{ digest.id }}</div>
+        <div><b>ID:</b> {{ props.digest.id }}</div>
         <div class="row items-center">
           <!-- Рейтинг -->
           <div>
@@ -11,32 +11,30 @@
               {{ displayRating }}
             </b>
           </div>
-          
-          
 
           <!-- Статус подписки -->
-          <b v-if="is_authed && hasSubscribeOptions">
+          <b v-if="props.is_authed && hasSubscribeOptions">
             {{ subscribed ? 'Подписан' : 'Не подписан' }}
           </b>
           <span v-if="hasSubscribeOptions && subscribed">
-            <q-icon v-if="sendToMail && is_authed" name="mail" class="q-ml-xs" />
-            <q-icon v-if="mobileNotifications && is_authed" name="phone_iphone" class="q-ml-xs" />
+            <q-icon v-if="sendToMail && props.is_authed" name="mail" class="q-ml-xs" />
+            <q-icon v-if="mobileNotifications && props.is_authed" name="phone_iphone" class="q-ml-xs" />
           </span>
 
           <!-- Дата -->
-          <span class="q-ml-sm"><b>Дата:</b> {{ digest.date }}</span>
+          <span class="q-ml-sm"><b>Дата:</b> {{ props.digest.date }}</span>
         </div>
       </div>
 
-      <div v-if="digest.tags" class="row items-center q-mt-sm">
+      <div v-if="props.digest.tags" class="row items-center q-mt-sm">
         <div class="text-h4 ellipsis">{{ truncatedTitle }}</div>
       </div>
 
       <div class="q-mt-sm">{{ truncatedText }}</div>
 
       <!-- Тэги -->
-      <div v-if="digest.tags && digest.tags.length" class="q-mt-sm row wrap">
-        <DocumentTags :tags="digest.tags" />
+      <div v-if="props.digest.tags && props.digest.tags.length" class="q-mt-sm row wrap">
+        <DocumentTags :tags="props.digest.tags" />
       </div>
 
       <div class="row items-center justify-between q-mt-sm">
@@ -59,87 +57,68 @@
   </q-card>
 </template>
 
-<script>
-import { backendURL } from 'src/data/lookups';
+<script setup>
+import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { useQuasar } from 'quasar'
+import { backendURL } from 'src/data/lookups'
 import DocumentTags from '../components/DocumentTags.vue'
+import { defineProps } from 'vue'
 
-export default {
-  name: 'DocumentCard',
-  components: {
-    DocumentTags,
-  },
-  props: {
-    digest: {
-      type: Object,
-      required: true,
-    },
-    is_authed: {
-      type: Boolean,
-      default: false,
-    },
-  },
-  data() {
-    // Подписки и опции уведомлений
-    return {
-      subscribed: this.digest.subscribe_options?.subscribed ?? false,
-      sendToMail: this.digest.subscribe_options?.send_to_mail ?? false,
-      mobileNotifications: this.digest.subscribe_options?.mobile_notifications ?? false,
-    }
-  },
-  computed: {
-    // Есть ли вообще опции подписки
-    hasSubscribeOptions() {
-      return !!this.digest.subscribe_options;
-    },
-    // Форматированное отображение рейтинга
-    displayRating() {
-      const r = this.digest.average_rating;
-      return (r != null && r !== -1) ? r : 'Нет оценок';
-    },
-    // Сокращённый заголовок
-    truncatedTitle() {
-      const t = this.digest.title || '';
-      return t.length > 22 ? t.slice(0, 22) + '...' : t;
-    },
-    // Сокращённый текст
-    truncatedText() {
-      const txt = this.digest.text || '';
-      return txt.length > 665 ? txt.slice(0, 665) + '...' : txt;
-    },
-  },
-  methods: {
-    viewDigest() {
-      this.$router.push(`/digests/${this.digest.id}`)
-      console.log(`/digests/${this.digest.id}`)
-    },
+const props = defineProps({
+  digest: { type: Object, required: true },
+  is_authed: { type: Boolean, default: false }
+})
 
-    async downloadPdf() {
-    try {
-      const response = await fetch(`${backendURL}digests/${this.digest.id}/pdf`, {
-        credentials: "include"
-      });
-      if (!response.ok) {
-        throw new Error(`Сервер вернул ${response.status}`);
-      }
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `${this.digest.title}_${this.digest.id}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.parentNode.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error('Ошибка при скачивании PDF:', err);
-      this.$q.notify({
-        message: 'Ошибка скачивания PDF',
-        type: 'negative',
-        position: 'top',
-      })
+const $q = useQuasar()
+const router = useRouter()
+
+const subscribed = ref(props.digest.subscribe_options?.subscribed ?? false)
+const sendToMail = ref(props.digest.subscribe_options?.send_to_mail ?? false)
+const mobileNotifications = ref(props.digest.subscribe_options?.mobile_notifications ?? false)
+
+const hasSubscribeOptions = computed(() => !!props.digest.subscribe_options)
+const displayRating = computed(() => {
+  const r = props.digest.average_rating
+  return (r != null && r !== -1) ? r : 'Нет оценок'
+})
+const truncatedTitle = computed(() => {
+  const t = props.digest.title || ''
+  return t.length > 22 ? t.slice(0, 22) + '...' : t
+})
+const truncatedText = computed(() => {
+  const txt = props.digest.text || ''
+  return txt.length > 665 ? txt.slice(0, 665) + '...' : txt
+})
+
+function viewDigest() {
+  const path = `/digests/${props.digest.id}`
+  router.push(path)
+  console.log(path)
+}
+
+async function downloadPdf() {
+  try {
+    const response = await fetch(
+      `${backendURL}digests/${props.digest.id}/pdf`,
+      { credentials: 'include' }
+    )
+    if (!response.ok) {
+      throw new Error(`Сервер вернул ${response.status}`)
     }
-  },
-  },
+    const blob = await response.blob()
+    const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', `${props.digest.title}_${props.digest.id}.pdf`)
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+  } catch (err) {
+    console.error('Ошибка при скачивании PDF:', err)
+    $q.notify({ message: 'Ошибка скачивания PDF', type: 'negative', position: 'top' })
+  }
 }
 </script>
 

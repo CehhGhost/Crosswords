@@ -75,7 +75,6 @@ const props = defineProps({
   },
 })
 
-
 const $q = useQuasar()
 const folders = ref([])
 const loading = ref(false)

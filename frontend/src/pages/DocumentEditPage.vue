@@ -1,7 +1,7 @@
 <template>
   <div class="page-body q-mt-md">
     <q-page>
-      <BackButton :to="'/documents/' + article.id" />
+      <BackButton :to="`/documents/${article.id}`" />
       <div
         class="text-h5 caption"
         :class="{ 'text-secondary': !$q.dark.isActive, 'text-white': $q.dark.isActive }"
@@ -40,12 +40,16 @@
         <div class="col-12">
           <div class="row q-col-gutter-md">
             <div class="col-4">
-              <FilterSelector
+              <q-select
                 v-model="article.source"
-                :label="'Источник'"
                 :options="sources"
-                required
-                :dense="true"
+                option-label="label"
+                option-value="value"
+                label="Источник"
+                outlined
+                dense
+                filled
+                :color="$q.dark.isActive ? 'primary' : 'accent'"
               />
             </div>
 
@@ -93,16 +97,19 @@
             </div>
           </div>
         </div>
-        <div>
-        <FilterSelector
+
+        <q-select
           v-model="article.tags"
-          :label="'Теги'"
           :options="tagsList"
-          required
-          :dense="true"
-          :multiple="true"
+          multiple
+          option-label="label"
+          option-value="value"
+          label="Теги"
+          outlined
+          dense
+          filled
+          :color="$q.dark.isActive ? 'primary' : 'accent'"
         />
-        </div>
 
         <q-input
           v-model="article.URL"
@@ -121,7 +128,6 @@
           color="primary"
         />
 
-        <!-- Сбросить рейтинг классификации -->
         <q-toggle
           v-model="article.drop_rating_classification"
           label="Сбросить рейтинг классификации"
@@ -142,6 +148,7 @@
           </div>
         </div>
       </q-form>
+
       <ConfirmDialog
         v-model="showConfirmDialog"
         title="Внимание!"
@@ -155,8 +162,8 @@
   </div>
 </template>
 
-<script>
-import { ref, onMounted } from 'vue'
+<script setup>
+import { ref, reactive, onMounted } from 'vue'
 import { useQuasar } from 'quasar'
 import { useRouter, useRoute } from 'vue-router'
 import {
@@ -168,191 +175,128 @@ import {
 
 import ConfirmDialog from 'src/components/ConfirmDialog.vue'
 import BackButton from 'src/components/BackButton.vue'
-import FilterSelector from 'src/components/FilterSelector.vue'
 
-export default {
-  name: 'EditArticle',
-  components: {
-    ConfirmDialog,
-    BackButton,
-    FilterSelector,
-  },
-  setup() {
-    const $q = useQuasar()
-    const router = useRouter()
+const $q = useQuasar()
+const router = useRouter()
+const route = useRoute()
 
-    const route = useRoute()
-    const sources = availableSources
-    const tagsList = availableTags
-    const languages = availableLanguages
+const sources = availableSources
+const tagsList = availableTags
+const languages = availableLanguages
 
-    const article = ref({
-      id: '',
-      title: '',
-      text: '',
-      summary: '',
-      source: '',
-      date: '',
-      language: '',
-      tags: [],
-      URL: '',
-      drop_rating_summary: false,
-      drop_rating_classification: false,
-    })
-    const originalText = ref('')
-    const isSaving = ref(false)
-    const showConfirmDialog = ref(false)
-    const formatToISO = (str) => {
-      if (!str) return null
-      const [day, month, year] = str.split('/')
-      if (!day || !month || !year) return null
-      const utcDateMs = Date.UTC(+year, +month - 1, +day)
-      const isoDateTime = new Date(utcDateMs).toISOString()
-      console.log(isoDateTime.split('T')[0])
-      return isoDateTime.split('T')[0]
-    }
-    const fetchArticle = async () => {
-      try {
-        const id = route.params.id
-        const response = await fetch(
-          //'https://api.example.com/get-article?id=1'
-          //'https://478dbea22d894b9a8f6623f77a2ed9ee.api.mockbin.io/'
-          backendURL + `documents/${id}`,
-          {
-            method: 'GET',
-            credentials: 'include',
-          },
-        )
-        if (!response.ok) {
-          throw new Error('Ошибка при получении данных статьи')
-        }
-        const data = await response.json()
-        console.log(data)
+const article = reactive({
+  id: '',
+  title: '',
+  text: '',
+  summary: '',
+  source: '',
+  date: '',
+  language: '',
+  tags: [],
+  URL: '',
+  drop_rating_summary: false,
+  drop_rating_classification: false,
+})
 
-        article.value = {
-          ...article.value,
-          id: data.id,
-          title: data.title,
-          text: data.text,
-          summary: data.summary,
-          date: data.date,
-          language: data.language,
-          tags: tagsList.filter(opt => data.tags.includes(opt.value)),
-          source: sources.find(opt => opt.value === data.source),
-          URL: data.URL,
-          drop_rating_summary: false,
-          drop_rating_classification: false,
-        }
-        originalText.value = data.text
-      } catch (err) {
-        $q.notify({
-          message: err.message,
-          type: 'negative',
-          position: 'top',
-        })
-      }
-    }
+const originalText = ref('')
+const isSaving = ref(false)
+const showConfirmDialog = ref(false)
 
-    onMounted(() => {
-      fetchArticle()
-    })
-
-    /**
-     * Логика при нажатии на "Сохранить".
-     * Если текст не меняли — сохраняем сразу.
-     * Если текст поменяли — показываем диалог подтверждения.
-     */
-    const onSaveClick = () => {
-      if (article.value.text !== originalText.value) {
-        showConfirmDialog.value = true
-      } else {
-        performSave()
-      }
-    }
-
-    const performSave = async () => {
-      isSaving.value = true
-      try {
-        const now = new Date().toISOString()
-        const body = {
-          id: article.value.id,
-          title: article.value.title,
-          text: article.value.text,
-          summary: article.value.summary,
-          source: article.value.source.value,
-          date: formatToISO(article.value.date),
-          language: article.value.language.value,
-          tags: article.value.tags.map((tag) => tag.value),
-          URL: article.value.URL,
-          drop_rating_summary: article.value.drop_rating_summary,
-          drop_rating_classification: article.value.drop_rating_classification,
-          last_edit: now,
-        }
-        console.log(body)
-
-        const response = await fetch(
-          //'https://api.example.com/update-article'
-          // 'https://4ec3051a148c46c8a8aa6dcfef35cdf8.api.mockbin.io/',
-          backendURL + `documents/${article.value.id}/edit`,
-          {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify(body),
-          },
-        )
-
-        if (!response.ok) {
-          throw new Error('Ошибка при сохранении статьи')
-        }
-
-        // Если успех - переходим на страницу просмотра документа
-        router.push(`/documents/${article.value.id}`)
-
-        $q.notify({
-          message: 'Изменения успешно сохранены!',
-          type: 'positive',
-          position: 'top',
-          badgeColor: 'yellow',
-          badgeTextColor: 'dark',
-        })
-      } catch (err) {
-        $q.notify({
-          message: err.message,
-          type: 'negative',
-          position: 'top',
-        })
-      } finally {
-        isSaving.value = false
-      }
-    }
-
-    // Нажали "Отменить" (просто возвращаемся на просмотр)
-    const cancelEdit = () => {
-      router.push(`/documents/${article.value.id}`)
-    }
-
-    // При отмене диалога подтверждения, ничего не делаем
-    const onDialogCancel = () => {
-      // Можно потом сделать что-то при отмене, если нужно
-    }
-
-    return {
-      article,
-      sources,
-      tagsList,
-      languages,
-      isSaving,
-      showConfirmDialog,
-
-      onSaveClick,
-      performSave,
-      cancelEdit,
-      onDialogCancel,
-      formatToISO,
-    }
-  },
+const formatToISO = (str) => {
+  if (!str) return null
+  const [day, month, year] = str.split('/')
+  if (!day || !month || !year) return null
+  const utcDateMs = Date.UTC(+year, +month - 1, +day)
+  return new Date(utcDateMs).toISOString().split('T')[0]
 }
-</script>
 
+const fetchArticle = async () => {
+  try {
+    const id = route.params.id
+    const response = await fetch(`${backendURL}documents/${id}`, {
+      method: 'GET',
+      credentials: 'include',
+    })
+    if (!response.ok) throw new Error('Ошибка при получении данных статьи')
+    const data = await response.json()
+
+    article.id = data.id
+    article.title = data.title
+    article.text = data.text
+    article.summary = data.summary
+    article.date = data.date
+    article.language = data.language
+    ;(article.tags = tagsList.filter((opt) => data.tags.includes(opt.value))),
+      (article.source = sources.find((opt) => opt.value === data.source)),
+      (article.URL = data.URL)
+    originalText.value = data.text
+  } catch (err) {
+    $q.notify({ message: err.message, type: 'negative', position: 'top' })
+  }
+}
+
+const onSaveClick = () => {
+  if (article.text !== originalText.value) {
+    showConfirmDialog.value = true
+  } else {
+    performSave()
+  }
+}
+
+const performSave = async () => {
+  isSaving.value = true
+  try {
+    const now = new Date().toISOString()
+    const body = {
+      id: article.id,
+      title: article.title,
+      text: article.text,
+      summary: article.summary,
+      source: article.source.value,
+      date: formatToISO(article.date),
+      language: article.language,
+      tags: article.tags.map((tag) => tag.value),
+      URL: article.URL,
+      drop_rating_summary: article.drop_rating_summary,
+      drop_rating_classification: article.drop_rating_classification,
+      last_edit: now,
+    }
+
+    console.log(JSON.stringify(body))
+    const response = await fetch(`${backendURL}documents/${article.id}/edit`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(body),
+    })
+    if (!response.ok) {
+      throw new Error('Ошибка при сохранении статьи')
+    } else {
+      router.push(`/documents/${article.id}`)
+      $q.notify({
+        message: 'Изменения успешно сохранены!',
+        type: 'positive',
+        position: 'top',
+        badgeColor: 'yellow',
+        badgeTextColor: 'dark',
+      })
+    }
+  } catch (err) {
+    $q.notify({ message: err.message, type: 'negative', position: 'top' })
+  } finally {
+    isSaving.value = false
+    showConfirmDialog.value = false
+  }
+}
+
+const cancelEdit = () => {
+  router.push(`/documents/${article.id}`)
+}
+
+const onDialogCancel = () => {
+  showConfirmDialog.value = false
+}
+
+onMounted(fetchArticle)
+</script>
 <style scoped lang="scss"></style>

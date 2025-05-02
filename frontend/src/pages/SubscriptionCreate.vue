@@ -7,7 +7,8 @@
     >
       Заказ дайджеста
     </div>
-    <q-form @submit="submitForm" class="q-gutter-md">
+
+    <q-form @submit.prevent="submitForm" class="q-gutter-md">
       <q-input
         v-model="title"
         label="Название"
@@ -20,12 +21,18 @@
       <div class="q-mt-sm row items-center q-gutter-sm">
         <FilterSelector
           v-model="selectedSources"
-          :label="'Источники'"
+          label="Источники"
           :options="availableSources"
-          :required=true
-          :multiple=true
+          multiple
+          required
         />
-        <FilterSelector v-model="selectedTags" :label="'Теги'" :options="availableTags" :multiple=true :required=true />
+        <FilterSelector
+          v-model="selectedTags"
+          label="Теги"
+          :options="availableTags"
+          multiple
+          required
+        />
       </div>
 
       <q-input
@@ -70,8 +77,12 @@
       <div v-if="emailExists" class="text-negative">Этот человек уже был добавлен в рассылку</div>
 
       <div class="q-mt-sm">
-        <!-- тут потом заменить на email текущего пользователя-->
-        <q-chip :label="ownerEmail" color="primary" text-color="secondary" class="q-mb-xs">
+        <q-chip
+          :label="ownerEmail"
+          color="primary"
+          text-color="secondary"
+          class="q-mb-xs"
+        >
           <q-icon :name="fasCrown" color="secondary" class="q-ml-xs">
             <q-tooltip
               anchor="top middle"
@@ -94,7 +105,12 @@
           @remove="removeChip(index)"
           class="q-mb-xs"
         >
-          <q-icon v-if="chip.send_to_mail" name="mail" color="secondary" class="q-ml-xs">
+          <q-icon
+            v-if="chip.send_to_mail"
+            name="mail"
+            color="secondary"
+            class="q-ml-xs"
+          >
             <q-tooltip
               class="bg-primary text-secondary"
               transition-show="scale"
@@ -103,7 +119,12 @@
               Этот пользователь получает уведомления на почту
             </q-tooltip>
           </q-icon>
-          <q-icon v-if="chip.mobile_notifications" name="phone_iphone" color="secondary" class="q-ml-xs">
+          <q-icon
+            v-if="chip.mobile_notifications"
+            name="phone_iphone"
+            color="secondary"
+            class="q-ml-xs"
+          >
             <q-tooltip
               class="bg-primary text-secondary"
               transition-show="scale"
@@ -128,155 +149,115 @@
   </q-page>
 </template>
 
-<script>
+<script setup>
+import { ref, onMounted } from 'vue'
+import { useQuasar } from 'quasar'
+import { useRouter } from 'vue-router'
 import { availableSources, availableTags, backendURL } from '../data/lookups.js'
 import { fasCrown } from '@quasar/extras/fontawesome-v6'
 import FilterSelector from '../components/FilterSelector.vue'
 import BackButton from 'src/components/BackButton.vue'
-import { useRouter } from 'vue-router'
 
+const $q = useQuasar()
 const router = useRouter()
+const title = ref('')
+const description = ref('')
+const notificationEmail = ref(false)
+const notificationMobile = ref(false)
+const isPublic = ref(false)
+const email = ref('')
+const addedEmails = ref([])
+const emailError = ref(false)
+const emailExists = ref(false)
+const selectedSources = ref([])
+const selectedTags = ref([])
+const ownerEmail = ref('')
 
-export default {
-  components: {
-    FilterSelector,
-    BackButton,
-  },
-  setup() {
-    return {
-      fasCrown,
+onMounted(fetchOwnerEmail)
+
+async function fetchOwnerEmail() {
+  try {
+    const res = await fetch(`${backendURL}users/get_email`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include'
+    })
+    if (!res.ok) throw new Error('Не удалось получить email владельца')
+    const data = await res.json()
+    ownerEmail.value = data.email
+  } catch (err) {
+    console.error('Ошибка при получении email владельца:', err)
+  }
+}
+
+async function addEmail() {
+  if (
+    addedEmails.value.some(chip => chip.email === email.value) ||
+    email.value === ownerEmail.value
+  ) {
+    emailExists.value = true
+    return
+  }
+  emailExists.value = false
+
+  if (!email.value) return
+
+  try {
+    const res = await fetch(`${backendURL}users/subscription_settings/check`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ username: email.value })
+    })
+    if (res.status === 401) {
+      router.replace('/login')
+      return
     }
-  },
-  data() {
-    return {
-      title: '',
-      description: '',
-      notificationEmail: false,
-      notificationMobile: false,
-      isPublic: false,
-      email: '',
-      addedEmails: [],
-      emailError: false,
-      emailExists: false,
-      selectedSources: [],
-      selectedTags: [],
-      availableSources,
-      availableTags,
-      ownerEmail: '',
-      router,
+    const data = await res.json()
+    const { send_to_mail, mobile_notifications } = data
+    if (send_to_mail !== undefined || mobile_notifications !== undefined) {
+      emailError.value = false
+      addedEmails.value.push({ email: email.value, send_to_mail, mobile_notifications })
+      email.value = ''
     }
-  },
-  mounted() {
-    this.fetchOwnerEmail()
-  },
-  methods: {
-    async fetchOwnerEmail() {
-      try {
-        const response = await fetch(
-          // '/api/get-owner-email'
-          // 'https://f52a38db04bb4e4ab4c5b6b0bd1f9285.api.mockbin.io/'
-          backendURL + `users/get_email`, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-          }
-        )
-        if (!response.ok) {
-          throw new Error('Не удалось получить email владельца')
-        }
-        const data = await response.json()
-        this.ownerEmail = data.email // Записываем email в переменную
-      } catch (error) {
-        console.error('Ошибка при получении email владельца:', error)
-      }
-    },
-    addEmail() {
-      // Проверка на наличие email в списке добавленных
-      if (
-        this.addedEmails.some((chip) => chip.email === this.email) ||
-        this.email === this.ownerEmail
-      ) {
-        this.emailExists = true
-        return
-      } else {
-        this.emailExists = false
-      }
+  } catch (err) {
+    console.error('Ошибка при добавлении email:', err)
+    emailError.value = true
+  }
+}
 
-      if (this.email) {
-        fetch(
-          //`https://a37743da82a54b24895ba26ea5cbc277.api.mockbin.io/`
-          backendURL + `users/subscription_settings/check`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify({ username: this.email }),
-        })
-          .then((response) => {
-            if (response.status === 401) {
-              this.$router.replace('/login')
-            }
-            return response.json()
-          })
-          .then((data) => {
-            console.log(data)
-            const { send_to_mail, mobile_notifications } = data
-            if (send_to_mail !== undefined || mobile_notifications !== undefined) {
-              this.emailError = false
-              this.addedEmails.push({
-                email: this.email,
-                send_to_mail,
-                mobile_notifications,
-              })
-              this.email = ''
-            }
-          })
-          .catch((error) => {
-            console.error('Ошибка:', error)
-            this.emailError = true
-          })
-      }
-    },
-    removeChip(index) {
-      this.addedEmails.splice(index, 1)
-    },
-    submitForm() {
-      const requestData = {
-        title: this.title,
-        description: this.description,
-        sources: this.selectedSources.map((source) => source.value),
-        tags: this.selectedTags.map((tag) => tag.value),
-        subscribe_options: {
-          send_to_mail: this.notificationEmail,
-          mobile_notifications: this.notificationMobile,
-        },
-        public: this.isPublic,
-        followers: this.addedEmails.map((email) => email.email),
-      }
-      console.log("creating digest", JSON.stringify(requestData))
+function removeChip(index) {
+  addedEmails.value.splice(index, 1)
+}
 
-      // Отправляем данные на сервер
-      fetch(backendURL + 'subscriptions/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(requestData),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          console.log(data)
-          this.$router.replace('/digests')
-        })
-        .catch((error) => {
-          console.error('Ошибка при создании дайджеста:', error)
-        })
+async function submitForm() {
+  const requestData = {
+    title: title.value,
+    description: description.value,
+    sources: selectedSources.value.map(src => src.value),
+    tags: selectedTags.value.map(tag => tag.value),
+    subscribe_options: {
+      send_to_mail: notificationEmail.value,
+      mobile_notifications: notificationMobile.value
     },
-  },
+    public: isPublic.value,
+    followers: addedEmails.value.map(chip => chip.email)
+  }
+  console.log('creating digest', JSON.stringify(requestData))
+
+  try {
+    const res = await fetch(`${backendURL}subscriptions/create`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(requestData)
+    })
+    const data = await res.json()
+    console.log(data)
+    router.replace('/digests')
+  } catch (err) {
+    console.error('Ошибка при создании дайджеста:', err)
+  }
 }
 </script>
 

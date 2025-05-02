@@ -126,7 +126,7 @@
   </q-page>
 </template>
 
-<script>
+<script setup>
 import { ref, onMounted } from 'vue'
 import useDrawer from 'src/composables/useDrawer'
 import { useRouter } from 'vue-router'
@@ -134,275 +134,148 @@ import { backendURL } from 'src/data/lookups'
 import { useQuasar } from 'quasar'
 import { emitter } from 'src/boot/emitter'
 
-export default {
-  name: 'AccountSettingsPage',
-  setup() {
-    const $q = useQuasar()
-    const { toggleDrawer } = useDrawer()
-    const first_name = ref('')
-    const last_name = ref('')
-    const username = ref('')
-    const email = ref('')
-    const static_email = ref('')
-    const oldPassword = ref('')
-    const newPassword = ref('')
-    const personal_mobile_notifications = ref(false)
-    const personal_send_to_mail = ref(false)
-    const allowForeignSubs = ref(false)
-    const mobile_notifications = ref(false)
-    const send_to_mail = ref(false)
-    const router = useRouter()
+const $q = useQuasar()
+const router = useRouter()
+const { toggleDrawer } = useDrawer()
 
-    onMounted(async () => {
-      try {
-        const response = await fetch(backendURL + 'users/personal_info', {
-          credentials: 'include',
-        })
-        const data = await response.json()
-        console.log('User data:', data)
-        // Заполняем все поля из ответа API
-        first_name.value = data.first_name
-        last_name.value = data.second_name
-        username.value = data.username
-        email.value = data.email
-        static_email.value = data.email
-        allowForeignSubs.value = data.subscribable
-        personal_mobile_notifications.value = data.personal_mobile_notifications
-        personal_send_to_mail.value = data.personal_send_to_mail
-        mobile_notifications.value = data.mobile_notifications
-        send_to_mail.value = data.send_to_mail
-      } catch (error) {
-        console.error('Error fetching user details:', error)
-        $q.notify({
-          type: 'negative',
-          message: 'Не удалось загрузить данные пользователя',
-          position: 'top',
-        })
-      }
+const first_name = ref('')
+const last_name = ref('')
+const username = ref('')
+const email = ref('')
+const static_email = ref('')
+const oldPassword = ref('')
+const newPassword = ref('')
+const personal_mobile_notifications = ref(false)
+const personal_send_to_mail = ref(false)
+const allowForeignSubs = ref(false)
+const send_to_mail = ref(false)
+const mobile_notifications = ref(false)
+
+onMounted(async () => {
+  try {
+    const resp = await fetch(`${backendURL}users/personal_info`, { credentials: 'include' })
+    const data = await resp.json()
+    first_name.value = data.first_name
+    last_name.value = data.second_name
+    username.value = data.username
+    email.value = data.email
+    static_email.value = data.email
+    allowForeignSubs.value = data.subscribable
+    personal_mobile_notifications.value = data.personal_mobile_notifications
+    personal_send_to_mail.value = data.personal_send_to_mail
+    mobile_notifications.value = data.mobile_notifications
+    send_to_mail.value = data.send_to_mail
+  } catch (err) {
+    console.error('Error fetching user details:', err)
+    $q.notify({ type: 'negative', message: 'Не удалось загрузить данные пользователя', position: 'top' })
+  }
+})
+
+async function updateSubscriptions() {
+  try {
+    const payload = {
+      subscribable: allowForeignSubs.value,
+      send_to_mail: send_to_mail.value,
+      mobile_notifications: mobile_notifications.value,
+      personal_send_to_mail: personal_send_to_mail.value,
+      personal_mobile_notifications: personal_mobile_notifications.value
+    }
+    const res = await fetch(`${backendURL}users/subscription_settings/set`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(payload)
     })
+    if (!res.ok) throw new Error(`Status ${res.status}`)
+    $q.notify({
+      type: 'positive',
+      message: 'Настройки уведомлений сохранены',
+      position: 'top',
+      badgeColor: 'yellow',
+      badgeTextColor: 'dark'
+    })
+  } catch (err) {
+    console.error('Ошибка при сохранении уведомлений', err)
+    $q.notify({ type: 'negative', message: 'Не удалось сохранить настройки уведомлений', position: 'top' })
+  }
+}
 
-    const updateSubscriptions = async () => {
-      try {
-        const payload = {
-          subscribable: allowForeignSubs.value,
-          send_to_mail: send_to_mail.value,
-          mobile_notifications: mobile_notifications.value,
-          personal_send_to_mail: personal_send_to_mail.value,
-          personal_mobile_notifications: personal_mobile_notifications.value,
-        }
-        const response = await fetch(`${backendURL}users/subscription_settings/set`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify(payload),
-        })
-        if (!response.ok) {
-          throw new Error(`Status ${response.status}`)
-        }
-        $q.notify({
-          type: 'positive',
-          message: 'Настройки уведомлений сохранены',
-          position: 'top',
-          badgeColor: 'yellow',
-          badgeTextColor: 'dark',
-        })
-      } catch (err) {
-        console.error('Ошибка при сохранении уведомлений', err)
-        $q.notify({
-          type: 'negative',
-          message: 'Не удалось сохранить настройки уведомлений',
-          position: 'top',
-        })
-      }
-    }
-
-    const updateEmail = async () => {
-      try {
-        const response = await fetch(backendURL + `users/change/email`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            new_email: email.value,
-          }),
-        })
-        if (response.ok) {
-          $q.notify({
-            type: 'positive',
-            message: 'email успешно обновлён',
-            position: 'top',
-          })
-          const data = await response.json()
-          email.value = data.email
-          static_email.value = data.email
-          username.value = data.username
-        } else if (response.status === 401) {
-          router.replace('/login')
-        } else if (response.status === 400) {
-          console.error('Error updating email')
-          $q.notify({
-            type: 'negative',
-            message: 'Новый email не может быть таким же, как старый, а также не может быть пустым',
-            position: 'top',
-          })
-        } else {
-          console.error('Error updating email')
-          $q.notify({
-            type: 'negative',
-            message: 'Ошибка при обновлении email',
-            position: 'top',
-          })
-        }
-      } catch (error) {
-        console.error('Error updating email:', error)
-        $q.notify({
-          type: 'negative',
-          message: 'Ошибка при обновлении email' + error,
-          position: 'top',
-        })
-      }
-    }
-
-    const updatePassword = async () => {
-      try {
-        const response = await fetch(backendURL + `users/change/password`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            old_password: oldPassword.value,
-            new_password: newPassword.value,
-          }),
-        })
-        oldPassword.value = ''
-        newPassword.value = ''
-        if (response.ok) {
-          $q.notify({
-            type: 'positive',
-            message: 'Пароль успешно обновлён',
-            position: 'top',
-          })
-        } else if (response.status === 401) {
-          router.replace('/login')
-        } else if (response.status === 403) {
-          console.error('Error updating password')
-          $q.notify({
-            type: 'negative',
-            message: 'Неверный старый пароль',
-            position: 'top',
-          })
-        } else if (response.status === 400) {
-          console.error('Error updating password')
-          $q.notify({
-            type: 'negative',
-            message:
-              'Новый пароль не может быть таким же, как старый, а также не может быть пустым',
-            position: 'top',
-          })
-        } else {
-          const errorData = await response.json()
-          console.error('Error updating password:', errorData)
-          $q.notify({
-            type: 'negative',
-            message: 'Ошибка при обновлении пароля',
-            position: 'top',
-          })
-        }
-      } catch (error) {
-        console.error('Error updating password:', error)
-        $q.notify({
-          type: 'negative',
-          message: 'Ошибка при обновлении пароля',
-          position: 'top',
-        })
-      }
-    }
-
-    const logout = async () => {
-      const response = await fetch(backendURL + `users/logout`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-      })
-      if (!response.ok) {
-        if (response.status === 401) {
-          router.replace('/login')
-        } else {
-          console.error('Ошибка при выходе из аккаунта')
-          $q.notify({
-            type: 'negative',
-            message: 'Ошибка при выходе из аккаунта',
-            position: 'top',
-          })
-        }
-        return
-      }
-      emitter.emit('auth-changed')
+async function updateEmail() {
+  try {
+    const res = await fetch(`${backendURL}users/change/email`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ new_email: email.value })
+    })
+    if (res.ok) {
+      $q.notify({ type: 'positive', message: 'Email успешно обновлён', position: 'top' })
+      const data = await res.json()
+      email.value = data.email
+      static_email.value = data.email
+      username.value = data.username
+    } else if (res.status === 401) {
       router.replace('/login')
-      $q.notify({
-        type: 'positive',
-        message: 'Вы вышли из аккаунта',
-        position: 'top',
-      })
+    } else if (res.status === 400) {
+      $q.notify({ type: 'negative', message: 'Новый email не может быть таким же, как старый или пустым', position: 'top' })
+    } else {
+      $q.notify({ type: 'negative', message: 'Ошибка при обновлении email', position: 'top' })
     }
+  } catch (err) {
+    console.error('Error updating email:', err)
+    $q.notify({ type: 'negative', message: 'Ошибка при обновлении email', position: 'top' })
+  }
+}
 
-    const globalLogout = async () => {
-      const response = await fetch(backendURL + `users/logout/full`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-      })
-      if (!response.ok) {
-        if (response.status === 401) {
-          router.replace('/login')
-        } else {
-          console.error('Ошибка при выходе из аккаунта')
-          $q.notify({
-            type: 'negative',
-            message: 'Ошибка при выходе из аккаунта',
-            position: 'top',
-          })
-        }
-        return
-      }
-      emitter.emit('auth-changed')
+async function updatePassword() {
+  try {
+    const res = await fetch(`${backendURL}users/change/password`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ old_password: oldPassword.value, new_password: newPassword.value })
+    })
+    oldPassword.value = ''
+    newPassword.value = ''
+    if (res.ok) {
+      $q.notify({ type: 'positive', message: 'Пароль успешно обновлён', position: 'top' })
+    } else if (res.status === 401) {
       router.replace('/login')
-      $q.notify({
-        type: 'positive',
-        message: 'Вы вышли из аккаунта',
-        position: 'top',
-      })
+    } else if (res.status === 403) {
+      $q.notify({ type: 'negative', message: 'Неверный старый пароль', position: 'top' })
+    } else if (res.status === 400) {
+      $q.notify({ type: 'negative', message: 'Новый пароль не может быть таким же, как старый или пустым', position: 'top' })
+    } else {
+      $q.notify({ type: 'negative', message: 'Ошибка при обновлении пароля', position: 'top' })
     }
+  } catch (err) {
+    console.error('Error updating password:', err)
+    $q.notify({ type: 'negative', message: 'Ошибка при обновлении пароля', position: 'top' })
+  }
+}
 
-    return {
-      first_name,
-      last_name,
-      username,
-      email,
-      static_email,
-      oldPassword,
-      newPassword,
-      personal_mobile_notifications,
-      personal_send_to_mail,
-      allowForeignSubs,
-      mobile_notifications,
-      send_to_mail,
-      updateEmail,
-      updateSubscriptions,
-      updatePassword,
-      toggleDrawer,
-      logout,
-      globalLogout,
-    }
-  },
+async function logout() {
+  const res = await fetch(`${backendURL}users/logout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include' })
+  if (!res.ok) {
+    if (res.status === 401) router.replace('/login')
+    else $q.notify({ type: 'negative', message: 'Ошибка при выходе из аккаунта', position: 'top' })
+    return
+  }
+  emitter.emit('auth-changed')
+  router.replace('/login')
+  $q.notify({ type: 'positive', message: 'Вы вышли из аккаунта', position: 'top' })
+}
+
+async function globalLogout() {
+  const res = await fetch(`${backendURL}users/logout/full`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include' })
+  if (!res.ok) {
+    if (res.status === 401) router.replace('/login')
+    else $q.notify({ type: 'negative', message: 'Ошибка при выходе из аккаунта', position: 'top' })
+    return
+  }
+  emitter.emit('auth-changed')
+  router.replace('/login')
+  $q.notify({ type: 'positive', message: 'Вы вышли из аккаунта', position: 'top' })
 }
 </script>
 

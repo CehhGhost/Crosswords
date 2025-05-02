@@ -250,7 +250,6 @@ import { availableTags, availableSources, backendURL } from '../data/lookups.js'
 const $q = useQuasar()
 const router = useRouter()
 
-// Reactive state
 const searchBody = ref('')
 const dateFrom = ref('')
 const dateTo = ref('')
@@ -267,7 +266,6 @@ const autoplay = ref(true)
 const nextPage = ref(0)
 const matchesPerPage = 20
 
-// Constants
 const digestColors = reactive({})
 const colorPalette = [
   '#072449',
@@ -282,7 +280,6 @@ const colorPalette = [
   '#351510',
 ]
 
-// Methods
 const getLimitedSources = (sources) => {
   return sources.length > 3 ? sources.slice(0, 3).join(', ') + ' ...' : sources.join(', ')
 }

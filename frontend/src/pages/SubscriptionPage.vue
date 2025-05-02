@@ -1,11 +1,7 @@
 <template>
-  <!-- Спиннер загрузки -->
   <ServerResponseSpinner v-if="isLoading" />
-
-  <!-- Контент страницы после загрузки -->
   <q-page v-else>
     <div class="full-width q-pa-md page-body">
-      <!-- Заголовок подписки -->
       <BackButton to="/digests" />
       <div class="row items-center">
         <div
@@ -80,8 +76,6 @@
       >
         Дайджесты
       </div>
-
-      <!-- Карточки дайджестов -->
       <div v-if="digests.length > 0">
         <digest-card
           v-for="digest in digests"
@@ -114,10 +108,8 @@ import SubscriptionButton from 'src/components/SubscriptionButton.vue'
 import { backendURL } from 'src/data/lookups'
 import { useRoute } from 'vue-router'
 
-// Quasar-переменные
 const $q = useQuasar()
 const route = useRoute()
-// Состояние
 const isLoading = ref(true)
 const subscription = ref({
   title: '',
@@ -170,6 +162,5 @@ async function fetchSubscription() {
   }
 }
 
-// Делаем запрос при монтировании компонента
 onMounted(fetchSubscription)
 </script>

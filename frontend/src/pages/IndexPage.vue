@@ -31,41 +31,19 @@
   </q-page>
 </template>
 
-<script>
+<script setup>
+import { ref } from 'vue'
 import DefaultButton from '../components/DefaultButton.vue'
 import SourceCard from '../components/SourceCard.vue'
 
-export default {
-  name: 'HomePage',
-  components: {
-    DefaultButton,
-    SourceCard,
-  },
-  data() {
-    return {
-      currentSlide: 0,
-      sources: [
-        { name: 'Издательство 1', background: '/src/assets/kommersant.jpg' },
-        { name: 'Издательство 2', background: '/src/assets/CBRU.jpg' },
-        { name: 'Издательство 3', background: '/src/assets/interfax.jpg' },
-        { name: 'Издательство 5', background: '/src/assets/CBTJ.jpg' },
-        { name: 'Издательство 6', background: '/src/assets/ria.jpg' },
-        { name: 'Издательство 4', background: '/src/assets/CBUZ.jpg' },
-      ],
-    }
-  },
-  computed: {
-    groupedSources() {
-      const groupSize = 4
-      return this.sources.reduce((groups, source, index) => {
-        const groupIndex = Math.floor(index / groupSize)
-        if (!groups[groupIndex]) groups[groupIndex] = []
-        groups[groupIndex].push(source)
-        return groups
-      }, [])
-    },
-  },
-}
+const sources = ref([
+  { name: 'Издательство 1', background: '/src/assets/kommersant.jpg' },
+  { name: 'Издательство 2', background: '/src/assets/CBRU.jpg' },
+  { name: 'Издательство 3', background: '/src/assets/interfax.jpg' },
+  { name: 'Издательство 5', background: '/src/assets/CBTJ.jpg' },
+  { name: 'Издательство 6', background: '/src/assets/ria.jpg' },
+  { name: 'Издательство 4', background: '/src/assets/CBUZ.jpg' }
+])
 </script>
 
 <style scoped lang="scss">

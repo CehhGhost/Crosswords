@@ -7,13 +7,13 @@
           Похоже, вы пытаетесь отписаться от дайджеста, который принадлежит вам.
           Выберите, кому передать права редактирования:
           <q-input
-          v-model="filter"
-          placeholder="Фильтр по почте"
-          clearable
-        />
+            v-model="filter"
+            placeholder="Фильтр по почте"
+            clearable
+          />
         </div>
       </q-card-section>
-      <!-- Список с фиксированной высотой для скроллинга -->
+
       <q-list
         bordered
         separator
@@ -34,7 +34,6 @@
         </q-item>
       </q-list>
 
-      <!-- Если при передаче прав произошла ошибка, показываем сообщение -->
       <div v-if="transferError" class="q-mt-sm text-negative text-caption">
         {{ transferError }}
       </div>
@@ -55,7 +54,6 @@
           :disable="!selectedEmail || transferLoading"
           @click="onConfirm"
         >
-          <!-- Спиннер внутри кнопки, если идёт загрузка -->
           <q-spinner-dots
             v-if="transferLoading"
             size="18px"
@@ -67,66 +65,63 @@
   </q-dialog>
 </template>
 
-<script>
-export default {
-  name: "OwnerTransferDialog",
-  props: {
-    subscriberEmails: {
-      type: Array,
-      required: true,
-    },
-    modelValue: {
-      type: Boolean,
-      default: false,
-    },
-    transferLoading: {
-      type: Boolean,
-      default: false,
-    },
-    transferError: {
-      type: String,
-      default: "",
-    },
+<script setup>
+import { ref, computed, watch } from 'vue'
+
+const props = defineProps({
+  subscriberEmails: {
+    type: Array,
+    required: true
   },
-  data() {
-    return {
-      show: this.modelValue,
-      selectedEmail: null,
-      filter: '',
-    };
+  modelValue: {
+    type: Boolean,
+    default: false
   },
-  computed: {
-    filteredEmails() {
-      if (!this.filter) {
-        return this.subscriberEmails;
-      }
-      return this.subscriberEmails.filter(email =>
-        email.toLowerCase().startsWith(this.filter.toLowerCase())
-      );
-    },
+  transferLoading: {
+    type: Boolean,
+    default: false
   },
-  watch: {
-    modelValue(val) {
-      this.show = val;
-    },
-    show(val) {
-      this.$emit("update:modelValue", val);
-    },
-  },
-  methods: {
-    selectEmail(email) {
-      this.selectedEmail = email;
-    },
-    onCancel() {
-      this.selectedEmail = null;
-      this.$emit("cancel");
-      this.show = false;
-    },
-    onConfirm() {
-      if (this.selectedEmail) {
-        this.$emit("confirm", this.selectedEmail);
-      }
-    },
-  },
-};
+  transferError: {
+    type: String,
+    default: ''
+  }
+})
+
+const emit = defineEmits(['update:modelValue', 'cancel', 'confirm'])
+
+const show = ref(props.modelValue)
+const selectedEmail = ref(null)
+const filter = ref('')
+
+const filteredEmails = computed(() => {
+  if (!filter.value) {
+    return props.subscriberEmails
+  }
+  return props.subscriberEmails.filter(email =>
+    email.toLowerCase().startsWith(filter.value.toLowerCase())
+  )
+})
+
+watch(() => props.modelValue, val => {
+  show.value = val
+})
+watch(show, val => {
+  emit('update:modelValue', val)
+})
+
+function selectEmail(email) {
+  selectedEmail.value = email
+}
+
+function onCancel() {
+  selectedEmail.value = null
+  emit('cancel')
+  show.value = false
+}
+
+function onConfirm() {
+  if (selectedEmail.value) {
+    emit('confirm', selectedEmail.value)
+  }
+}
 </script>

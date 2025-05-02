@@ -11,7 +11,7 @@
         <h4 class="caption">Создайте аккаунт</h4>
       </div>
 
-      <!-- Форма входа -->
+      <!-- Форма регистрации -->
       <q-form @submit.prevent="register" class="q-mt-md">
         <!-- Поля для ввода -->
         <q-input
@@ -36,7 +36,6 @@
           class="q-mb-md"
           :color="$q.dark.isActive ? 'primary' : 'accent'"
         />
-
         <q-input
           filled
           v-model="password"
@@ -46,15 +45,15 @@
           :color="$q.dark.isActive ? 'primary' : 'accent'"
         />
 
-        <!-- Текст с предложением регистрации -->
+        <!-- Текст с предложением входа -->
         <div class="text-center q-mb-md">
           <p>Уже есть зарегистрированный аккаунт? <a href="/login">Войти</a></p>
         </div>
 
-        <!-- Кнопка входа -->
+        <!-- Кнопка регистрации -->
         <q-btn
           type="submit"
-          label="Войти"
+          label="Зарегистрироваться"
           no-caps
           text-color="secondary"
           color="primary"
@@ -65,63 +64,54 @@
   </q-page>
 </template>
 
-<script>
+<script setup>
+import { ref, computed } from 'vue'
+import { useQuasar } from 'quasar'
+import { useRouter } from 'vue-router'
 import lightLogo from '../assets/crosswords_mono.png'
 import darkLogo from '../assets/crosswords_mono_white.png'
 import { backendURL } from 'src/data/lookups'
 import { emitter } from 'src/boot/emitter'
-export default {
-  name: 'RegisterPage',
-  data() {
-    return {
-      email: '',
-      password: '',
-      name: '',
-      surname: '',
-    }
-  },
-  computed: {
-    logoSrc() {
-      return this.$q.dark.isActive ? darkLogo : lightLogo
-    },
-  },
-  methods: {
-    register() {
-      const payload = {
-        username: this.email,
-        password: this.password,
-        name: this.name,
-        surname: this.surname,
-        email: this.email,
+
+const $q = useQuasar()
+const router = useRouter()
+
+const name = ref('')
+const surname = ref('')
+const email = ref('')
+const password = ref('')
+
+const logoSrc = computed(() => $q.dark.isActive ? darkLogo : lightLogo)
+
+async function register() {
+  const payload = {
+    username: email.value,
+    password: password.value,
+    name: name.value,
+    surname: surname.value,
+    email: email.value
+  }
+
+  try {
+    const response = await fetch(
+      `${backendURL}users/register`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(payload)
       }
-      fetch(
-        backendURL + 'users/register',
-        //'https://60b277858b7d4dbc8347955c8dc89e8e.api.mockbin.io/',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
-           credentials: 'include'
-        },
-      )
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error('Ошибка при входе')
-          }
-          return response.json()
-        })
-        .then((data) => {
-          console.log(data)
-          emitter.emit('auth-changed')
-          this.$router.replace('/')
-        })
-        .catch((error) => {
-          console.error('Ошибка входа:', error)
-        })
-    },
-  },
+    )
+    if (!response.ok) {
+      throw new Error('Ошибка при регистрации')
+    }
+    await response.json()
+    emitter.emit('auth-changed')
+    router.replace('/')
+  } catch (error) {
+    console.error('Ошибка при регистрации:', error)
+    $q.notify({ type: 'negative', message: 'Ошибка регистрации. Проверьте данные.', position: 'top' })
+  }
 }
 </script>
 

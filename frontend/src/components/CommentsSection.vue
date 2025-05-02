@@ -47,7 +47,7 @@
         </div>
 
         <div class="q-mt-xs">
-          <!-- Если комментарий в режиме редактирования -->
+          <!-- Редактируемый комментарий -->
           <div v-if="editingCommentId === comment.id">
             <q-input v-model="editCommentText" outlined dense autogrow style="border-radius: 8px" />
             <div class="row q-mt-sm">
@@ -62,7 +62,7 @@
               <q-btn label="Отмена" no-caps color="secondary" flat @click="cancelEdit" />
             </div>
           </div>
-          <!-- Если не редактируется, просто отображаем текст -->
+          <!-- Текст комментария -->
           <div v-else>
             {{ comment.text }}
           </div>
@@ -72,216 +72,145 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, onMounted } from 'vue'
+import { defineProps } from 'vue'
+import { useRouter } from 'vue-router'
+import { useQuasar } from 'quasar'
 import { backendURL } from 'src/data/lookups'
 
-export default {
-  name: 'CommentsSection',
-  props: {
-    article_id: {
-      type: [String, Number],
-      required: true,
-    },
-  },
-  data() {
-    return {
-      comments: [],
-      newCommentText: '',
-      isLoadingComments: false,
-      isPosting: false,
-      editingCommentId: null, // id редактируемого комментария
-      editCommentText: '', // текст редактируемого комментария
-    }
-  },
-  created() {
-    this.fetchComments()
-  },
-  methods: {
-    fetchComments() {
-      this.isLoadingComments = true
-      // GET-запрос для получения комментариев по article_id.
-      fetch(
-        // 'https://2d54fe2c64a94fe6ace1277926ab4b47.api.mockbin.io/',
-        backendURL + `documents/${this.article_id}/comment`,
-        {
-          credentials: 'include',
-        },
-      )
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error(`Ошибка загрузки комментариев: ${response.status}`)
-          }
-          return response.json()
-        })
-        .then((data) => {
-          // Ожидается объект вида: { "comments": [ { id, text, created_at, updated_at }, ... ] }
-          this.comments = data.comments
-        })
-        .catch((error) => {
-          console.error(error)
-          this.$q.notify({
-            message: error.message,
-            type: 'negative',
-            position: 'top',
-          })
-        })
-        .finally(() => {
-          this.isLoadingComments = false
-        })
-    },
-    submitComment() {
-      console.log('Start')
-      if (!this.newCommentText.trim()) return
-      console.log('start2')
-      this.isPosting = true
-      const newComment = {
-        text: this.newCommentText,
-      }
-      // POST-запрос для создания нового комментария. В ответе должен прийти новый объект комментария.
-      fetch(
-        //`https://d9d09fc87da74a3088ee44ce681593c4.api.mockbin.io/`
-        backendURL + `documents/${this.article_id}/comment`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newComment),
-          credentials: 'include',
-        },
-      )
-        .then((response) => {
-          if (!response.ok) {
-            if (response.status === 401) {
-              this.$router.replace('/login')
-            } else {
-              throw new Error(`Ошибка отправки комментария: ${response.status}`)
-            }
-          }
-          console.log(JSON.stringify(newComment))
-          console.log('AAAAAA')
-          console.log(response)
-          return response.json()
-        })
-        .then((postedComment) => {
-          this.comments.push(postedComment)
-          this.newCommentText = ''
-        })
-        .catch((error) => {
-          console.error(error)
-          this.$q.notify({
-            message: error.message,
-            type: 'negative',
-            position: 'top',
-          })
-        })
-        .finally(() => {
-          this.isPosting = false
-        })
-    },
-    enableEdit(comment) {
-      this.editingCommentId = comment.id
-      this.editCommentText = comment.text
-    },
-    cancelEdit() {
-      // Выход из режима редактирования
-      this.editingCommentId = null
-      this.editCommentText = ''
-    },
-    updateComment(comment) {
-  if (!this.editCommentText.trim()) return
-  const payload = {
-    text: this.editCommentText,
+const props = defineProps({
+  article_id: {
+    type: [String, Number],
+    required: true
   }
-  // PUT запрос для обновления комментария.
-  fetch(
-    backendURL + `documents/${this.article_id}/comment/${comment.id}`,
-    {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-      credentials: 'include',
-    },
-  )
-    .then((response) => {
-      if (!response.ok) {
-        if (response.status === 401) {
-          this.$router.replace('/login')
-        } else {
-          throw new Error(`Ошибка обновления комментария: ${response.status}`)
-        }
-      }
-      return response.json()
-    })
-    .then((updatedComment) => {
-      // Обновляем комментарий в локальном массиве, перезаписывая старый объект новым
-      const index = this.comments.findIndex((c) => c.id === comment.id)
-      if (index !== -1) {
-        this.comments.splice(index, 1, updatedComment)
-      }
-      this.cancelEdit()
-    })
-    .catch((error) => {
-      console.error(error)
-      this.$q.notify.create({
-        message: error.message,
-        type: 'negative',
-        position: 'top',
-      })
-    })
-},
-    deleteComment(comment) {
-      // Отправляем delete запрос для удаления комментария
-      fetch(
-        //`https://example.com/api/comments/${comment.id}`
-        //'https://f776e92186144f8e8cc6cfc807c771e8.api.mockbin.io/',
-        backendURL + `documents/${this.article_id}/comment/${comment.id}`,
-        {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-        },
-      )
-        .then((response) => {
-          if (!response.ok) {
-            if (response.status === 401) {
-              this.$router.replace('/login')
-            } else {
-              throw new Error(`Ошибка удаления комментария: ${response.status}`)
-            }
-          }
-          // Если запрос успешный, удаляем комментарий из массива
-          const index = this.comments.findIndex((c) => c.id === comment.id)
-          if (index !== -1) {
-            this.comments.splice(index, 1)
-          }
-        })
-        .catch((error) => {
-          console.error(error)
-          this.$q.notify.create({
-            message: error.message,
-            type: 'negative',
-            position: 'top',
-          })
-        })
-    },
-    formatDate(dateStr) {
-      const date = new Date(dateStr)
-      if (isNaN(date.getTime())) {
-        return ''
-      }
-      return date.toLocaleDateString('ru-RU')
-    },
+})
 
-    formatCommentDate(comment) {
-      // Если updated_at отличается от created_at, показываем обе даты
-      const created = this.formatDate(comment.created_at)
-      if (comment.updated_at && comment.updated_at !== comment.created_at) {
-        const updated = this.formatDate(comment.updated_at)
-        return `${created} (изм. ${updated})`
-      }
-      return created
-    },
-  },
+const $q = useQuasar()
+const router = useRouter()
+
+const comments = ref([])
+const newCommentText = ref('')
+const isLoadingComments = ref(false)
+const isPosting = ref(false)
+const editingCommentId = ref(null)
+const editCommentText = ref('')
+
+function formatDate(dateStr) {
+  const date = new Date(dateStr)
+  return isNaN(date.getTime()) ? '' : date.toLocaleDateString('ru-RU')
 }
+
+function formatCommentDate(comment) {
+  const created = formatDate(comment.created_at)
+  if (comment.updated_at && comment.updated_at !== comment.created_at) {
+    const updated = formatDate(comment.updated_at)
+    return `${created} (изм. ${updated})`
+  }
+  return created
+}
+
+async function fetchComments() {
+  isLoadingComments.value = true
+  try {
+    const res = await fetch(
+      `${backendURL}documents/${props.article_id}/comment`,
+      { credentials: 'include' }
+    )
+    if (!res.ok) throw new Error(`Ошибка загрузки комментариев: ${res.status}`)
+    const data = await res.json()
+    comments.value = data.comments
+  } catch (err) {
+    console.error(err)
+    $q.notify({ message: err.message, type: 'negative', position: 'top' })
+  } finally {
+    isLoadingComments.value = false
+  }
+}
+
+async function submitComment() {
+  if (!newCommentText.value.trim()) return
+  isPosting.value = true
+  try {
+    const res = await fetch(
+      `${backendURL}documents/${props.article_id}/comment`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ text: newCommentText.value })
+      }
+    )
+    if (!res.ok) {
+      if (res.status === 401) { router.replace('/login'); return }
+      throw new Error(`Ошибка отправки комментария: ${res.status}`)
+    }
+    const posted = await res.json()
+    comments.value.push(posted)
+    newCommentText.value = ''
+  } catch (err) {
+    console.error(err)
+    $q.notify({ message: err.message, type: 'negative', position: 'top' })
+  } finally {
+    isPosting.value = false
+  }
+}
+
+function enableEdit(comment) {
+  editingCommentId.value = comment.id
+  editCommentText.value = comment.text
+}
+
+function cancelEdit() {
+  editingCommentId.value = null
+  editCommentText.value = ''
+}
+
+async function updateComment(comment) {
+  if (!editCommentText.value.trim()) return
+  try {
+    const res = await fetch(
+      `${backendURL}documents/${props.article_id}/comment/${comment.id}`,
+      {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ text: editCommentText.value })
+      }
+    )
+    if (!res.ok) {
+      if (res.status === 401) { router.replace('/login'); return }
+      throw new Error(`Ошибка обновления комментария: ${res.status}`)
+    }
+    const updated = await res.json()
+    const idx = comments.value.findIndex(c => c.id === comment.id)
+    if (idx !== -1) comments.value.splice(idx, 1, updated)
+    cancelEdit()
+  } catch (err) {
+    console.error(err)
+    $q.notify({ message: err.message, type: 'negative', position: 'top' })
+  }
+}
+
+async function deleteComment(comment) {
+  try {
+    const res = await fetch(
+      `${backendURL}documents/${props.article_id}/comment/${comment.id}`,
+      { method: 'DELETE', credentials: 'include' }
+    )
+    if (!res.ok) {
+      if (res.status === 401) { router.replace('/login'); return }
+      throw new Error(`Ошибка удаления комментария: ${res.status}`)
+    }
+    const idx = comments.value.findIndex(c => c.id === comment.id)
+    if (idx !== -1) comments.value.splice(idx, 1)
+  } catch (err) {
+    console.error(err)
+    $q.notify({ message: err.message, type: 'negative', position: 'top' })
+  }
+}
+
+onMounted(fetchComments)
 </script>
 
 <style scoped></style>
