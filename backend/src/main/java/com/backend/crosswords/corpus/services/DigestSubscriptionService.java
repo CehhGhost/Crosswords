@@ -47,6 +47,7 @@ public class DigestSubscriptionService {
 
     @Transactional
     public void createDigestSubscription(User owner, CreateDigestSubscriptionDTO createDigestSubscriptionDTO) {
+        var template = this.extractTagsAndSourcesAndCreateTemplate(createDigestSubscriptionDTO.getTags(), createDigestSubscriptionDTO.getSources());
         if (createDigestSubscriptionDTO.getSources() == null || createDigestSubscriptionDTO.getSources().isEmpty()) {
             throw new IllegalArgumentException("Subscription's sources can't be null or empty!");
         }
@@ -62,7 +63,6 @@ public class DigestSubscriptionService {
         subscription.setCreatedAt(new Timestamp(System.currentTimeMillis()));
         subscription.setIsPublic(createDigestSubscriptionDTO.getIsPublic());
 
-        var template = this.extractTagsAndSourcesAndCreateTemplate(createDigestSubscriptionDTO.getTags(), createDigestSubscriptionDTO.getSources());
         subscription.setTemplate(template);
 
         subscription = subscriptionRepository.save(subscription);
@@ -78,6 +78,7 @@ public class DigestSubscriptionService {
 
     @Transactional
     public void updateDigestSubscription(User user, Long id, UpdateDigestSubscriptionDTO updateDigestSubscriptionDTO) throws IllegalAccessException {
+        var template = this.extractTagsAndSourcesAndCreateTemplate(updateDigestSubscriptionDTO.getTags(), updateDigestSubscriptionDTO.getSources());
         var subscription = subscriptionRepository.findById(id).orElseThrow(() -> new NoSuchElementException("There is no subscriptions with such id!"));
         if (!Objects.equals(user.getId(), subscription.getOwner().getId())) {
             throw new IllegalAccessException("You are not an owner of this subscription!");
@@ -88,8 +89,6 @@ public class DigestSubscriptionService {
         subscription.setIsPublic(updateDigestSubscriptionDTO.getPublic());
         subscription.setSendToMail(updateDigestSubscriptionDTO.getSubscribeOptions().getSendToMail());
         subscription.setMobileNotifications(updateDigestSubscriptionDTO.getSubscribeOptions().getMobileNotifications());
-
-        var template = this.extractTagsAndSourcesAndCreateTemplate(updateDigestSubscriptionDTO.getTags(), updateDigestSubscriptionDTO.getSources());
         subscription.setTemplate(template);
 
         subscription = subscriptionRepository.save(subscription);
@@ -102,6 +101,12 @@ public class DigestSubscriptionService {
     }
     @Transactional
     public DigestTemplate extractTagsAndSourcesAndCreateTemplate(List<String> tagsNames, List<String> sourcesNames) {
+        if (sourcesNames == null || sourcesNames.isEmpty()) {
+            throw new IllegalArgumentException("Subscription's sources can't be null or empty!");
+        }
+        if (tagsNames == null || tagsNames.isEmpty()) {
+            throw new IllegalArgumentException("Subscription's tags can't be null or empty!");
+        }
         Set<Tag> tags = tagService.getTagsInNames(tagsNames);
         Set<Source> sources = new HashSet<>();
         for (var source : sourcesNames) {

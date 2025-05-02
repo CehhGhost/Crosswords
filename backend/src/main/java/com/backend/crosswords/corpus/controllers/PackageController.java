@@ -103,7 +103,7 @@ public class PackageController {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
             var docs = packageService.getDocsFromPackage(name, crosswordUserDetails.getUser());
-            List<DocDTO> docDTOs = docService.transformDocsIntoDTO(docs);
+            List<DocDTO> docDTOs = docService.transformDocsIntoDTO(docs, false);
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"documents_export.pdf\"")
                     .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_PDF_VALUE)
@@ -121,12 +121,12 @@ public class PackageController {
             @ApiResponse(responseCode = "404", description = "This user doesn't have packages with such name")
     })
     @GetMapping("/{name}/docs")
-    public ResponseEntity<?> getPackagesDocsByName(@PathVariable String name) {
+    public ResponseEntity<?> getPackagesDocsByName(@PathVariable String name, @RequestParam(name = "include_annotations", required = false) Boolean includeAnnotations) {
         try {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
             var docs = packageService.getDocsFromPackage(name, crosswordUserDetails.getUser());
-            List<DocDTO> docDTOs = docService.transformDocsIntoDTO(docs);
+            List<DocDTO> docDTOs = docService.transformDocsIntoDTO(docs, includeAnnotations);
             return ResponseEntity.ok().body(new DocsDTO(docDTOs));
         } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());

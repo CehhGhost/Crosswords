@@ -57,32 +57,38 @@ public class DocService {
         this.commentService = commentService;
     }
 
-    private DocDTO transformDocIntoDocDTO(DocMeta docMeta) {
-        var doc = modelMapper.map(docMeta, DocDTO.class);
-        var docES = docSearchRepository.findById(doc.getId()).orElseThrow();
+    private DocDTO transformDocIntoDocDTO(DocMeta docMeta, Boolean includeAnnotations) {
+        var docDTO = modelMapper.map(docMeta, DocDTO.class);
+        var docES = docSearchRepository.findById(docDTO.getId()).orElseThrow();
         try {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
             var user = crosswordUserDetails.getUser();
-            doc.setFavourite(packageService.checkDocInFavourites(user, docMeta));
+            docDTO.setFavourite(packageService.checkDocInFavourites(user, docMeta));
             var rating = ratingService.getRatingsForDocumentByUser(docMeta, user);
-            doc.setRatingSummary(rating.get(0));
-            doc.setRatingClassification(rating.get(1));
-            doc.setAuthed(true);
+            docDTO.setRatingSummary(rating.get(0));
+            docDTO.setRatingClassification(rating.get(1));
+            docDTO.setAuthed(true);
         } catch (ClassCastException e) {
-            doc.setFavourite(null);
-            doc.setRatingClassification(null);
-            doc.setRatingSummary(null);
-            doc.setAuthed(false);
+            docDTO.setFavourite(null);
+            docDTO.setRatingClassification(null);
+            docDTO.setRatingSummary(null);
+            docDTO.setAuthed(false);
         }
-        doc.setTagNames(new ArrayList<>());
+        docDTO.setTagNames(new ArrayList<>());
         for (var tag : docMeta.getTags()) {
-            doc.getTagNames().add(tag.getName());
+            docDTO.getTagNames().add(tag.getName());
         }
-        doc.setText(docES.getText());
-        doc.setTitle(docES.getTitle());
-        doc.setRusSource(docMeta.getSource().getRussianName());
-        return doc;
+        docDTO.setText(docES.getText());
+        docDTO.setTitle(docES.getTitle());
+        docDTO.setRusSource(docMeta.getSource().getRussianName());
+        if (includeAnnotations != null && includeAnnotations) {
+            docDTO.setDocsAnnotations(new ArrayList<>());
+            for (var annotation : docMeta.getAnnotations()) {
+                docDTO.getDocsAnnotations().add(modelMapper.map(annotation, AnnotationDTO.class));
+            }
+        }
+        return docDTO;
     }
 
     @Transactional
@@ -107,21 +113,14 @@ public class DocService {
     public List<DocDTO> getAllDocs() {
         List<DocDTO> result = new ArrayList<>();
         for (var docMeta : docMetaRepository.findAll()) {
-            result.add(this.transformDocIntoDocDTO(docMeta));
+            result.add(this.transformDocIntoDocDTO(docMeta, false));
         }
         return result;
     }
 
     public DocDTO getDocByIdAndTransformIntoDTO(Long id) {
         var docMeta = docMetaRepository.findById(id).orElseThrow(() -> new NoSuchElementException("No documents with such id!"));
-        var docDTO = this.transformDocIntoDocDTO(docMeta);
-        if (docDTO.getDocsAnnotations() == null) {
-            docDTO.setDocsAnnotations(new ArrayList<>());
-        }
-        for (var annotation : docMeta.getAnnotations()) {
-            docDTO.getDocsAnnotations().add(modelMapper.map(annotation, AnnotationDTO.class));
-        }
-        return docDTO;
+        return this.transformDocIntoDocDTO(docMeta, true);
     }
 
     private SearchResultDTO formSearchResultDTO(int pageNumber, List<DocDTO> resultHits) {
@@ -197,7 +196,7 @@ public class DocService {
             {
                 var docES = hit.getContent();
                 var docMeta = docMetaRepository.findById(docES.getId()).orElseThrow();
-                resultHits.add(this.transformDocIntoDocDTO(docMeta));
+                resultHits.add(this.transformDocIntoDocDTO(docMeta, false));
                 System.out.println("Score for a hit: " + hit.getScore());
             });
             int nextPage = pageNumber + 1;
@@ -252,6 +251,9 @@ public class DocService {
     }
 
     public void rateDocById(Long id, RateDocDTO rateDocDTO) {
+        if (rateDocDTO == null) {
+            return;
+        }
         if (rateDocDTO.getClassificationRating() < 1 || rateDocDTO.getClassificationRating() > 5 || rateDocDTO.getSummaryRating() < 1 || rateDocDTO.getSummaryRating() > 5) {
             throw new IllegalArgumentException("Rating's arguments must be in range of 1 to 5!");
         }
@@ -445,10 +447,10 @@ public class DocService {
         return docSearchRepository.findById(id).orElseThrow(() -> new NoSuchElementException("There is no documents with such id!")).getTitle();
     }
 
-    public List<DocDTO> transformDocsIntoDTO(Set<DocMeta> docs) {
+    public List<DocDTO> transformDocsIntoDTO(Set<DocMeta> docs, Boolean includeAnnotations) {
         List<DocDTO> docDTOs = new ArrayList<>();
         for (var doc : docs) {
-            docDTOs.add(this.transformDocIntoDocDTO(doc));
+            docDTOs.add(this.transformDocIntoDocDTO(doc, includeAnnotations));
         }
         return docDTOs;
     }

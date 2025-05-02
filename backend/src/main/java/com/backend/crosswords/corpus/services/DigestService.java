@@ -71,17 +71,17 @@ public class DigestService {
 
         core = coreRepository.save(core);
         docService.setCoreForDocs(core, docMetas);
-        StringBuilder docMetasText = new StringBuilder();
-        // GenerateDigestDTO generateDigestDTO = new GenerateDigestDTO();
+        // StringBuilder docMetasText = new StringBuilder();
+        GenerateDigestDTO generateDigestDTO = new GenerateDigestDTO();
         for (var docMeta : docMetas) {
             var text = docService.getDocTextByDocId(docMeta.getId());
             var summary = docMeta.getSummary();
-            docMetasText.append(text);
-            /*GenerateDigestsDocumentsDTO generateDigestsDocumentsDTO =  new GenerateDigestsDocumentsDTO(text, summary);
-            generateDigestDTO.getDocuments().add(generateDigestsDocumentsDTO);*/
+            // docMetasText.append(text);
+            GenerateDigestsDocumentsDTO generateDigestsDocumentsDTO =  new GenerateDigestsDocumentsDTO(text, summary);
+            generateDigestDTO.getDocuments().add(generateDigestsDocumentsDTO);
         }
-        //var digestText = generatorService.generateDigest(generateDigestDTO).block();
-        var digestText = docMetasText.toString();
+        var digestText = generatorService.generateDigest(generateDigestDTO).block();
+        //var digestText = docMetasText.toString();
         core.setText(digestText); // TODO добавить подключение к сервису создания дайджестов и получать текст от него
         core = coreRepository.save(core);
         return core;
