@@ -51,6 +51,7 @@
           label="Источники"
           dense
           clearable
+          :multiple=true
           class="q-my-sm"
           @clear="clearSelection('sources')"
         />
@@ -61,6 +62,7 @@
           :options="availableTags"
           label="Тэги"
           dense
+          :multiple=true
           clearable
           class="q-my-sm"
           @clear="clearSelection('tags')"

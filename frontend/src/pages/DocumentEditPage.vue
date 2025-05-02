@@ -40,16 +40,12 @@
         <div class="col-12">
           <div class="row q-col-gutter-md">
             <div class="col-4">
-              <q-select
+              <FilterSelector
                 v-model="article.source"
+                :label="'Источник'"
                 :options="sources"
-                option-label="label"
-                option-value="value"
-                label="Источник"
-                outlined
-                dense
-                filled
-                :color="$q.dark.isActive ? 'primary' : 'accent'"
+                required
+                :dense="true"
               />
             </div>
 
@@ -97,19 +93,16 @@
             </div>
           </div>
         </div>
-
-        <q-select
+        <div>
+        <FilterSelector
           v-model="article.tags"
+          :label="'Теги'"
           :options="tagsList"
-          multiple
-          option-label="label"
-          option-value="value"
-          label="Теги"
-          outlined
-          dense
-          filled
-          :color="$q.dark.isActive ? 'primary' : 'accent'"
+          required
+          :dense="true"
+          :multiple="true"
         />
+        </div>
 
         <q-input
           v-model="article.URL"
@@ -175,12 +168,14 @@ import {
 
 import ConfirmDialog from 'src/components/ConfirmDialog.vue'
 import BackButton from 'src/components/BackButton.vue'
+import FilterSelector from 'src/components/FilterSelector.vue'
 
 export default {
   name: 'EditArticle',
   components: {
     ConfirmDialog,
     BackButton,
+    FilterSelector,
   },
   setup() {
     const $q = useQuasar()
@@ -232,6 +227,7 @@ export default {
           throw new Error('Ошибка при получении данных статьи')
         }
         const data = await response.json()
+        console.log(data)
 
         article.value = {
           ...article.value,
@@ -239,10 +235,10 @@ export default {
           title: data.title,
           text: data.text,
           summary: data.summary,
-          source: data.source,
           date: data.date,
           language: data.language,
-          tags: data.tags,
+          tags: tagsList.filter(opt => data.tags.includes(opt.value)),
+          source: sources.find(opt => opt.value === data.source),
           URL: data.URL,
           drop_rating_summary: false,
           drop_rating_classification: false,
@@ -283,10 +279,10 @@ export default {
           title: article.value.title,
           text: article.value.text,
           summary: article.value.summary,
-          source: article.value.source,
+          source: article.value.source.value,
           date: formatToISO(article.value.date),
-          language: article.value.language,
-          tags: article.value.tags.map(tag => tag.value),
+          language: article.value.language.value,
+          tags: article.value.tags.map((tag) => tag.value),
           URL: article.value.URL,
           drop_rating_summary: article.value.drop_rating_summary,
           drop_rating_classification: article.value.drop_rating_classification,
