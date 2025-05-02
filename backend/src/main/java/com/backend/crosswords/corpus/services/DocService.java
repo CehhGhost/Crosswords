@@ -92,8 +92,11 @@ public class DocService {
     }
 
     @Transactional
-    public void createDoc(CreateDocDTO createDocDTO) {
+    public void createDoc(CreateDocDTO createDocDTO) throws IllegalArgumentException {
         var docMeta = modelMapper.map(createDocDTO, DocMeta.class);
+        if (docMeta.getLanguage() == null) {
+            throw new IllegalArgumentException("Language is unappropriated or null!");
+        }
         docMeta.setSource(Source.fromRussianName(createDocDTO.getRusSource()));
         Timestamp timeNow = new Timestamp(System.currentTimeMillis());
         if (createDocDTO.getDate() == null) {
@@ -285,8 +288,8 @@ public class DocService {
         DocES docES = checkDocES.get();
 
         docMeta.setSource(Source.fromRussianName(editDocDTO.getRusSource()));
+        docMeta.setLanguage(Language.getValueOf(editDocDTO.getLanguage()));
         docMeta.setDate(editDocDTO.getDate());
-        docMeta.setLanguage(Language.valueOf(editDocDTO.getLanguage().toUpperCase()));
         docMeta.setSummary(editDocDTO.getSummary());
         docMeta.setUrl(editDocDTO.getUrl());
 

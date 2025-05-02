@@ -39,12 +39,18 @@ public class TagService {
         tagRepository.delete(tag.get());
     }
 
-    public Set<Tag> getTagsInNamesAndSaveForDoc(List<TagDTO> tagDTOs, DocMeta docMeta) {
+    public Set<Tag> getTagsInNamesAndSaveForDoc(List<TagDTO> tagDTOs, DocMeta docMeta) throws IllegalArgumentException {
+        if (tagDTOs == null || tagDTOs.isEmpty()) {
+            throw new IllegalArgumentException("Tags can't be null or empty!");
+        }
         List<String> names = new ArrayList<>();
         for (var tagDTO : tagDTOs) {
             names.add(tagDTO.getName());
         }
         var tags= tagRepository.getTagsByNameIsIn(names);
+        if (tags.isEmpty()) {
+            throw new IllegalArgumentException("There is no appropriate tags' names!");
+        }
         for (var tag : tags) {
             tag.getDocs().add(docMeta);
             tagRepository.save(tag);

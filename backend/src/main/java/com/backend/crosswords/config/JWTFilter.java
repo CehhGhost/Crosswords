@@ -119,7 +119,7 @@ public class JWTFilter extends OncePerRequestFilter {
                         "anonymous", "anonymousUser", AuthorityUtils.createAuthorityList("ROLE_ANONYMOUS"));
                 SecurityContextHolder.getContext().setAuthentication(anonymousToken);
             }
-        }catch (ObjectOptimisticLockingFailureException ex) {
+        } catch (ObjectOptimisticLockingFailureException ex) {
             refreshUser(oldToken, request, response);
         } catch (TokenExpiredException | NoSuchElementException | SecurityException | IllegalAccessException e) {
             AnonymousAuthenticationToken anonymousToken = new AnonymousAuthenticationToken(

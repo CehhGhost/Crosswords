@@ -25,6 +25,9 @@ public enum Source {
         return russianName;
     }
     public static Source fromRussianName(String russianName) {
+        if (russianName == null || russianName.isEmpty()) {
+            throw new IllegalArgumentException("Название источника не может быть пустым или null!");
+        }
         Source source = RUSSIAN_NAME_MAP.get(russianName.toLowerCase());
         if (source == null) {
             throw new IllegalArgumentException("Неизвестное русское название: " + russianName);
