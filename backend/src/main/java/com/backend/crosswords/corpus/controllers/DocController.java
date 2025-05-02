@@ -152,7 +152,8 @@ public class DocController {
             @ApiResponse(responseCode = "200", description = "You successfully updated the document"),
             @ApiResponse(responseCode = "401", description = "You are trying to updated a document while unauthorized"),
             @ApiResponse(responseCode = "403", description = "You don't have enough rights to updated documents"),
-            @ApiResponse(responseCode = "404", description = "There is no documents with such id")
+            @ApiResponse(responseCode = "404", description = "There is no documents with such id"),
+            @ApiResponse(responseCode = "400", description = "Tags, sources and language must be correct and can't be null or empty"),
     })
     @PutMapping("/{id}/edit")
     public ResponseEntity<?> updateDocById(@PathVariable Long id, @RequestBody EditDocDTO editDocDTO) {
@@ -160,6 +161,8 @@ public class DocController {
             docService.editDocById(id, editDocDTO);
         } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
         return ResponseEntity.ok(HttpStatus.OK);
     }

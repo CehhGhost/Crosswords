@@ -285,8 +285,8 @@ public class DocService {
         DocES docES = checkDocES.get();
 
         docMeta.setSource(Source.fromRussianName(editDocDTO.getRusSource()));
+        docMeta.setLanguage(Language.getValueOf(editDocDTO.getLanguage()));
         docMeta.setDate(editDocDTO.getDate());
-        docMeta.setLanguage(Language.valueOf(editDocDTO.getLanguage().toUpperCase()));
         docMeta.setSummary(editDocDTO.getSummary());
         docMeta.setUrl(editDocDTO.getUrl());
 
