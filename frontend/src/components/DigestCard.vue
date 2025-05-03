@@ -63,7 +63,6 @@ import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { backendURL } from 'src/data/lookups'
 import DocumentTags from '../components/DocumentTags.vue'
-import { defineProps } from 'vue'
 
 const props = defineProps({
   digest: { type: Object, required: true },

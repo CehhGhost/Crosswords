@@ -21,7 +21,7 @@
         <SourceCard
           v-for="source in sources"
           :key="source.name"
-          :name="source.name"
+
           :background="source.background"
           class="col-auto"
         />

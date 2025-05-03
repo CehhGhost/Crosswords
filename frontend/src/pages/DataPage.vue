@@ -142,10 +142,9 @@ const $q = useQuasar()
      - loading: флаг ожидания ответа от сервера при сохранении */
 const folders = ref([])
 
-// Флаг для toggle "Включить аннотации в выгрузку"
+
 const includeAnnotations = ref(false)
 
-// Загрузка списка папок с бекенда
 const fetchFolders = async () => {
   try {
     const response = await fetch(backendURL + 'packages', { credentials: 'include' })
@@ -162,24 +161,20 @@ const fetchFolders = async () => {
   }
 }
 
-// Включить режим редактирования для папки
 const enableEditing = (index) => {
   folders.value[index].editing = true
   folders.value[index].error = false
 }
 
-// Сохранение нового названия папки с учётом возможности изменения только регистра
 const saveFolder = async (index) => {
   const folder = folders.value[index]
   const newName = folder.newName.trim()
 
-  // Если имя не изменилось (учитывая регистр), просто выходим из режима редактирования
   if (newName === folder.name) {
     folder.editing = false
     return
   }
 
-  // Проверка на дубликат среди остальных папок (без учёта регистра)
   const duplicate = folders.value.find(
     (f, idx) => idx !== index && f.name.toLowerCase() === newName.toLowerCase(),
   )
@@ -205,7 +200,6 @@ const saveFolder = async (index) => {
       folder.editing = false
       return
     }
-    // Обновляем название папки
     folder.name = newName
     folder.editing = false
     folder.error = false
@@ -218,11 +212,11 @@ const saveFolder = async (index) => {
   }
 }
 
-// Скачивание папки с передачей include_annotations
 const downloadFolder = async (folderName) => {
   try {
     const params = new URLSearchParams()
-    params.append('include_annotations', includeAnnotations)
+    params.append('include_annotations', includeAnnotations.value.toString())
+    console.log(backendURL + `packages/${encodeURIComponent(folderName)}/docs?${params.toString()}`)
     const response = await fetch(backendURL + `packages/${folderName}/docs?${params.toString()}`, {
       method: 'GET',
       credentials: 'include',
@@ -237,7 +231,7 @@ const downloadFolder = async (folderName) => {
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.setAttribute('download', `${folderName}_export.pdf`);
+    link.setAttribute('download', `${folderName}_export.json`);
     link.click()
     setTimeout(() => {
       URL.revokeObjectURL(url)

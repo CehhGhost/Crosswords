@@ -25,7 +25,6 @@
 
 <script setup>
 import { ref, watch } from 'vue'
-import { defineProps, defineEmits } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { backendURL } from 'src/data/lookups'
