@@ -5,6 +5,8 @@ import com.backend.crosswords.corpus.models.DocMeta;
 import com.backend.crosswords.corpus.models.Package;
 import com.backend.crosswords.corpus.models.PackageId;
 import com.backend.crosswords.corpus.repositories.jpa.PackageRepository;
+import jakarta.transaction.Transactional;
+import org.hibernate.Hibernate;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -105,5 +107,32 @@ public class PackageService {
         var packageId = new PackageId(name, user.getId());
         Package pack = packageRepository.findById(packageId).orElseThrow(() -> new NoSuchElementException("This user doesn't have packages with such name!"));
         return pack.getDocs();
+    }
+
+    @Transactional
+    public void changePackagesNameByName(String name, String newName, User user) throws IllegalArgumentException, NoSuchElementException {
+        if (newName == null || newName.isEmpty() || name ==  null || name.isEmpty()) {
+            throw new IllegalArgumentException("Packages' names can't be null or empty!");
+        }
+        if (newName.length() > 255 || name.length() > 255) {
+            throw new IllegalArgumentException("This name is too long, max 255 characters!");
+        }
+        if (Objects.equals(name, Package.favouritesName)) {
+            throw new IllegalArgumentException("You cant change a package with this name!");
+        }
+        if (name.equals(newName)) {
+            throw new IllegalArgumentException("New package's name can't be the same as an old one!");
+        }
+        var packageId = new PackageId(name, user.getId());
+        Package oldPackage = packageRepository.findByIdWithDocs(packageId).orElseThrow(() -> new NoSuchElementException("There is no packages for this user with such name!"));
+
+        var newPackageId = new PackageId(newName, user.getId());
+        if (packageRepository.existsById(newPackageId)) {
+            throw new IllegalArgumentException("You are trying to change a package's name with already existing package with a such name for this user!");
+        }
+        Package newPackage = new Package(newPackageId, user);
+        newPackage.setDocs(oldPackage.getDocs());
+        packageRepository.save(newPackage);
+        packageRepository.delete(oldPackage);
     }
 }

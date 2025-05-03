@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   app:
-    image: cehhghost/crosswords_backend:0.2.3-STABLE
+    image: cehhghost/crosswords_backend:latest
     # cehhghost/crosswords_backend:latest
     ports:
       - "8081:8081"  # Пробрасываем порт Spring Boot

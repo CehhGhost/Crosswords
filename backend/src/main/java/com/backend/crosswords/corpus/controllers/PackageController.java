@@ -69,12 +69,36 @@ public class PackageController {
     })
     @DeleteMapping("/{name}")
     public ResponseEntity<?> deletePackage(@PathVariable String name) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
         try {
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
             packageService.deletePackageByName(name, crosswordUserDetails.getUser());
         } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("This user doesn't have packages with such name!");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+        return ResponseEntity.ok(HttpStatus.OK);
+    }
+
+    @Operation(summary = "Change package by name", description = "This endpoint lets you change a package's name for a certain user")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You have successfully changed this package's name for a certain user"),
+            @ApiResponse(responseCode = "401", description = "You are trying to change this package's name while not authenticated"),
+            @ApiResponse(responseCode = "400", description = "You are trying to change package's name, that can't be changes for this user (ex: favourites). " +
+                    "Packages' names can't b null, empty or above 255 characters long. " +
+                    "New package's name can't be the same as an old one. " +
+                    "You are trying to change a package's name with already existing package with a such name for this user"),
+            @ApiResponse(responseCode = "404", description = "This user doesn't have packages with such name")
+    })
+    @PatchMapping("/{name}/change_name")
+    public ResponseEntity<?> changePackagesName(@PathVariable String name, @RequestParam(name = "new_name") String newName) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+        try {
+            packageService.changePackagesNameByName(name, newName, crosswordUserDetails.getUser());
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
@@ -97,6 +121,7 @@ public class PackageController {
         }
         return ResponseEntity.ok(new FoldersDTO(usersPackagesNames));
     }
+
     @GetMapping("/{name}/pdf")
     public ResponseEntity<?> getPackagePDF(@PathVariable String name) {
         try {
@@ -114,6 +139,7 @@ public class PackageController {
             throw new RuntimeException("An error occurred while creating a pdf!");
         }
     }
+
     @Operation(summary = "Get all user's package's docs", description = "This endpoint lets you get all documents, from a certain user and a certain package")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "You have get all user's package's docs", content = @Content(schema = @Schema(implementation = FoldersDTO.class))),
