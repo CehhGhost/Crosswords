@@ -4,9 +4,6 @@
       class="card-background"
       :style="{ backgroundImage: `url(${background})` }"
     ></div>
-    <div class="card-content">
-      <div class="source-name">{{ name }}</div>
-    </div>
   </div>
 </template>
 
@@ -22,7 +19,7 @@ const props = defineProps({
   }
 })
 
-const { name, background } = props
+const {background } = props
 </script>
 
 <style scoped>

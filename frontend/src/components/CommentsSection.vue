@@ -74,7 +74,6 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { defineProps } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { backendURL } from 'src/data/lookups'
