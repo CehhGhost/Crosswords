@@ -24,18 +24,16 @@ public class SearchDocDTO {
     private String searchMode;
 
     @Schema(
-            description = "The date of the beginning of the searching period in format dd/MM/yyyy. Can be later then date_to, they would simply exchange values",
-            example = "25/03/2000"
+            description = "The date of the beginning of the searching period in format yyyy-MM-dd. Can be later then date_to, they would simply exchange values",
+            example = "2000-03-25"
     )
-    @JsonFormat(pattern = "dd/MM/yyyy")
     @JsonProperty("date_from")
     private Timestamp dateFrom;
 
     @Schema(
-            description = "The date of the end of the searching period in format dd/MM/yyyy. Can be before then date_from, they would simply exchange values",
-            example = "25/03/2025"
+            description = "The date of the end of the searching period in format yyyy-MM-dd. Can be before then date_from, they would simply exchange values",
+            example = "2025-03-25"
     )
-    @JsonFormat(pattern = "dd/MM/yyyy")
     @JsonProperty("date_to")
     private Timestamp dateTo;
 
