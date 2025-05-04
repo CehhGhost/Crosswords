@@ -378,7 +378,13 @@ public class DigestSubscriptionService {
         if (subscription.getIsPublic()) {
             isAvailable = true;
         } else if (user != null){
-            isAvailable = subscription.getOwner().getId().equals(user.getId());
+            var subscriptionSettings = subscriptionSettingsService.getAllDigestSubscriptionSettingsByDigestSubscription(subscription);
+            for (var subscriptionSetting : subscriptionSettings) {
+                if (subscriptionSetting.getSubscriber().getId().equals(user.getId())) {
+                    isAvailable = true;
+                    break;
+                }
+            }
         }
         return new CheckAccessDTO(isAvailable);
     }
