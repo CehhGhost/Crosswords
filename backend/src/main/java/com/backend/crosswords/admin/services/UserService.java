@@ -84,7 +84,11 @@ public class UserService {
         var user = userRepository.findByUsernameOrEmail(loginUserDTO.getUsername(), loginUserDTO.getUsername()).orElseThrow();
         RefreshToken refreshToken;
         var optionalRefreshToken = refreshTokenService.checkExistingRefreshToken(ipAddress, userAgent, user);
-        refreshToken = optionalRefreshToken.orElseGet(() -> refreshTokenService.generateRefreshToken(ipAddress, userAgent, user));
+        if (optionalRefreshToken == null) {
+            refreshToken = refreshTokenService.generateRefreshToken(ipAddress, userAgent, user);
+        } else {
+            refreshToken = optionalRefreshToken;
+        }
         List<String> jwt = new ArrayList<>();
         jwt.add(accessToken);
         jwt.add(refreshToken.getToken());

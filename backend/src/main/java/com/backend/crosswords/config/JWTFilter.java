@@ -65,6 +65,7 @@ public class JWTFilter extends OncePerRequestFilter {
             } catch (UsernameNotFoundException | JWTVerificationException exception) {
                 refreshUser(oldRefreshToken, request, response);
             } catch (IllegalAccessException e) {
+                System.out.println("Dropping cookies");
                 this.setCookies(response, "", "");
                 AnonymousAuthenticationToken anonymousToken = new AnonymousAuthenticationToken(
                         "anonymous", "anonymousUser", AuthorityUtils.createAuthorityList("ROLE_ANONYMOUS"));
@@ -86,7 +87,7 @@ public class JWTFilter extends OncePerRequestFilter {
         }
         String userAgent = request.getHeader("User-Agent");
 
-        if (refreshTokenService.checkExistingRefreshToken(ipAddress, userAgent, ((CrosswordUserDetails)userDetails).getUser()).isEmpty()) {
+        if (refreshTokenService.checkExistingRefreshToken(ipAddress, userAgent, ((CrosswordUserDetails)userDetails).getUser()) == null) {
             throw new IllegalAccessException("There is no such authorized users!");
         }
 
@@ -98,7 +99,6 @@ public class JWTFilter extends OncePerRequestFilter {
         if (SecurityContextHolder.getContext().getAuthentication() == null) {
             SecurityContextHolder.getContext().setAuthentication(authToken);
         }
-        System.out.println("Access token is valid: " + accessToken);
     }
 
     private void refreshUser(String oldToken, HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -122,6 +122,7 @@ public class JWTFilter extends OncePerRequestFilter {
         } catch (ObjectOptimisticLockingFailureException ex) {
             refreshUser(oldToken, request, response);
         } catch (TokenExpiredException | NoSuchElementException | SecurityException | IllegalAccessException e) {
+            System.out.println("Dropping cookies, because refresh is bad, exception: " + e.getClass());
             AnonymousAuthenticationToken anonymousToken = new AnonymousAuthenticationToken(
                     "anonymous", "anonymousUser", AuthorityUtils.createAuthorityList("ROLE_ANONYMOUS"));
             SecurityContextHolder.getContext().setAuthentication(anonymousToken);

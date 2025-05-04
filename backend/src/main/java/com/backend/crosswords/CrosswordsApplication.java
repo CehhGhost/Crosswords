@@ -10,7 +10,9 @@ import org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchDa
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.netty.http.client.HttpClient;
@@ -64,5 +66,14 @@ public class CrosswordsApplication {
 								.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, digestGeneratorProperties.getConnectTimeout())
 				))
 				.build();
+	}
+	@Bean
+	public TaskScheduler taskScheduler() {
+		ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
+		scheduler.setPoolSize(10);
+		scheduler.setThreadNamePrefix("scheduled-task-");
+		scheduler.setAwaitTerminationSeconds(60);
+		scheduler.setWaitForTasksToCompleteOnShutdown(true);
+		return scheduler;
 	}
 }

@@ -31,12 +31,17 @@ public class RefreshToken {
     @JoinColumn(name = "user_id")
     private User user;
 
+    @OneToOne
+    @JoinColumn(name = "new_refresh_id")
+    private RefreshToken newRefresh;
+
     public RefreshToken(String token, String ip, String userAgent, User user, Instant expiryDate) {
         this.token = token;
         this.ip = ip;
         this.userAgent = userAgent;
         this.user = user;
         this.expiryDate = expiryDate;
+        this.newRefresh = null;
     }
 
     public RefreshToken() {
@@ -96,5 +101,13 @@ public class RefreshToken {
 
     public void setVersion(Long version) {
         this.version = version;
+    }
+
+    public RefreshToken getNewRefresh() {
+        return newRefresh;
+    }
+
+    public void setNewRefresh(RefreshToken newRefresh) {
+        this.newRefresh = newRefresh;
     }
 }
