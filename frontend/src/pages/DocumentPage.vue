@@ -393,7 +393,7 @@ async function onRatingChange(newRating) {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ classification_rating: newRating, summary_rating: null }),
+      body: JSON.stringify({ classification_rating: newRating, summary_rating: documentData.value.rating_summary }),
     })
     if (!postResponse.ok) {
       if (postResponse.status === 401) {

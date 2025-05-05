@@ -285,7 +285,7 @@ const getLimitedSources = (sources) => {
 }
 
 const goToDigest = (id) => {
-  router.push(`/digests/${id}`)
+  router.push(`/subscriptions/${id}`)
 }
 
 const formatToISO = (str) => {
@@ -353,14 +353,19 @@ const fetchDigests = async (reset) => {
 
 const fetchFeaturedDigests = async () => {
   try {
-    const res = await fetch('https://d0ef77d78d0747daa591ac2497df51ed.api.mockbin.io/', {
+    const params = new URLSearchParams()
+    params.append('amount', 3)
+    const res = await fetch(
+      //'https://d859459784894b3fa1c10b75490e2c56.api.mockbin.io/'
+      backendURL + `subscriptions/most_rated?${params.toString()}`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
     })
+    console.log(backendURL + `subscriptions/most_rated?${params.toString()}`)
     if (!res.ok) throw new Error('Ошибка при получении featured дайджестов')
     const data = await res.json()
-    featuredDigests.value = data.digests || []
+    featuredDigests.value = data.subscriptions || []
   } catch (e) {
     console.error(e)
   }
