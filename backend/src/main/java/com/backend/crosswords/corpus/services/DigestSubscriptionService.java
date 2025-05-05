@@ -8,6 +8,8 @@ import com.backend.crosswords.corpus.enums.Source;
 import com.backend.crosswords.corpus.models.*;
 import com.backend.crosswords.corpus.repositories.elasticsearch.DigestSubscriptionSearchRepository;
 import com.backend.crosswords.corpus.repositories.jpa.DigestSubscriptionRepository;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.modelmapper.ModelMapper;
 import org.opensearch.data.client.orhlc.NativeSearchQueryBuilder;
 import org.opensearch.index.query.QueryBuilder;
@@ -387,5 +389,28 @@ public class DigestSubscriptionService {
             }
         }
         return new CheckAccessDTO(isAvailable);
+    }
+
+    public MostRatedDigestSubscriptionsDTO getMostRatedSubscriptionsAndTransformIntoDTO(Integer amount) {
+        var subscriptions = subscriptionRepository.findMostRatedSubscriptions(PageRequest.of(0, amount));
+        List<MostRatedDigestSubscriptionDTO> mostRatedDigestSubscriptionDTOs = new ArrayList<>();
+        for (var subscription : subscriptions) {
+            MostRatedDigestSubscriptionDTO mostRatedSubscriptionDTO = new MostRatedDigestSubscriptionDTO();
+            var usersSubscriptionES = subscriptionSearchRepository.findById(subscription.getId()).orElseThrow(() -> new NoSuchElementException("There is no subscriptions with such id!"));
+            mostRatedSubscriptionDTO.setDate(subscription.getCreatedAt());
+            mostRatedSubscriptionDTO.setDescription(subscription.getDescription());
+            mostRatedSubscriptionDTO.setTitle(usersSubscriptionES.getTitle());
+            mostRatedSubscriptionDTO.setId(subscription.getId());
+            if (subscription.getTemplate() != null) {
+                for (var source : subscription.getTemplate().getSources()) {
+                    mostRatedSubscriptionDTO.getSources().add(source.getRussianName());
+                }
+                for (var tag : subscription.getTemplate().getTags()) {
+                    mostRatedSubscriptionDTO.getTags().add(tag.getName());
+                }
+            }
+            mostRatedDigestSubscriptionDTOs.add(mostRatedSubscriptionDTO);
+        }
+        return new MostRatedDigestSubscriptionsDTO(mostRatedDigestSubscriptionDTOs);
     }
 }
