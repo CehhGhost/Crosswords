@@ -247,4 +247,9 @@ public class DigestSubscriptionController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
+
+    @GetMapping("/most_rated")
+    public ResponseEntity<?> getMostRatedSubscriptions(@RequestParam Integer amount) {
+        return ResponseEntity.ok(digestSubscriptionService.getMostRatedSubscriptionsAndTransformIntoDTO(amount));
+    }
 }

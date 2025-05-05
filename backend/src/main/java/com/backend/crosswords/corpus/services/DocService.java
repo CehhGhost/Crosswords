@@ -257,8 +257,15 @@ public class DocService {
         if (rateDocDTO == null) {
             return;
         }
-        if (rateDocDTO.getClassificationRating() < 1 || rateDocDTO.getClassificationRating() > 5 || rateDocDTO.getSummaryRating() < 1 || rateDocDTO.getSummaryRating() > 5) {
-            throw new IllegalArgumentException("Rating's arguments must be in range of 1 to 5!");
+        if (rateDocDTO.getClassificationRating() != null) {
+            if (rateDocDTO.getClassificationRating() < 1 || rateDocDTO.getClassificationRating() > 5) {
+                throw new IllegalArgumentException("Classification rating's arguments must be in range of 1 to 5!");
+            }
+        }
+        if (rateDocDTO.getSummaryRating() != null) {
+            if (rateDocDTO.getSummaryRating() < 1 || rateDocDTO.getSummaryRating() > 5) {
+                throw new IllegalArgumentException("Summary rating's arguments must be in range of 1 to 5!");
+            }
         }
         DocMeta doc;
 
