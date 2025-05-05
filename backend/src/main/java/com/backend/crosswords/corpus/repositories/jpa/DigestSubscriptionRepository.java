@@ -43,8 +43,9 @@ public interface DigestSubscriptionRepository extends JpaRepository<DigestSubscr
     JOIN ds.digests d
     JOIN d.core c
     LEFT JOIN c.ratings r
+    WHERE ds.isPublic = true
     GROUP BY ds
     ORDER BY AVG(r.digestCoreRating) DESC
-""")
+    """)
     List<DigestSubscription> findMostRatedSubscriptions(Pageable pageable);
 }
