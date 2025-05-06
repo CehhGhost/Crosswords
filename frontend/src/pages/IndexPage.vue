@@ -35,14 +35,20 @@
 import { ref } from 'vue'
 import DefaultButton from '../components/DefaultButton.vue'
 import SourceCard from '../components/SourceCard.vue'
+import kommersantLogo from "/src/assets/kommersant.jpg"
+import CBRULogo from "/src/assets/CBRU.jpg"
+import interfaxLogo from "/src/assets/interfax.jpg"
+import CBTJLogo from "/src/assets/CBTJ.jpg"
+import CBKGLogo from "/src/assets/CBKG.jpg"
+import CBUZLogo from "/src/assets/CBUZ.jpg"
 
 const sources = ref([
-  { name: 'Издательство 1', background: '/src/assets/kommersant.jpg' },
-  { name: 'Издательство 2', background: '/src/assets/CBRU.jpg' },
-  { name: 'Издательство 3', background: '/src/assets/interfax.jpg' },
-  { name: 'Издательство 5', background: '/src/assets/CBTJ.jpg' },
-  { name: 'Издательство 6', background: '/src/assets/ria.jpg' },
-  { name: 'Издательство 4', background: '/src/assets/CBUZ.jpg' }
+  { name: 'Издательство 1', background: kommersantLogo },
+  { name: 'Издательство 2', background: CBRULogo },
+  { name: 'Издательство 3', background: interfaxLogo },
+  { name: 'Издательство 5', background: CBTJLogo },
+  { name: 'Издательство 6', background: CBKGLogo },
+  { name: 'Издательство 4', background: CBUZLogo }
 ])
 </script>
 
