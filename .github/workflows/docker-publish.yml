@@ -24,7 +24,7 @@ jobs:
 
       # Шаг 3: Сборка JAR-файла
       - name: Build JAR file
-        run: mvn clean package -DskipTests
+        run: mvn -f backend/pom.xml clean package -DskipTests
 
       # Шаг 4: Настройка Docker Buildx
       - name: Set up Docker Buildx
@@ -41,13 +41,14 @@ jobs:
       - name: Get version from pom.xml
         id: version
         run: |
-          echo "::set-output name=VERSION::$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)"
+          echo "VERSION=$(mvn -f backend/pom.xml help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_OUTPUT
 
       # Шаг 7: Сборка и публикация Docker-образа
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
-          context: .  # Контекст сборки (текущая директория)
+          context: backend # Контекст сборки - папка backend
+          file: backend/Dockerfile # Явное указание Dockerfile
           push: true  # Публиковать образ после сборки
           tags: |
             cehhghost/crosswords_backend:latest
