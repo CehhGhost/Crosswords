@@ -142,5 +142,5 @@ export const availableSources = [
     { label: "Английский", value: "ENG"},
   ];
 
-  export const backendURL = "http://localhost:8081/"
+  export const backendURL = "/api/"
   

@@ -246,6 +246,8 @@ import FilterSelector from 'src/components/FilterSelector.vue'
 import LockedContent from 'src/components/LockedContent.vue'
 import ServerResponseSpinner from 'src/components/ServerResponseSpinner.vue'
 import { availableTags, availableSources, backendURL } from '../data/lookups.js'
+import { getImageAssetPath } from 'src/data/imageLoader'
+import defaultImage from "/src/assets/default.jpg"
 
 const $q = useQuasar()
 const router = useRouter()
@@ -298,13 +300,18 @@ const formatToISO = (str) => {
 
 const getDigestPic = (digest) => {
   if (!digest.tags || !digest.tags.length) {
-    return 'images/default.jpg'
+    return defaultImage // ← лежит в public/images/
   }
+
   for (const tagValue of digest.tags) {
     const found = availableTags.find((t) => t.value === tagValue)
-    if (found?.digest_pic) return found.digest_pic
+    if (found?.digest_pic) {
+      const assetPath = getImageAssetPath(found.digest_pic)
+      if (assetPath) return assetPath
+    }
   }
-  return 'images/default.jpg'
+
+  return defaultImage
 }
 
 const getLeftStyle = (digest) => {

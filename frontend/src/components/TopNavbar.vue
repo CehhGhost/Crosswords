@@ -17,7 +17,7 @@
         <q-toolbar-title>
           <router-link to="/" class="flex items-center no-underline text-black">
             <q-img
-  src="../assets/crosswords.png"
+  :src="logo"
   alt="логотип"
   style="width: 120px; max-width: 100%;"
 />
@@ -100,6 +100,7 @@ import { useQuasar } from 'quasar'
 import TopNavBarButton from '../components/TopNavbarButton.vue'
 import { backendURL } from 'src/data/lookups'
 import { emitter } from 'src/boot/emitter' 
+import logo from 'src/assets/crosswords.png'
 
 const drawerOpen = ref(false)
 function toggleDrawer() {
