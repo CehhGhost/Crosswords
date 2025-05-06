@@ -38,14 +38,14 @@ public interface DigestSubscriptionRepository extends JpaRepository<DigestSubscr
     """)
     Double calculateAverageRating(@Param("subscriptionId") Long subscriptionId);
     @Query("""
-    SELECT ds, AVG(r.digestCoreRating)
+    SELECT ds, COALESCE(AVG(r.digestCoreRating), -1.0)
     FROM DigestSubscription ds
     JOIN ds.digests d
     JOIN d.core c
     LEFT JOIN c.ratings r
     WHERE ds.isPublic = true
     GROUP BY ds
-    ORDER BY AVG(r.digestCoreRating) DESC
-    """)
+    ORDER BY COALESCE(AVG(r.digestCoreRating), -1.0) DESC
+""")
     List<DigestSubscription> findMostRatedSubscriptions(Pageable pageable);
 }
