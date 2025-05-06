@@ -62,7 +62,9 @@ public class DigestSubscriptionSettingsService {
         List<User> newFollowers = new ArrayList<>();
         List<DigestSubscriptionSettings> oldSubscriptionSettings = new ArrayList<>();
         List<DigestSubscriptionSettings> userSettingsList = new ArrayList<>();
-        for (int i = 0, j = 0; i < oldFollowers.size() && j < followers.size(); ) {
+        int i;
+        int j;
+        for (i = 0, j = 0; i < oldFollowers.size() && j < followers.size(); ) {
             var oldFollower = oldFollowers.get(i).getSubscriber();
             var follower = followers.get(j);
             var compare = oldFollower.getUsername().compareTo(follower.getUsername());
@@ -98,6 +100,18 @@ public class DigestSubscriptionSettingsService {
                 );
                 ++i;
             }
+        }
+        for (; i < oldFollowers.size(); ++i) {
+            var oldFollower = oldFollowers.get(i).getSubscriber();
+            oldSubscriptionSettings.add(subscriptionSettingsRepository
+                    .findById(new DigestSubscriptionSettingsId(subscription.getId(), oldFollower.getId())).orElseThrow(
+                            () -> new NoSuchElementException("There is no settings between these user and subscription!"))
+            );
+        }
+        for (; j < followers.size(); ++j) {
+            var follower = followers.get(j);
+            newFollowers.add(follower);
+            ++j;
         }
         subscriptionSettingsRepository.deleteAll(oldSubscriptionSettings);
         for (var user : newFollowers) {
