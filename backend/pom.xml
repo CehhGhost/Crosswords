@@ -103,16 +103,16 @@
 	</dependencies>
 
 	<build>
-		<sourceDirectory>backend/src/main/java</sourceDirectory>
+		<sourceDirectory>src/main/java</sourceDirectory>
 		<resources>
 			<resource>
-				<directory>backend/src/main/resources</directory>
+				<directory>src/main/resources</directory>
 			</resource>
 		</resources>
-		<testSourceDirectory>backend/src/test/java</testSourceDirectory>
+		<testSourceDirectory>src/test/java</testSourceDirectory>
 		<testResources>
 			<testResource>
-				<directory>backend/src/test/resources</directory>
+				<directory>src/test/resources</directory>
 			</testResource>
 		</testResources>
 		<plugins>
