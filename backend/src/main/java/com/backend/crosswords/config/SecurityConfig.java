@@ -47,6 +47,7 @@ public class SecurityConfig {
                 .exceptionHandling(h -> h.authenticationEntryPoint(unauthorizedHandler))
                 .securityMatcher("/**")
                 .authorizeHttpRequests(registry -> registry
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(HttpMethod.PATCH, "/documents/{id}/rate").authenticated()
                         .requestMatchers(HttpMethod.POST, "/documents/{id}/add_to_favourites").authenticated()
                         .requestMatchers(HttpMethod.POST, "/documents/{id}/remove_from_favourites").authenticated()
