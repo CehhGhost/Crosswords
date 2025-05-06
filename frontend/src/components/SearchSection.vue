@@ -39,7 +39,7 @@
       />
     </div>
 
-    <div v-if="search_mode === 'exact'" class="q-my-sm">
+    <div v-if="search_mode === 'semantic' || search_mode === 'exact'" class="q-my-sm">
       <q-checkbox
         v-model="search_in_text"
         label="Искать в тексте (иначе только по названию)"
@@ -234,7 +234,7 @@ function emitSearch() {
     }
   }
 
-  if (search_mode.value === 'exact') {
+  if (search_mode.value === 'exact' || search_mode.value === 'semantic') {
     payload.search_in_text = search_in_text.value
   }
 
