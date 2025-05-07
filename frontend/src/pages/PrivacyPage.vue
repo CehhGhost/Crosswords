@@ -153,8 +153,8 @@ const mobile_notifications = ref(false)
 
 onMounted(async () => {
   try {
-    const resp = await fetch(`${backendURL}users/personal_info`, { credentials: 'include' })
-    const data = await resp.json()
+    const response = await fetch(`${backendURL}users/personal_info`, { credentials: 'include' })
+    const data = await response.json()
     first_name.value = data.first_name
     last_name.value = data.second_name
     username.value = data.username
@@ -180,13 +180,13 @@ async function updateSubscriptions() {
       personal_send_to_mail: personal_send_to_mail.value,
       personal_mobile_notifications: personal_mobile_notifications.value
     }
-    const res = await fetch(`${backendURL}users/subscription_settings/set`, {
+    const response = await fetch(`${backendURL}users/subscription_settings/set`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
       body: JSON.stringify(payload)
     })
-    if (!res.ok) throw new Error(`Status ${res.status}`)
+    if (!response.ok) throw new Error(`Status ${response.status}`)
     $q.notify({
       type: 'positive',
       message: 'Настройки уведомлений сохранены',
@@ -202,21 +202,21 @@ async function updateSubscriptions() {
 
 async function updateEmail() {
   try {
-    const res = await fetch(`${backendURL}users/change/email`, {
+    const response = await fetch(`${backendURL}users/change/email`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
       body: JSON.stringify({ new_email: email.value })
     })
-    if (res.ok) {
+    if (response.ok) {
       $q.notify({ type: 'positive', message: 'Email успешно обновлён', position: 'top' })
-      const data = await res.json()
+      const data = await response.json()
       email.value = data.email
       static_email.value = data.email
       username.value = data.username
-    } else if (res.status === 401) {
+    } else if (response.status === 401) {
       router.replace('/login')
-    } else if (res.status === 400) {
+    } else if (response.status === 400) {
       $q.notify({ type: 'negative', message: 'Новый email не может быть таким же, как старый или пустым', position: 'top' })
     } else {
       $q.notify({ type: 'negative', message: 'Ошибка при обновлении email', position: 'top' })
@@ -229,7 +229,7 @@ async function updateEmail() {
 
 async function updatePassword() {
   try {
-    const res = await fetch(`${backendURL}users/change/password`, {
+    const response = await fetch(`${backendURL}users/change/password`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -237,13 +237,13 @@ async function updatePassword() {
     })
     oldPassword.value = ''
     newPassword.value = ''
-    if (res.ok) {
+    if (response.ok) {
       $q.notify({ type: 'positive', message: 'Пароль успешно обновлён', position: 'top' })
-    } else if (res.status === 401) {
+    } else if (response.status === 401) {
       router.replace('/login')
-    } else if (res.status === 403) {
+    } else if (response.status === 403) {
       $q.notify({ type: 'negative', message: 'Неверный старый пароль', position: 'top' })
-    } else if (res.status === 400) {
+    } else if (response.status === 400) {
       $q.notify({ type: 'negative', message: 'Новый пароль не может быть таким же, как старый или пустым', position: 'top' })
     } else {
       $q.notify({ type: 'negative', message: 'Ошибка при обновлении пароля', position: 'top' })
@@ -255,9 +255,9 @@ async function updatePassword() {
 }
 
 async function logout() {
-  const res = await fetch(`${backendURL}users/logout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include' })
-  if (!res.ok) {
-    if (res.status === 401) router.replace('/login')
+  const response = await fetch(`${backendURL}users/logout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include' })
+  if (!response.ok) {
+    if (response.status === 401) router.replace('/login')
     else $q.notify({ type: 'negative', message: 'Ошибка при выходе из аккаунта', position: 'top' })
     return
   }
@@ -267,9 +267,9 @@ async function logout() {
 }
 
 async function globalLogout() {
-  const res = await fetch(`${backendURL}users/logout/full`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include' })
-  if (!res.ok) {
-    if (res.status === 401) router.replace('/login')
+  const response = await fetch(`${backendURL}users/logout/full`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include' })
+  if (!response.ok) {
+    if (response.status === 401) router.replace('/login')
     else $q.notify({ type: 'negative', message: 'Ошибка при выходе из аккаунта', position: 'top' })
     return
   }

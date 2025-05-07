@@ -56,7 +56,7 @@ watch(
     selected.value = newVal
   }
 )
-// Emit updates
+
 watch(
   selected,
   newVal => {

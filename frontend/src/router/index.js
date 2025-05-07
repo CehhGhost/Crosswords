@@ -45,12 +45,11 @@ export default defineRouter(function (/* { store, ssrContext } */) {
         .catch(() => next({ name: 'home' }))
         return
     }
-    
+    console.log("AAAAAAa")
     if (!to.meta.requiresAuth) {
       return next()
     }
 
-    // Запрашиваем данные о пользователе. HttpOnly cookie отправляются автоматически
     fetch(backendURL + 'users/check_auth', { credentials: 'include' })
       .then((response) => {
         if (!response.ok) {
