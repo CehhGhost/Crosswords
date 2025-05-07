@@ -162,6 +162,7 @@ public class DocService {
         }
         QueryBuilder filterBuilder = QueryBuilders.termsQuery("id", filtersIds);
         searchQueryBuilder.withFilter(filterBuilder);
+        String field = searchDocDTO.getSearchInText() != null && searchDocDTO.getSearchInText() ? "text" : "title";
         if (searchDocDTO.getSearchTerm() != null && !searchDocDTO.getSearchTerm().equals("") && searchDocDTO.getSearchMode() != null)
         {
             switch (searchDocDTO.getSearchMode()) {
@@ -174,13 +175,13 @@ public class DocService {
                         return this.formSearchResultDTO(searchDocDTO.getPageNumber(), resultHits);
                     }
                     queryBuilder = QueryBuilders.boolQuery()
-                            .should(QueryBuilders.matchQuery("text", searchDocDTO.getSearchTerm()).fuzziness(Fuzziness.AUTO))
-                            .should(QueryBuilders.matchPhraseQuery("text", searchDocDTO.getSearchTerm())).boost(2.0F);
+                            .should(QueryBuilders.matchQuery(field, searchDocDTO.getSearchTerm()).fuzziness(Fuzziness.AUTO))
+                            .should(QueryBuilders.matchPhraseQuery(field, searchDocDTO.getSearchTerm())).boost(2.0F);
                     /*float percentage = searchDocDTO.getApprovalPercentage() == null ? 0.5F : searchDocDTO.getApprovalPercentage();
                     minScore = searchDocDTO.getSearchTerm().split(" ").length * percentage;*/
                 }
                 case "certain", "exact" -> {
-                    queryBuilder = QueryBuilders.matchPhraseQuery("text", searchDocDTO.getSearchTerm());
+                    queryBuilder = QueryBuilders.matchPhraseQuery(field, searchDocDTO.getSearchTerm());
                 }
                 default -> throw new IllegalArgumentException("There is no such search modes!");
             }

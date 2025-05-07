@@ -51,6 +51,9 @@ public class SearchDocDTO {
     @JsonProperty("matches_per_page")
     private Integer matchesPerPage;
 
+    @JsonProperty("search_in_text")
+    private Boolean searchInText;
+
     @Schema(
             description = "The list of probable languages, if document's language contains in them, then it gets through",
             example = "[\"RU\"]"
@@ -162,6 +165,14 @@ public class SearchDocDTO {
         this.folders = folders;
     }
 
+    public Boolean getSearchInText() {
+        return searchInText;
+    }
+
+    public void setSearchInText(Boolean searchInText) {
+        this.searchInText = searchInText;
+    }
+
     @Override
     public String toString() {
         return "SearchDocDTO{" +
@@ -171,6 +182,7 @@ public class SearchDocDTO {
                 ", dateTo=" + dateTo +
                 ", pageNumber=" + pageNumber +
                 ", matchesPerPage=" + matchesPerPage +
+                ", searchInText=" + searchInText +
                 ", language=" + language +
                 ", sources=" + sources +
                 ", tags=" + tags +
