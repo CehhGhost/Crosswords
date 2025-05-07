@@ -11,15 +11,22 @@ services:
       - opensearch
     networks:
       - shared_network
-
+    environment:
+      OPENSEARCH_URIS: http://node-0.example.com:9200
+      OPENSEARCH_USERNAME: ${OPENSEARCH_USERNAME}
+      OPENSEARCH_PASSWORD: ${OPENSEARCH_PASSWORD}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://backend-postgres:5432/crossword_new
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: ${SPRING_JPA_HIBERNATE_DDL_AUTO}
+      SPRING_JPA_PROPERTIES_HIBERNATE_SHOW_SQL: ${SPRING_JPA_PROPERTIES_HIBERNATE_SHOW_SQL}
+      JWT_SECRET: ${JWT_SECRET}
   postgres:
     image: postgres:13
-    ports:
-      - "5432:5432"  # Пробрасываем порт PostgreSQL
     environment:
       POSTGRES_DB: crossword_new
-      POSTGRES_USER: crossword_new
-      POSTGRES_PASSWORD: 1234567890
+      POSTGRES_USER: ${SPRING_DATASOURCE_USERNAME}
+      POSTGRES_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
     volumes:
       - postgres-data:/var/lib/postgresql/data
     networks:
@@ -29,12 +36,10 @@ services:
 
   opensearch:
     image: opensearchproject/opensearch:2.11.0  # Используем OpenSearch вместо Elasticsearch
-    ports:
-      - "9200:9200"  # Пробрасываем порт OpenSearch
     environment:
       discovery.type: single-node
       plugins.security.disabled: "true"
-      OPENSEARCH_INITIAL_ADMIN_PASSWORD: "CBsZ6#9kHxb"
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: ${OPENSEARCH_PASSWORD}
       OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
       DISABLE_INSTALL_DEMO_CONFIG: "false"
       plugins.security.ssl.http.enabled: "false"
