@@ -22,8 +22,9 @@ public class DigestGeneratorService {
     }
     public Mono<String> generateDigest(GenerateDigestDTO request) {
         return webClient.post()
-                .uri("/")
-                .bodyValue("{\"documents\":[{\"text\":\"test\"}]}")
+                .uri(properties.getGenerateDigestPath())
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(request)
                 .retrieve()
                 .bodyToMono(GenerateDigestResponseDTO.class)
                 .timeout(Duration.ofMillis(properties.getResponseTimeout()))
