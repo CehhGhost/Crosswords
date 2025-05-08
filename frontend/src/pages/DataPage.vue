@@ -246,7 +246,6 @@ const downloadFolder = async (folderName) => {
   }
 }
 
-// Управление удалением папки с подтверждением через диалог
 const deleteDialog = ref(false)
 const folderToDelete = ref(null)
 

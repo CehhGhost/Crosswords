@@ -86,7 +86,6 @@ function toggleMenu() {
   fetchFolders()
 }
 
-// Получение списка папок через fetch
 async function fetchFolders() {
   console.log('fetching folders...')
   loading.value = true
@@ -105,7 +104,6 @@ async function fetchFolders() {
       }
     }
     const data = await response.json()
-    // Ожидается, что бекенд вернет объект: { folders: [ { name, is_included } ] }
     folders.value = data.folders.map((folder) => ({ ...folder, pending: false }))
   } catch (error) {
     errorMsg.value = error.message || 'Ошибка при загрузке папок'
@@ -115,7 +113,6 @@ async function fetchFolders() {
   }
 }
 
-// Переключает состояние папки: добавление или удаление документа
 async function toggleFolder(folder) {
   if (folder.pending) return
   errorMsg.value = ''
@@ -158,21 +155,18 @@ async function toggleFolder(folder) {
   }
 }
 
-// Показывает поле для ввода названия новой папки
 function showNewFolderInput() {
   newFolderVisible.value = true
   errorMsg.value = ''
   newFolderName.value = ''
 }
 
-// Отмена создания новой папки
 function cancelNewFolder() {
   newFolderVisible.value = false
   newFolderName.value = ''
   errorMsg.value = ''
 }
 
-// Создание новой папки с проверкой на существование
 async function createFolder() {
   errorMsg.value = ''
   const trimmedName = newFolderName.value.trim()
@@ -180,7 +174,6 @@ async function createFolder() {
     errorMsg.value = 'Название папки не может быть пустым'
     return
   }
-  // Проверка: папка с таким названием уже существует
   const exists = folders.value.some(
     (folder) => folder.name.toLowerCase() === trimmedName.toLowerCase(),
   )
@@ -201,7 +194,6 @@ async function createFolder() {
       }),
     })
     if (!response.ok) {
-      // Пытаемся извлечь сообщение об ошибке из ответа
       let errMsg = 'Ошибка при создании папки'
       try {
         const errData = await response.json()
@@ -213,7 +205,6 @@ async function createFolder() {
       }
       throw new Error(errMsg)
     }
-    // Добавляем новую папку в список (документ в неё не добавляется)
     folders.value.push({
       name: trimmedName,
       is_included: false,
@@ -233,7 +224,6 @@ async function createFolder() {
   display: inline-block;
 }
 
-/* Обрезаем длинное названия папки многоточием TODO обощить этот класс*/
 .folder-name {
   display: inline-block;
   max-width: 200px;

@@ -26,7 +26,6 @@
 <script setup>
 import { ref, watch, computed } from 'vue'
 
-// Пропы компонента
 const props = defineProps({
   label: { type: String, required: true },
   options: { type: Array, required: true },
@@ -39,13 +38,10 @@ const props = defineProps({
   required: { type: Boolean, default: false }
 })
 
-// Эмитим событие обновления v-model
 const emit = defineEmits(['update:modelValue'])
 
-// Внутреннее состояние фильтрованных опций
 const filteredOptions = ref([...props.options])
 
-// Слежка за изменениями исходных опций
 watch(
   () => props.options,
   (newOpts) => {
@@ -53,7 +49,6 @@ watch(
   }
 )
 
-// Доступ к v-model через computed
 const innerValue = computed({
   get() {
     return props.modelValue
@@ -63,7 +58,6 @@ const innerValue = computed({
   }
 })
 
-// Функция фильтрации опций
 function filterItems(val, update) {
   update(() => {
     filteredOptions.value = props.options.filter(option =>

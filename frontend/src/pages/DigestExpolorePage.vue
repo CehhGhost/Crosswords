@@ -1,6 +1,7 @@
 <template>
   <ServerResponseSpinner v-if="isLoading" />
   <q-page v-else class="flex flex-center">
+    <ConfirmEmailBanner />
     <div class="full-width q-pa-md page-body">
       <q-carousel
         v-if="featuredDigests.length"
@@ -248,6 +249,7 @@ import ServerResponseSpinner from 'src/components/ServerResponseSpinner.vue'
 import { availableTags, availableSources, backendURL } from '../data/lookups.js'
 import { getImageAssetPath } from 'src/data/imageLoader'
 import defaultImage from "/src/assets/default.jpg"
+import ConfirmEmailBanner from 'src/components/ConfirmEmailBanner.vue'
 
 const $q = useQuasar()
 const router = useRouter()
@@ -397,7 +399,6 @@ const resetFilters = () => {
   subscribeOnly.value = false
 }
 
-// Lifecycle
 onMounted(async () => {
   try {
     await Promise.all([fetchFeaturedDigests(), fetchDigests(false)])

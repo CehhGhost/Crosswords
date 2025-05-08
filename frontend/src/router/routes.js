@@ -14,6 +14,11 @@ const routes = [
         component: () => import('../pages/RegisterPage.vue')
       },
       {
+        path: 'confirm-email',
+        name: 'confirm-email',
+        component: () => import('../pages/EmailConfirmPage.vue')
+      },
+      {
         path: '',
         name: 'home',
         component: () => import('../pages/IndexPage.vue'),
@@ -75,7 +80,6 @@ const routes = [
     ],
   },
 
-  // Маршрут с боковым меню для страниц privacy и data
   {
     path: '/privacy',
     component: () => import('../layouts/SidebarLayout.vue'),
@@ -84,7 +88,7 @@ const routes = [
         path: '',
         name: 'privacy',
         component: () => import('../pages/PrivacyPage.vue'),
-        // meta: { requiresAuth: true }
+        meta: { requiresAuth: true }
       }
     ]
   },
@@ -95,13 +99,12 @@ const routes = [
       {
         path: '',
         name: 'data',
-        component: () => import('../pages/DataPage.vue')
-        // meta: { requiresAuth: true}
+        component: () => import('../pages/DataPage.vue'),
+        meta: { requiresAuth: true}
       }
     ]
   },
 
-  // Маршрут страницы 404 — для всех несуществующих ссылок
   {
     path: '/:catchAll(.*)*',
     name: '404',

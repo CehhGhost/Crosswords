@@ -12,7 +12,6 @@ import { useQuasar } from 'quasar';
 
 const $q = useQuasar();
 
-// Изначальный URL без параметра theme
 const grafanaUrl = ref('');
 const initialGrafanaUrl = 'http://localhost:4000'; 
 
@@ -23,12 +22,10 @@ const updateGrafanaUrl = () => {
   grafanaUrl.value = `${initialGrafanaUrl}${path}?theme=${theme}`;
 };
 
-// При изменении темы обновляем URL
 watchEffect(() => {
-  updateGrafanaUrl(); // Обновляем URL при изменении темы
+  updateGrafanaUrl();
 });
 
-// Для первоначальной загрузки страницы
 updateGrafanaUrl();
 </script>
 
