@@ -20,16 +20,16 @@
 </template>
 
 <script setup>
+import { backendURL } from 'src/data/lookups'
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
 const showBanner = ref(false)
 const router = useRouter()
-const endpoint = 'https://f428f470bdb54ea3b01575a06aea4778.api.mockbin.io/'
 
 onMounted(async () => {
   try {
-    const response = await fetch(endpoint, {
+    const response = await fetch(backendURL + "users/check_verification", {
       credentials: 'include',
     })
 

@@ -187,10 +187,13 @@ const saveFolder = async (index) => {
   // Если дошли сюда, значит обновление разрешено (даже если изменение только регистра)
   folder.loading = true
   try {
-    const response = await fetch('https://8be73c6cb1434fa6a55467ff489377b5.api.mockbin.io/', {
-      method: 'POST',
+    const params = new URLSearchParams()
+    params.append('new_name', newName)
+    const response = await fetch(
+      // 'https://8be73c6cb1434fa6a55467ff489377b5.api.mockbin.io/'
+      backendURL + `packages/${folder.name}/change_name?${params.toString()}`, {
+      method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ oldName: folder.name, newName }),
       credentials: 'include',
     })
     folder.loading = false
@@ -216,7 +219,6 @@ const downloadFolder = async (folderName) => {
   try {
     const params = new URLSearchParams()
     params.append('include_annotations', includeAnnotations.value.toString())
-    console.log(backendURL + `packages/${encodeURIComponent(folderName)}/docs?${params.toString()}`)
     const response = await fetch(backendURL + `packages/${folderName}/docs?${params.toString()}`, {
       method: 'GET',
       credentials: 'include',
@@ -258,7 +260,6 @@ const confirmDelete = async () => {
   if (folderToDelete.value !== null) {
     try {
       const folder = folders.value[folderToDelete.value.index]
-      console.log(backendURL + `packages/${folder.name}`)
       const response = await fetch(backendURL + `packages/${folder.name}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },

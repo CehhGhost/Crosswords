@@ -262,7 +262,6 @@ const performSave = async () => {
       last_edit: now,
     }
 
-    console.log(JSON.stringify(body))
     const response = await fetch(`${backendURL}documents/${article.id}/edit`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },

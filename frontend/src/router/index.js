@@ -27,7 +27,6 @@ export default defineRouter(function (/* { store, ssrContext } */) {
       const url = to.meta.checkDigestViewPermission
         ? backendURL + `digests/${to.params.id}/check_access`
         : backendURL + `subscriptions/${to.params.id}/check_access`
-        console.log(url)
       fetch(url, { credentials: 'include' })
         .then((response) => {
           if (!response.ok) {
@@ -36,7 +35,6 @@ export default defineRouter(function (/* { store, ssrContext } */) {
           return response.json()
         })
         .then((data) => {
-          console.log(data)
           if (data.available) {
             return next()
           }
@@ -45,7 +43,6 @@ export default defineRouter(function (/* { store, ssrContext } */) {
         .catch(() => next({ name: 'home' }))
         return
     }
-    console.log("AAAAAAa")
     if (!to.meta.requiresAuth) {
       return next()
     }
@@ -71,10 +68,8 @@ export default defineRouter(function (/* { store, ssrContext } */) {
           )
             .then((response) => {
               if (!response.ok) {
-                console.log('response not ok')
                 throw new Error('Not authorized')
               }
-              console.log(`/subscriptions/${to.params.id}/check_ownership`)
               return response.json() // вот тут
             })
             .then((data) => {

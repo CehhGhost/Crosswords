@@ -60,6 +60,7 @@ import { useRouter } from 'vue-router'
 import {useQuasar} from 'quasar'
 
 import ServerResponseSpinner from 'src/components/ServerResponseSpinner.vue'
+import { backendURL } from 'src/data/lookups'
 
 const router = useRouter()
 const $q = useQuasar()
@@ -127,8 +128,9 @@ const sending = ref(false)
 
 async function requestConfirmation() {
   try {
-    const response = await fetch('https://7081c1c201184e178498fb3b23f0be3c.api.mockbin.io/', {
+    const response = await fetch(backendURL + 'users/verification_code/send', {
       method: 'POST',
+      credentials: 'include'
     })
     if (!response.ok) {
       if (response.status === 401) {
@@ -156,13 +158,14 @@ async function submitCode() {
   if (code.value.length !== 6) return
   sending.value = true
   try {
-    const response = await fetch('/api/email/confirm-code', {
+    const response = await fetch(backendURL + 'users/verification_code/check', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ code: code.value }),
     })
     if (response.ok) {
-      router.push('/success')
+      router.replace('/')
     } else {
       digits.fill('')
       focusBox(0)

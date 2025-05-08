@@ -127,9 +127,7 @@ onBeforeUnmount(() => {
 
 async function checkAuth() {
   try {
-    console.log('Проверка авторизации...')
     const response = await fetch(backendURL + 'users/check_auth', { credentials: 'include' })
-    console.log(response.json())
     if (response.ok) {
       isAuthenticated.value = true
       console.log('Пользователь авторизован')

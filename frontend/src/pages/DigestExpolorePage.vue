@@ -1,7 +1,7 @@
 <template>
   <ServerResponseSpinner v-if="isLoading" />
   <q-page v-else class="flex flex-center">
-    <ConfirmEmailBanner />
+    <ConfirmEmailBanner v-if="isAuthed"/>
     <div class="full-width q-pa-md page-body">
       <q-carousel
         v-if="featuredDigests.length"
@@ -371,7 +371,6 @@ const fetchFeaturedDigests = async () => {
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
     })
-    console.log(backendURL + `subscriptions/most_rated?${params.toString()}`)
     if (!res.ok) throw new Error('Ошибка при получении featured дайджестов')
     const data = await res.json()
     featuredDigests.value = data.subscriptions || []

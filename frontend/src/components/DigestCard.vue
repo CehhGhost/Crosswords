@@ -93,7 +93,6 @@ const truncatedText = computed(() => {
 function viewDigest() {
   const path = `/digests/${props.digest.id}`
   router.push(path)
-  console.log(path)
 }
 
 async function downloadPdf() {
