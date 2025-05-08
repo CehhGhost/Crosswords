@@ -211,7 +211,7 @@ public class UserService {
     }
 
     public CheckUsersVerificationDTO checkUsersEmailVerification(User user) {
-        return new CheckUsersVerificationDTO(user.getVerified());
+        return new CheckUsersVerificationDTO(!user.getVerified());
     }
 
     public VerificatingEmailDTO sendVerificationCodeAndReturnVerificatingEmailInDTO(User user) throws ConnectionClosedException {
