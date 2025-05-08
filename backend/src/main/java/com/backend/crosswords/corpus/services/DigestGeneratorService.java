@@ -3,6 +3,7 @@ package com.backend.crosswords.corpus.services;
 import com.backend.crosswords.config.DigestGeneratorProperties;
 import com.backend.crosswords.corpus.dto.GenerateDigestDTO;
 import com.backend.crosswords.corpus.dto.GenerateDigestResponseDTO;
+import org.apache.http.ConnectionClosedException;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -20,15 +21,19 @@ public class DigestGeneratorService {
         this.webClient = webClient;
         this.properties = properties;
     }
-    public Mono<String> generateDigest(GenerateDigestDTO request) {
-        return webClient.post()
-                .uri(properties.getGenerateDigestPath())
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(request)
-                .retrieve()
-                .bodyToMono(GenerateDigestResponseDTO.class)
-                .timeout(Duration.ofMillis(properties.getResponseTimeout()))
-                .map(GenerateDigestResponseDTO::getResponse)
-                .onErrorResume(e -> Mono.just("Error: " + e.getMessage()));
+    public Mono<String> generateDigest(GenerateDigestDTO request) throws ConnectionClosedException {
+        try {
+            return webClient.post()
+                    .uri(properties.getGenerateDigestPath())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(request)
+                    .retrieve()
+                    .bodyToMono(GenerateDigestResponseDTO.class)
+                    .timeout(Duration.ofMillis(properties.getResponseTimeout()))
+                    .map(GenerateDigestResponseDTO::getResponse);
+                    // .onErrorResume(e -> Mono.just("Error: " + e.getMessage()));
+        } catch (Exception e) {
+            throw new ConnectionClosedException(e.getMessage());
+        }
     }
 }

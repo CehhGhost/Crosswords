@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.apache.http.ConnectionClosedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -304,6 +305,64 @@ public class UserController {
         CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
         GetPersonalInfoDTO personalInfoDTO = userService.getUsersPersonalInfoAndTransformIntoDTO(crosswordUserDetails.getUser());
         return ResponseEntity.ok(personalInfoDTO);
+    }
+    @Operation(
+            summary = "Check user's verification",
+            description = "This endpoint lets you check if user's email is verificated"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully checked user's verification", content = @Content(schema = @Schema(implementation = CheckUsersVerificationDTO.class))),
+            @ApiResponse(responseCode = "401", description = "You are trying to check user's verification while not authenticated")
+    })
+    @GetMapping("/check_verification")
+    public ResponseEntity<?> checkUsersEmailVerification() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+        var checkVerification = userService.checkUsersEmailVerification(crosswordUserDetails.getUser());
+        return ResponseEntity.ok(checkVerification);
+    }
+    @Operation(
+            summary = "Send user's verification code",
+            description = "This endpoint lets you send user's verification code on his email"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully sent user's verification code and got his email", content = @Content(schema = @Schema(implementation = VerificatingEmailDTO.class))),
+            @ApiResponse(responseCode = "401", description = "You are trying to send user's verification code while not authenticated"),
+            @ApiResponse(responseCode = "404", description = "Connection with mailman error")
+    })
+    @PostMapping("/verification_code/send")
+    public ResponseEntity<?> sendVerificationCode() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+        try {
+            var verificatingEmail = userService.sendVerificationCodeAndReturnVerificatingEmailInDTO(crosswordUserDetails.getUser());
+            return ResponseEntity.ok(verificatingEmail);
+        } catch (ConnectionClosedException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
+    @Operation(
+            summary = "Check user's verification code",
+            description = "This endpoint lets you check user's verification code"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully checked user's verification code"),
+            @ApiResponse(responseCode = "401", description = "You are trying to check user's verification code while not authenticated"),
+            @ApiResponse(responseCode = "404", description = "There is no verification code for this user"),
+            @ApiResponse(responseCode = "400", description = "Wrong verification code")
+    })
+    @PostMapping("/verification_code/check")
+    public ResponseEntity<?> checkVerificationCode(@RequestBody CheckVerificationCodeDTO checkVerificationCodeDTO) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+        try {
+            userService.checkVerificationCodeForUser(checkVerificationCodeDTO.getCode(), crosswordUserDetails.getUser());
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+        return ResponseEntity.ok(HttpStatus.OK);
     }
     // TODO добавить удаление пользователя, учтя тот факт, что перед удалением необходимо очистить связанные с ним данные
     /*@DeleteMapping("/{id}")

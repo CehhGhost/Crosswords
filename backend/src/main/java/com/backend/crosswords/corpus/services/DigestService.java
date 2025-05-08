@@ -8,6 +8,7 @@ import com.backend.crosswords.corpus.models.*;
 import com.backend.crosswords.corpus.repositories.elasticsearch.DigestSearchRepository;
 import com.backend.crosswords.corpus.repositories.jpa.DigestCoreRepository;
 import com.backend.crosswords.corpus.repositories.jpa.DigestRepository;
+import org.apache.http.ConnectionClosedException;
 import org.opensearch.data.client.orhlc.NativeSearchQueryBuilder;
 import org.opensearch.index.query.BoolQueryBuilder;
 import org.opensearch.index.query.IdsQueryBuilder;
@@ -58,7 +59,7 @@ public class DigestService {
         this.generatorService = generatorService;
     }
     @Transactional
-    protected DigestCore createNewDigestCore(DigestTemplate template) {
+    protected DigestCore createNewDigestCore(DigestTemplate template) throws ConnectionClosedException {
         template = templateService.getTemplateFromId(template.getUuid()); // необходимо, чтобы сделать полную загрузку данных, избегаю ленивую
         var docMetas = docService.getAllDocsByTemplateForToday(template);
         if (docMetas.size() == 0) {
@@ -82,14 +83,13 @@ public class DigestService {
         }
         var digestText = generatorService.generateDigest(generateDigestDTO).block();
         //var digestText = docMetasText.toString();
-        core.setText(digestText); // TODO добавить подключение к сервису создания дайджестов и получать текст от него
+        core.setText(digestText);
         core = coreRepository.save(core);
         return core;
     }
-    private void createNewDigests() {
+    private void createNewDigests() throws ConnectionClosedException {
         List<Digest> digests = new ArrayList<>();
         List<DigestES> digestsES = new ArrayList<>();
-        // var mailmanIsAvailable = mailManService.checkServiceAvailability().block();
         while (!templates.isEmpty()) {
             var template = templates.poll();
             var core = this.createNewDigestCore(template);
@@ -102,21 +102,20 @@ public class DigestService {
                     String digestESId = coreId + "-" + subscriptionId;
                     var digestES = new DigestES(digestESId, subscriptionService.getDigestSubscriptionsTitle(subscriptionId), core.getDate());
                     digestsES.add(digestES);
-                    /*if (mailmanIsAvailable != null && mailmanIsAvailable) {
-                        SendDigestByEmailsDTO sendDigestByEmailsDTO = new SendDigestByEmailsDTO();
-                        sendDigestByEmailsDTO.setTitle(digestES.getTitle());
-                        sendDigestByEmailsDTO.setText(core.getText());
-                        sendDigestByEmailsDTO.setWebLink("http://localhost:9000/digests/{id}");
-                        for (var subscriptionSettings : subscription.getSubscriptionSettings()) {
-                            var user = subscriptionSettings.getSubscriber();
-                            if (subscriptionSettings.getSendToMail()) {
-                                sendDigestByEmailsDTO.getRecipients().add(user.getEmail());
-                            }
+
+                    SendDigestByEmailsDTO sendDigestByEmailsDTO = new SendDigestByEmailsDTO();
+                    sendDigestByEmailsDTO.setTitle(digestES.getTitle());
+                    sendDigestByEmailsDTO.setText(core.getText());
+                    sendDigestByEmailsDTO.setWebLink("http://localhost/digests/" + digestESId); // TODO доделать с Максом
+                    for (var subscriptionSettings : subscription.getSubscriptionSettings()) {
+                        var user = subscriptionSettings.getSubscriber();
+                        if (user.getVerified() && subscriptionSettings.getSendToMail()) {
+                            sendDigestByEmailsDTO.getRecipients().add(user.getEmail());
                         }
-                        if (!sendDigestByEmailsDTO.getRecipients().isEmpty()) {
-                            mailManService.sendEmail(sendDigestByEmailsDTO).block();
-                        }
-                    }*/
+                    }
+                    if (!sendDigestByEmailsDTO.getRecipients().isEmpty()) {
+                        mailManService.sendEmail(sendDigestByEmailsDTO).block();
+                    }
                 }
             }
         }
@@ -125,7 +124,7 @@ public class DigestService {
     }
 
     @Scheduled(cron = "${scheduler.cron}")
-    public void scheduledDigestCreation() {
+    public void scheduledDigestCreation() throws ConnectionClosedException {
         startOfDay = Timestamp.valueOf(LocalDate.now().atStartOfDay());
         endOfDay = Timestamp.valueOf(LocalDate.now().plusDays(1).atStartOfDay());
         System.out.println("The start of creating digests");

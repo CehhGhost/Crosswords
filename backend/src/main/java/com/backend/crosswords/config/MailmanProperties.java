@@ -9,8 +9,8 @@ public class MailmanProperties {
     private String url;
     @Value("${mailman.send-email-path}")
     private String sendEmailPath;
-    @Value("${mailman.check-health-path}")
-    private String checkHealthPath;
+    @Value("${mailman.verify-email-path}")
+    private String verifyEmailPath;
     @Value("${mailman.connect-timeout}")
     private int connectTimeout;
     @Value("${mailman.response-timeout}")
@@ -32,7 +32,7 @@ public class MailmanProperties {
         return responseTimeout;
     }
 
-    public String getCheckHealthPath() {
-        return checkHealthPath;
+    public String getVerifyEmailPath() {
+        return verifyEmailPath;
     }
 }

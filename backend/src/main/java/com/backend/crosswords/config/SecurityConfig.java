@@ -55,6 +55,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/documents/{docId}/remove_from/{packageName}").authenticated()
                         .requestMatchers(HttpMethod.GET, "/users/check_auth").authenticated()
                         .requestMatchers(HttpMethod.GET, "/users/get_email").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/users/check_verification").authenticated()
+                        .requestMatchers("/users/verification_code/**").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/users/subscription_settings/set").authenticated()
                         .requestMatchers(HttpMethod.GET, "/users/personal_info").authenticated()
                         .requestMatchers(HttpMethod.POST, "/users/logout/**").authenticated()
