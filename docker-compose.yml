@@ -23,6 +23,7 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       BACKEND_SECRET_KEY: ${BACKEND_SECRET_KEY}
       DEFAULT_ADMINS_PASSWORD: ${DEFAULT_ADMINS_PASSWORD}
+      CREATE_SWAGGER: ${CREATE_SWAGGER}
   postgres:
     image: postgres:13
     environment:
