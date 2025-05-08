@@ -48,11 +48,11 @@ services:
     image: opensearchproject/opensearch:2.19.2  # Используем OpenSearch вместо Elasticsearch
     environment:
       discovery.type: single-node
-      plugins.security.disabled: "true"
+      plugins.security.disabled: "false"
       OPENSEARCH_INITIAL_ADMIN_PASSWORD: ${OPENSEARCH_PASSWORD}
       OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
       DISABLE_INSTALL_DEMO_CONFIG: "false"
-      plugins.security.ssl.http.enabled: "false"
+      plugins.security.ssl.http.enabled: "true"
     volumes:
       - opensearch-data:/usr/share/opensearch/data
     networks:
