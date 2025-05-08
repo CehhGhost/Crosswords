@@ -190,7 +190,6 @@ onMounted(async () => {
     }
 
     documentData.value = await response.json()
-    console.log('Документ загружен:', documentData.value)
   } catch (error) {
     console.error('Ошибка при загрузке документа:', error)
   } finally {
@@ -255,13 +254,11 @@ watch(
         },
       }))
 
-      console.log('Инициализация RecogitoJS, аннотации:', annotations)
       recogitoInstance.setAnnotations(annotations)
 
       recogitoInstance.on('createAnnotation', async (annotation, overrideId) => {
         // Получаем текст из annotation.body, если он есть
         const note = annotation.body && annotation.body[0] ? annotation.body[0].value : ''
-        console.log("AAAAAAAAAAAAAAAAAAA")
 
         // Ищем селектор с типом 'TextPositionSelector'
         const posSelector = annotation.target.selector.find(
@@ -270,7 +267,6 @@ watch(
         const quoteSelector = annotation.target.selector.find(
           (s) => s.type === 'TextQuoteSelector',
         )
-        console.log(quoteSelector)
         if (!quoteSelector.exact) {
           recogitoInstance.removeAnnotation(annotation)
           return
@@ -281,9 +277,6 @@ watch(
           end: posSelector ? posSelector.end : null,
           comments: [note],
         }
-
-        console.log(JSON.stringify(annotation))
-        console.log(JSON.stringify(payload))
 
         try {
           const response = await fetch(
@@ -296,7 +289,6 @@ watch(
               credentials: 'include',
             },
           )
-          console.log(payload)
           if (response.ok) {
             const data = await response.json()
             overrideId(data.id)
@@ -350,7 +342,6 @@ watch(
           end: posSelector ? posSelector.end : null,
           comments: annotation.body.map((bodyItem) => bodyItem.value),
         }
-        console.log(updatedPayload)
 
         try {
           const response = await fetch(

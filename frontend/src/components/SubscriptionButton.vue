@@ -127,7 +127,6 @@ async function sendSubscriptionUpdate() {
     mobile_notifications: mobile_notifications.value,
   }
   try {
-    console.log(getUpdateUrl())
     const response = await fetch(getUpdateUrl(), {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -143,7 +142,6 @@ async function sendSubscriptionUpdate() {
       return false
     }
     const data = await response.json()
-    console.log(data)
     subscribed.value = data.subscribed
     send_to_mail.value = data.send_to_mail
     mobile_notifications.value = data.mobile_notifications

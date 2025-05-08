@@ -99,8 +99,6 @@ async function fetchDocuments(reset) {
   } catch (error) {
     console.error('Ошибка поиска:', error)
   }
-
-  console.log(JSON.stringify(payload))
 }
 </script>
 

@@ -179,7 +179,6 @@ onMounted(async () => {
       return
     }
     digestData.value = await response.json()
-    console.log(digestData.value)
   } catch (error) {
     console.error('Ошибка при загрузке документа:', error)
   } finally {
@@ -230,8 +229,29 @@ function onEditCancel() {
   console.log('Редактирование отменено')
 }
 
-function downloadPdf() {
-  console.log('Скачать PDF для документа', digestData.value?.id)
+
+async function downloadPdf() {
+  try {
+    const response = await fetch(
+      `${backendURL}digests/${digestData.value?.id}/pdf`,
+      { credentials: 'include' }
+    )
+    if (!response.ok) {
+      throw new Error(`Сервер вернул ${response.status}`)
+    }
+    const blob = await response.blob()
+    const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }))
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', `${digestData.value?.title}_${digestData.value?.id}.pdf`)
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+  } catch (err) {
+    console.error('Ошибка при скачивании PDF:', err)
+    $q.notify({ message: 'Ошибка скачивания PDF', type: 'negative', position: 'top' })
+  }
 }
 
 async function onDeleteConfirm() {
@@ -247,7 +267,6 @@ async function onDeleteConfirm() {
       }
       console.error('Ошибка при удалении документа:', response.status)
     } else {
-      console.log('Документ удалён')
       router.push('/documents')
     }
   } catch (error) {

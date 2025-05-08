@@ -87,7 +87,6 @@ function toggleMenu() {
 }
 
 async function fetchFolders() {
-  console.log('fetching folders...')
   loading.value = true
   errorMsg.value = ''
   try {

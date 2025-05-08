@@ -135,7 +135,6 @@ const displayRating = computed(() => {
 async function fetchSubscription() {
   try {
     const id = route.params.id
-    console.log(backendURL + `subscriptions/${id}/digests`)
     const response = await fetch(
       //'https://6d9e7a119e7c45aa8ba0100093e326f9.api.mockbin.io/'
       backendURL + `subscriptions/${id}/digests`,
@@ -145,7 +144,6 @@ async function fetchSubscription() {
       throw new Error(`HTTP ${response.status}`)
     }
     const { subscription: sub } = await response.json()
-    console.log(sub)
     // Заполняем реактивные данные
     subscription.value = sub
     digests.value = sub.digests || []

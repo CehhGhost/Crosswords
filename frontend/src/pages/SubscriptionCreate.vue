@@ -243,7 +243,6 @@ async function submitForm() {
     public: isPublic.value,
     followers: addedEmails.value.map(chip => chip.email)
   }
-  console.log('creating digest', JSON.stringify(requestData))
 
   try {
     const res = await fetch(`${backendURL}subscriptions/create`, {
@@ -252,8 +251,7 @@ async function submitForm() {
       credentials: 'include',
       body: JSON.stringify(requestData)
     })
-    const data = await res.json()
-    console.log(data)
+    await res.json()
     router.replace('/digests')
   } catch (err) {
     console.error('Ошибка при создании дайджеста:', err)
