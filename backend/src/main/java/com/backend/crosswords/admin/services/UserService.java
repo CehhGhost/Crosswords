@@ -222,6 +222,7 @@ public class UserService {
     }
 
     public void checkVerificationCodeForUser(String checkingCode, User user) throws NoSuchElementException, IllegalArgumentException {
+        user = userRepository.findById(user.getId()).orElseThrow();
         if (verifyCodeService.checkVerificationCodeForUser(checkingCode, user)) {
             user.setVerified(true);
             userRepository.save(user);
