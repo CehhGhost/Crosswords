@@ -215,6 +215,7 @@ public class UserService {
     }
 
     public VerificatingEmailDTO sendVerificationCodeAndReturnVerificatingEmailInDTO(User user) throws ConnectionClosedException {
+        user = userRepository.findById(user.getId()).orElseThrow();
         var email = user.getEmail();
         verifyCodeService.sendEmailWithVerificationCode(user);
         return new VerificatingEmailDTO(email);
