@@ -106,7 +106,7 @@ public class DigestService {
                     SendDigestByEmailsDTO sendDigestByEmailsDTO = new SendDigestByEmailsDTO();
                     sendDigestByEmailsDTO.setTitle(digestES.getTitle());
                     sendDigestByEmailsDTO.setText(core.getText());
-                    sendDigestByEmailsDTO.setWebLink("http://localhost:9000/digests/{id}"); // TODO доделать с Максом
+                    sendDigestByEmailsDTO.setWebLink("http://localhost/digests/" + digestESId); // TODO доделать с Максом
                     for (var subscriptionSettings : subscription.getSubscriptionSettings()) {
                         var user = subscriptionSettings.getSubscriber();
                         if (user.getVerified() && subscriptionSettings.getSendToMail()) {
