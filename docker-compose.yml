@@ -7,8 +7,10 @@ services:
     ports:
       - "8081:8081"  # Пробрасываем порт Spring Boot
     depends_on:
-      - postgres
-      - opensearch
+      postgres:
+        condition: service_healthy
+      opensearch:
+        condition: service_healthy
     networks:
       - shared_network
     environment:
@@ -36,6 +38,11 @@ services:
       shared_network:
         aliases:
           - backend-postgres
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   opensearch:
     image: opensearchproject/opensearch:2.11.0  # Используем OpenSearch вместо Elasticsearch
@@ -52,6 +59,11 @@ services:
       shared_network:
         aliases:
           - node-0.example.com
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -sS http://localhost:9200/_cat/health || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 20
 
 volumes:
   postgres-data:
