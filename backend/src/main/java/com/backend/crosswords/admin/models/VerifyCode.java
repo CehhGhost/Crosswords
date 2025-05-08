@@ -8,16 +8,29 @@ import java.sql.Timestamp;
 @Table(name = "_verifycode")
 public class VerifyCode {
 
+    @Id
+    @Column(name = "user_id")
+    private Long userId;
+
     @Column(name = "code")
     private Integer code;
 
     @Column(name = "expiration_date")
     private Timestamp expirationDate;
 
-    @Id
+    @MapsId
     @OneToOne
     @JoinColumn(name = "user_id")
     private User user;
+
+    public VerifyCode() {
+    }
+
+    public VerifyCode(Integer code, Timestamp expirationDate, User user) {
+        this.code = code;
+        this.expirationDate = expirationDate;
+        this.user = user;
+    }
 
     public Integer getCode() {
         return code;
@@ -41,5 +54,9 @@ public class VerifyCode {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public Long getUserId() {
+        return userId;
     }
 }

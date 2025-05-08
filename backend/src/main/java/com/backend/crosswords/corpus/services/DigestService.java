@@ -113,7 +113,7 @@ public class DigestService {
                         }
                     }
                     if (!sendDigestByEmailsDTO.getRecipients().isEmpty()) {
-                        mailManService.sendEmail(sendDigestByEmailsDTO).block();
+                        mailManService.sendEmail(sendDigestByEmailsDTO).block(); // добавить обработку ошибки
                     }
                 }
             }

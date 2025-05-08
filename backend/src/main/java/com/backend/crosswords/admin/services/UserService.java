@@ -1,9 +1,6 @@
 package com.backend.crosswords.admin.services;
 
-import com.backend.crosswords.admin.dto.GetPersonalInfoDTO;
-import com.backend.crosswords.admin.dto.LoginUserDTO;
-import com.backend.crosswords.admin.dto.RegisterUserDTO;
-import com.backend.crosswords.admin.dto.PersonalDigestSubscriptionSettingsDTO;
+import com.backend.crosswords.admin.dto.*;
 import com.backend.crosswords.admin.enums.RoleEnum;
 import com.backend.crosswords.admin.models.CrosswordUserDetails;
 import com.backend.crosswords.admin.models.RefreshToken;
@@ -13,6 +10,7 @@ import com.backend.crosswords.config.JWTUtil;
 import com.backend.crosswords.corpus.models.Package;
 import com.backend.crosswords.corpus.models.DocRating;
 import com.backend.crosswords.corpus.services.PackageService;
+import org.apache.http.ConnectionClosedException;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -36,8 +34,9 @@ public class UserService {
     private final RefreshTokenService refreshTokenService;
     private final PasswordEncoder passwordEncoder;
     private final PackageService packageService;
+    private final VerifyCodeService verifyCodeService;
 
-    public UserService(ModelMapper modelMapper, UserRepository userRepository, AuthenticationManager authenticationManager, JWTUtil jwtUtil, RefreshTokenService refreshTokenService, PasswordEncoder passwordEncoder, PackageService packageService) {
+    public UserService(ModelMapper modelMapper, UserRepository userRepository, AuthenticationManager authenticationManager, JWTUtil jwtUtil, RefreshTokenService refreshTokenService, PasswordEncoder passwordEncoder, PackageService packageService, VerifyCodeService verifyCodeService) {
         this.modelMapper = modelMapper;
         this.userRepository = userRepository;
         this.authenticationManager = authenticationManager;
@@ -45,6 +44,7 @@ public class UserService {
         this.refreshTokenService = refreshTokenService;
         this.passwordEncoder = passwordEncoder;
         this.packageService = packageService;
+        this.verifyCodeService = verifyCodeService;
     }
 
     public List<String> registerUser(RegisterUserDTO registerUserDTO, String ipAddress, String userAgent) {
@@ -203,9 +203,27 @@ public class UserService {
         }
         user.setEmail(newEmail);
         user.setUsername(newEmail.split("@")[0]);
+        user.setVerified(false);
         userRepository.save(user);
     }
     public GetPersonalInfoDTO getUsersPersonalInfoAndTransformIntoDTO(User user) {
         return new GetPersonalInfoDTO(user.getName(), user.getSurname(), user.getUsername(), user.getEmail(), user.getSendToMail(), user.getMobileNotifications(), user.getPersonalSendToMail(), user.getPersonalMobileNotifications(), user.getSubscribable());
+    }
+
+    public CheckUsersVerificationDTO checkUsersEmailVerification(User user) {
+        return new CheckUsersVerificationDTO(user.getVerified());
+    }
+
+    public VerificatingEmailDTO sendVerificationCodeAndReturnVerificatingEmailInDTO(User user) throws ConnectionClosedException {
+        var email = user.getEmail();
+        verifyCodeService.sendEmailWithVerificationCode(user);
+        return new VerificatingEmailDTO(email);
+    }
+
+    public void checkVerificationCodeForUser(String checkingCode, User user) throws NoSuchElementException, IllegalArgumentException {
+        if (verifyCodeService.checkVerificationCodeForUser(checkingCode, user)) {
+            user.setVerified(true);
+            userRepository.save(user);
+        }
     }
 }

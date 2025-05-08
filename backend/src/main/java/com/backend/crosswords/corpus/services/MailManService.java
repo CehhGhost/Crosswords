@@ -2,6 +2,8 @@ package com.backend.crosswords.corpus.services;
 
 import com.backend.crosswords.config.MailmanProperties;
 import com.backend.crosswords.corpus.dto.SendDigestByEmailsDTO;
+import com.backend.crosswords.corpus.dto.SendVerificationCodeDTO;
+import org.apache.http.ConnectionClosedException;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -19,13 +21,22 @@ public class MailManService {
         this.webClient = webClient;
         this.properties = properties;
     }
-    public Mono<String> sendEmail(SendDigestByEmailsDTO request) {
+    public Mono<String> sendEmail(SendDigestByEmailsDTO request) throws RuntimeException {
         return webClient.post()
                 .uri(properties.getSendEmailPath())
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(request)
                 .retrieve()
-                .onStatus(HttpStatusCode::isError, error -> Mono.error(new RuntimeException("Connection error")))
+                .onStatus(HttpStatusCode::isError, error -> Mono.error(new RuntimeException("Connection with mailman error")))
+                .bodyToMono(String.class);
+    }
+    public Mono<String> sendVerificationCode(SendVerificationCodeDTO request) throws ConnectionClosedException {
+        return webClient.post()
+                .uri(properties.getVerifyEmailPath())
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(request)
+                .retrieve()
+                .onStatus(HttpStatusCode::isError, error -> Mono.error(new ConnectionClosedException("Connection with mailman error")))
                 .bodyToMono(String.class);
     }
 }
