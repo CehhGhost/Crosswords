@@ -89,7 +89,6 @@ public class DigestService {
     private void createNewDigests() {
         List<Digest> digests = new ArrayList<>();
         List<DigestES> digestsES = new ArrayList<>();
-        // var mailmanIsAvailable = mailManService.checkServiceAvailability().block();
         while (!templates.isEmpty()) {
             var template = templates.poll();
             var core = this.createNewDigestCore(template);
@@ -102,21 +101,20 @@ public class DigestService {
                     String digestESId = coreId + "-" + subscriptionId;
                     var digestES = new DigestES(digestESId, subscriptionService.getDigestSubscriptionsTitle(subscriptionId), core.getDate());
                     digestsES.add(digestES);
-                    /*if (mailmanIsAvailable != null && mailmanIsAvailable) {
-                        SendDigestByEmailsDTO sendDigestByEmailsDTO = new SendDigestByEmailsDTO();
-                        sendDigestByEmailsDTO.setTitle(digestES.getTitle());
-                        sendDigestByEmailsDTO.setText(core.getText());
-                        sendDigestByEmailsDTO.setWebLink("http://localhost:9000/digests/{id}");
-                        for (var subscriptionSettings : subscription.getSubscriptionSettings()) {
-                            var user = subscriptionSettings.getSubscriber();
-                            if (subscriptionSettings.getSendToMail()) {
-                                sendDigestByEmailsDTO.getRecipients().add(user.getEmail());
-                            }
+
+                    SendDigestByEmailsDTO sendDigestByEmailsDTO = new SendDigestByEmailsDTO();
+                    sendDigestByEmailsDTO.setTitle(digestES.getTitle());
+                    sendDigestByEmailsDTO.setText(core.getText());
+                    // sendDigestByEmailsDTO.setWebLink("http://localhost:9000/digests/{id}"); // TODO доделать с Максом
+                    for (var subscriptionSettings : subscription.getSubscriptionSettings()) {
+                        var user = subscriptionSettings.getSubscriber();
+                        if (user.getVerified() && subscriptionSettings.getSendToMail()) {
+                            sendDigestByEmailsDTO.getRecipients().add(user.getEmail());
                         }
-                        if (!sendDigestByEmailsDTO.getRecipients().isEmpty()) {
-                            mailManService.sendEmail(sendDigestByEmailsDTO).block();
-                        }
-                    }*/
+                    }
+                    if (!sendDigestByEmailsDTO.getRecipients().isEmpty()) {
+                        mailManService.sendEmail(sendDigestByEmailsDTO).block();
+                    }
                 }
             }
         }

@@ -45,6 +45,9 @@ public class User {
     @Column(name = "subscribable")
     private Boolean subscribable;
 
+    @Column(name = "verified")
+    private Boolean verified = false;
+
     @Column(name = "role")
     @Enumerated(EnumType.ORDINAL)
     private RoleEnum role;
@@ -192,5 +195,13 @@ public class User {
 
     public void setSubscribable(Boolean subscribable) {
         this.subscribable = subscribable;
+    }
+
+    public Boolean getVerified() {
+        return verified;
+    }
+
+    public void setVerified(Boolean verified) {
+        this.verified = verified;
     }
 }

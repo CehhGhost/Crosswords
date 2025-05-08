@@ -19,18 +19,6 @@ public class MailManService {
         this.webClient = webClient;
         this.properties = properties;
     }
-    public Mono<Boolean> checkServiceAvailability() {
-        return webClient.get()
-                .uri(properties.getCheckHealthPath())
-                .exchangeToMono(response -> {
-                    if (response.statusCode().is2xxSuccessful()) {
-                        return Mono.just(true);
-                    } else {
-                        return Mono.just(false);
-                    }
-                })
-                .onErrorReturn(false);
-    }
     public Mono<String> sendEmail(SendDigestByEmailsDTO request) {
         return webClient.post()
                 .uri(properties.getSendEmailPath())
