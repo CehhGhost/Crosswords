@@ -326,7 +326,7 @@ public class UserController {
             description = "This endpoint lets you send user's verification code on his email"
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "You successfully sent user's verification code and got his email", content = @Content(schema = @Schema(implementation = CheckUsersVerificationDTO.class))),
+            @ApiResponse(responseCode = "200", description = "You successfully sent user's verification code and got his email", content = @Content(schema = @Schema(implementation = VerificatingEmailDTO.class))),
             @ApiResponse(responseCode = "401", description = "You are trying to send user's verification code while not authenticated"),
             @ApiResponse(responseCode = "404", description = "Connection with mailman error")
     })

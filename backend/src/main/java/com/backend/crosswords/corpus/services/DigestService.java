@@ -83,7 +83,7 @@ public class DigestService {
         }
         var digestText = generatorService.generateDigest(generateDigestDTO).block();
         //var digestText = docMetasText.toString();
-        core.setText(digestText); // TODO добавить подключение к сервису создания дайджестов и получать текст от него
+        core.setText(digestText);
         core = coreRepository.save(core);
         return core;
     }
@@ -114,7 +114,7 @@ public class DigestService {
                         }
                     }
                     if (!sendDigestByEmailsDTO.getRecipients().isEmpty()) {
-                        mailManService.sendEmail(sendDigestByEmailsDTO).block(); // добавить обработку ошибки
+                        mailManService.sendEmail(sendDigestByEmailsDTO).block();
                     }
                 }
             }
