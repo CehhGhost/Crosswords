@@ -59,7 +59,7 @@ public class DigestService {
         this.generatorService = generatorService;
     }
     @Transactional
-    protected DigestCore createNewDigestCore(DigestTemplate template) {
+    protected DigestCore createNewDigestCore(DigestTemplate template) throws ConnectionClosedException {
         template = templateService.getTemplateFromId(template.getUuid()); // необходимо, чтобы сделать полную загрузку данных, избегаю ленивую
         var docMetas = docService.getAllDocsByTemplateForToday(template);
         if (docMetas.size() == 0) {

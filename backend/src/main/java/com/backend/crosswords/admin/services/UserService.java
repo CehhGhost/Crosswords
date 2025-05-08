@@ -136,7 +136,6 @@ public class UserService {
                 }
             }
         }
-        // String name, String surname, String username, String password, RoleEnum role
         for (var username : RoleEnum.ROLE_ADMIN.getUsersWhiteList()) {
             if (userRepository.findByUsernameOrEmail(username, username).isEmpty()) {
                 // TODO сделать пароль admin настраиваемым через параметры среды запуска или придумать другой более безопасный и удобный способ
