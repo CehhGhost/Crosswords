@@ -51,13 +51,11 @@ public class VerifyCodeService {
             }
         }
         VerifyCode verifyCode;
-        Timestamp newExpirationDate = (Timestamp) Date.from(ZonedDateTime.now().plusMinutes(15).toInstant());
         if (oldVerifyCode.isPresent()) {
             verifyCode = oldVerifyCode.get();
             verifyCode.setCode(codeNum);
-            verifyCode.setExpirationDate(newExpirationDate);
         } else {
-            verifyCode = new VerifyCode(codeNum, newExpirationDate, user);
+            verifyCode = new VerifyCode(codeNum, user);
         }
         verifyCodeRepository.save(verifyCode);
         taskScheduler.schedule(

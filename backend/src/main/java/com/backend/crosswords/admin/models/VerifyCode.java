@@ -15,9 +15,6 @@ public class VerifyCode {
     @Column(name = "code")
     private Integer code;
 
-    @Column(name = "expiration_date")
-    private Timestamp expirationDate;
-
     @MapsId
     @OneToOne
     @JoinColumn(name = "user_id")
@@ -26,9 +23,8 @@ public class VerifyCode {
     public VerifyCode() {
     }
 
-    public VerifyCode(Integer code, Timestamp expirationDate, User user) {
+    public VerifyCode(Integer code, User user) {
         this.code = code;
-        this.expirationDate = expirationDate;
         this.user = user;
     }
 
@@ -38,14 +34,6 @@ public class VerifyCode {
 
     public void setCode(Integer code) {
         this.code = code;
-    }
-
-    public Timestamp getExpirationDate() {
-        return expirationDate;
-    }
-
-    public void setExpirationDate(Timestamp expirationDate) {
-        this.expirationDate = expirationDate;
     }
 
     public User getUser() {
