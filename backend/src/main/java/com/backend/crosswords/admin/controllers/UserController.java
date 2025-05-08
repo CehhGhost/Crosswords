@@ -15,6 +15,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.http.ConnectionClosedException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -31,6 +32,8 @@ import java.util.NoSuchElementException;
 @Tag(name = "User controller", description = "Controller for all operations with users")
 public class UserController {
     private final UserService userService;
+    @Value("${backend-secret-key}")
+    private String backendSecretKey;
 
     public UserController(UserService userService, PasswordEncoder passwordEncoder) {
         this.userService = userService;
@@ -113,7 +116,14 @@ public class UserController {
             @ApiResponse(responseCode = "400", description = "The credentials are incorrect")
     })
     @PostMapping("/refresh")
-    public ResponseEntity<?> refreshUser(HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<?> refreshUser(@RequestHeader("Authorization") String authHeader, HttpServletRequest request, HttpServletResponse response) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Missing or invalid Authorization header");
+        }
+        String authToken = authHeader.substring(7);
+        if (!backendSecretKey.equals(authToken)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Your token is incorrect!");
+        }
         String ipAddress = request.getHeader("X-Forwarded-For");
         if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
             ipAddress = request.getRemoteAddr();

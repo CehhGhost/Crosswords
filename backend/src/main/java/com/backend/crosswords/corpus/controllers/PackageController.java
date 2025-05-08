@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -35,6 +36,8 @@ public class PackageController {
     private final PackageService packageService;
     private final DocService docService;
     private final PdfService pdfService;
+    @Value("${backend-secret-key}")
+    private String backendSecretKey;
 
     public PackageController(PackageService packageService, DocService docService, PdfService pdfService) {
         this.packageService = packageService;
@@ -123,7 +126,14 @@ public class PackageController {
     }
 
     @GetMapping("/{name}/pdf")
-    public ResponseEntity<?> getPackagePDF(@PathVariable String name) {
+    public ResponseEntity<?> getPackagePDF(@RequestHeader("Authorization") String authHeader, @PathVariable String name) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Missing or invalid Authorization header");
+        }
+        String token = authHeader.substring(7);
+        if (!backendSecretKey.equals(token)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Your token is incorrect!");
+        }
         try {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();

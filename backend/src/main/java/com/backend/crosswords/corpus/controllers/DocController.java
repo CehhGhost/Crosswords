@@ -188,7 +188,14 @@ public class DocController {
             @ApiResponse(responseCode = "500", description = "This error means, that something is wrong with ES itself, it has an index, but couldn't delete it")
     })
     @DeleteMapping("/ES/itself")
-    public ResponseEntity<?> deleteDocumentsItself() {
+    public ResponseEntity<?> deleteDocumentsItself(@RequestHeader("Authorization") String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Missing or invalid Authorization header");
+        }
+        String token = authHeader.substring(7);
+        if (!backendSecretKey.equals(token)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Your token is incorrect!");
+        }
         try {
             docService.deleteDocumentsItself();
         } catch (NoSuchElementException e) {
