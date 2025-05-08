@@ -45,7 +45,7 @@ services:
       retries: 10
 
   opensearch:
-    image: opensearchproject/opensearch:2.11.0  # Используем OpenSearch вместо Elasticsearch
+    image: opensearchproject/opensearch:2.19.2  # Используем OpenSearch вместо Elasticsearch
     environment:
       discovery.type: single-node
       plugins.security.disabled: "true"
