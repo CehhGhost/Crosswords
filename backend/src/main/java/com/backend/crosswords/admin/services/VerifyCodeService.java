@@ -44,10 +44,10 @@ public class VerifyCodeService {
     public void sendEmailWithVerificationCode(User user) throws ConnectionClosedException {
         var oldVerifyCode = verifyCodeRepository.findById(user.getId());
         Random rand = new Random();
-        int codeNum = rand.nextInt(0, 1000000);
+        int codeNum = rand.nextInt(1000000);
         if (oldVerifyCode.isPresent()) {
             while (codeNum == oldVerifyCode.get().getCode()) {
-                codeNum = rand.nextInt(0, 1000000);
+                codeNum = rand.nextInt(1000000);
             }
         }
         VerifyCode verifyCode;
