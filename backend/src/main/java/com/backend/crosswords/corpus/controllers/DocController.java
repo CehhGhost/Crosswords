@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -31,6 +32,8 @@ import java.util.NoSuchElementException;
 public class DocController {
     private final DocService docService;
     private final ModelMapper modelMapper;
+    @Value("${backend-secret-key}")
+    private String backendSecretKey;
 
     public DocController(DocService docService, ModelMapper modelMapper) {
         this.docService = docService;
@@ -43,7 +46,14 @@ public class DocController {
             @ApiResponse(responseCode = "400", description = "There is no sources with such id!")
     })
     @PostMapping("/create")
-    public ResponseEntity<?> createDoc(@RequestBody CreateDocDTO createDocDTO) {
+    public ResponseEntity<?> createDoc(@RequestHeader("Authorization") String authHeader, @RequestBody CreateDocDTO createDocDTO) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Missing or invalid Authorization header");
+        }
+        String token = authHeader.substring(7);
+        if (!backendSecretKey.equals(token)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Your token is incorrect!");
+        }
         try {
             docService.createDoc(createDocDTO);
         } catch (IllegalArgumentException e) {
