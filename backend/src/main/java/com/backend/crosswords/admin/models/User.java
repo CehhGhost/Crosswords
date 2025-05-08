@@ -78,11 +78,11 @@ public class User {
     public User() {
     }
 
-    public User(String name, String surname, String username, String password, RoleEnum role) {
+    public User(String name, String surname, String email, String password, RoleEnum role) {
         this.name = name;
         this.surname = surname;
-        this.username = username;
-        this.email = username;
+        this.email = email;
+        this.username = email.split("@")[0];
         this.password = password;
         this.role = role;
 

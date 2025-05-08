@@ -12,6 +12,7 @@ import com.backend.crosswords.corpus.models.DocRating;
 import com.backend.crosswords.corpus.services.PackageService;
 import org.apache.http.ConnectionClosedException;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -35,6 +36,8 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final PackageService packageService;
     private final VerifyCodeService verifyCodeService;
+    @Value("${default-admins-password}")
+    private String defaultAdminsPassword;
 
     public UserService(ModelMapper modelMapper, UserRepository userRepository, AuthenticationManager authenticationManager, JWTUtil jwtUtil, RefreshTokenService refreshTokenService, PasswordEncoder passwordEncoder, PackageService packageService, VerifyCodeService verifyCodeService) {
         this.modelMapper = modelMapper;
@@ -129,17 +132,19 @@ public class UserService {
 
     public void createDefaultUsers() {
         for (var role : RoleEnum.values()) {
-            for (var username : role.getUsersWhiteList()) {
-                var user = userRepository.findByUsernameOrEmail(username, username);
+            for (var registeredUser : role.getUsersWhiteList()) {
+                var email = registeredUser.getEmail();
+                var user = userRepository.findByUsernameOrEmail(email, email);
                 if (user.isPresent() && !user.get().getRole().name().equals(role.name())) {
                     user.get().setRole(role);
                 }
             }
         }
-        for (var username : RoleEnum.ROLE_ADMIN.getUsersWhiteList()) {
-            if (userRepository.findByUsernameOrEmail(username, username).isEmpty()) {
+        for (var registeredUser : RoleEnum.ROLE_ADMIN.getUsersWhiteList()) {
+            var email = registeredUser.getEmail();
+            if (userRepository.findByUsernameOrEmail(email, email).isEmpty()) {
                 // TODO сделать пароль admin настраиваемым через параметры среды запуска или придумать другой более безопасный и удобный способ
-                var user = userRepository.save(new User(username, username, username, passwordEncoder.encode(username), RoleEnum.ROLE_ADMIN));
+                var user = userRepository.save(new User(registeredUser.getName(), registeredUser.getSurname(), registeredUser.getEmail(), passwordEncoder.encode(defaultAdminsPassword), RoleEnum.ROLE_ADMIN));
                 packageService.createPackage(Package.favouritesName, user);
             }
         }

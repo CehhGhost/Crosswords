@@ -40,7 +40,7 @@ public class DataLoader implements ApplicationRunner, DisposableBean {
 
     @Override
     public void destroy() throws Exception {
-        if (ddlAuto.equals("create-drop")) {
+        if (ddlAuto.equals("create-drop") || ddlAuto.equals("create")) {
             this.deleteESIndexes();
         }
     }
