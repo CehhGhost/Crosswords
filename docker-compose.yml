@@ -52,7 +52,7 @@ services:
       OPENSEARCH_INITIAL_ADMIN_PASSWORD: ${OPENSEARCH_PASSWORD}
       OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
       DISABLE_INSTALL_DEMO_CONFIG: "false"
-      plugins.security.ssl.http.enabled: "true"
+      plugins.security.ssl.http.enabled: "false"
     volumes:
       - opensearch-data:/usr/share/opensearch/data
     networks:
