@@ -21,13 +21,13 @@ public class MailManService {
         this.webClient = webClient;
         this.properties = properties;
     }
-    public Mono<String> sendEmail(SendDigestByEmailsDTO request) throws RuntimeException {
+    public Mono<String> sendEmail(SendDigestByEmailsDTO request) throws ConnectionClosedException {
         return webClient.post()
                 .uri(properties.getSendEmailPath())
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(request)
                 .retrieve()
-                .onStatus(HttpStatusCode::isError, error -> Mono.error(new RuntimeException("Connection with mailman error")))
+                .onStatus(HttpStatusCode::isError, error -> Mono.error(new ConnectionClosedException("Connection with mailman error")))
                 .bodyToMono(String.class);
     }
     public Mono<String> sendVerificationCode(SendVerificationCodeDTO request) throws ConnectionClosedException {

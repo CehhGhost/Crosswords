@@ -8,6 +8,7 @@ import com.backend.crosswords.corpus.models.*;
 import com.backend.crosswords.corpus.repositories.elasticsearch.DigestSearchRepository;
 import com.backend.crosswords.corpus.repositories.jpa.DigestCoreRepository;
 import com.backend.crosswords.corpus.repositories.jpa.DigestRepository;
+import org.apache.http.ConnectionClosedException;
 import org.opensearch.data.client.orhlc.NativeSearchQueryBuilder;
 import org.opensearch.index.query.BoolQueryBuilder;
 import org.opensearch.index.query.IdsQueryBuilder;
@@ -86,7 +87,7 @@ public class DigestService {
         core = coreRepository.save(core);
         return core;
     }
-    private void createNewDigests() {
+    private void createNewDigests() throws ConnectionClosedException {
         List<Digest> digests = new ArrayList<>();
         List<DigestES> digestsES = new ArrayList<>();
         while (!templates.isEmpty()) {
@@ -105,7 +106,7 @@ public class DigestService {
                     SendDigestByEmailsDTO sendDigestByEmailsDTO = new SendDigestByEmailsDTO();
                     sendDigestByEmailsDTO.setTitle(digestES.getTitle());
                     sendDigestByEmailsDTO.setText(core.getText());
-                    // sendDigestByEmailsDTO.setWebLink("http://localhost:9000/digests/{id}"); // TODO доделать с Максом
+                    sendDigestByEmailsDTO.setWebLink("http://localhost:9000/digests/{id}"); // TODO доделать с Максом
                     for (var subscriptionSettings : subscription.getSubscriptionSettings()) {
                         var user = subscriptionSettings.getSubscriber();
                         if (user.getVerified() && subscriptionSettings.getSendToMail()) {
@@ -123,7 +124,7 @@ public class DigestService {
     }
 
     @Scheduled(cron = "${scheduler.cron}")
-    public void scheduledDigestCreation() {
+    public void scheduledDigestCreation() throws ConnectionClosedException {
         startOfDay = Timestamp.valueOf(LocalDate.now().atStartOfDay());
         endOfDay = Timestamp.valueOf(LocalDate.now().plusDays(1).atStartOfDay());
         System.out.println("The start of creating digests");

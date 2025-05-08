@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.apache.http.ConnectionClosedException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -265,7 +266,11 @@ public class DigestController {
     }
     @PostMapping("/create")
     public ResponseEntity<?> createDigests() {
-        digestService.scheduledDigestCreation();
+        try {
+            digestService.scheduledDigestCreation();
+        } catch (ConnectionClosedException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
         return ResponseEntity.ok(HttpStatus.OK);
     }
     @Operation(summary = "Check an access to the digest", description = "This endpoint lets check an access to the digest")
