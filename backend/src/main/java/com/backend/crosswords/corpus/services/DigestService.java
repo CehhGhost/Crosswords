@@ -1,6 +1,8 @@
 package com.backend.crosswords.corpus.services;
 
+import com.backend.crosswords.admin.models.FcmToken;
 import com.backend.crosswords.admin.models.User;
+import com.backend.crosswords.admin.services.FcmTokenService;
 import com.backend.crosswords.admin.services.UserService;
 import com.backend.crosswords.config.Pair;
 import com.backend.crosswords.corpus.dto.*;
@@ -40,10 +42,12 @@ public class DigestService {
     private final ElasticsearchOperations elasticsearchOperations;
     private final MailManService mailManService;
     private final DigestGeneratorService generatorService;
+    private final FirebaseMessagingService firebaseMessagingService;
+    private final FcmTokenService fcmTokenService;
     private final Queue<DigestTemplate> templates = new LinkedList<>();
     public static Timestamp startOfDay;
     public static Timestamp endOfDay;
-    public DigestService(DigestCoreRepository digestCoreRepository, DigestSubscriptionService subscriptionService, DigestSubscriptionSettingsService subscriptionSettingsService, DigestTemplateService templateService, DigestRepository digestRepository, DigestSearchRepository digestSearchRepository, DocService docService, DigestRatingService ratingService, UserService userService, TagService tagService, ElasticsearchOperations elasticsearchOperations, MailManService mailManService, DigestGeneratorService generatorService) {
+    public DigestService(DigestCoreRepository digestCoreRepository, DigestSubscriptionService subscriptionService, DigestSubscriptionSettingsService subscriptionSettingsService, DigestTemplateService templateService, DigestRepository digestRepository, DigestSearchRepository digestSearchRepository, DocService docService, DigestRatingService ratingService, UserService userService, TagService tagService, ElasticsearchOperations elasticsearchOperations, MailManService mailManService, DigestGeneratorService generatorService, FirebaseMessagingService firebaseMessagingService, FcmTokenService fcmTokenService) {
         this.coreRepository = digestCoreRepository;
         this.subscriptionService = subscriptionService;
         this.subscriptionSettingsService = subscriptionSettingsService;
@@ -57,6 +61,8 @@ public class DigestService {
         this.elasticsearchOperations = elasticsearchOperations;
         this.mailManService = mailManService;
         this.generatorService = generatorService;
+        this.firebaseMessagingService = firebaseMessagingService;
+        this.fcmTokenService = fcmTokenService;
     }
     @Transactional
     protected DigestCore createNewDigestCore(DigestTemplate template) throws ConnectionClosedException {
@@ -106,16 +112,34 @@ public class DigestService {
                     SendDigestByEmailsDTO sendDigestByEmailsDTO = new SendDigestByEmailsDTO();
                     sendDigestByEmailsDTO.setTitle(digestES.getTitle());
                     sendDigestByEmailsDTO.setText(core.getText());
-                    sendDigestByEmailsDTO.setWebLink("http://localhost/digests/" + digestESId); // TODO доделать с Максом
+                    sendDigestByEmailsDTO.setWebLink("http://localhost/digests/" + digestESId);
+
+                    List<User> subscribersWithMobileNotifications = new ArrayList<>();
                     for (var subscriptionSettings : subscription.getSubscriptionSettings()) {
                         var user = subscriptionSettings.getSubscriber();
                         if (user.getVerified() && subscriptionSettings.getSendToMail()) {
                             sendDigestByEmailsDTO.getRecipients().add(user.getEmail());
                         }
+                        if (subscriptionSettings.getMobileNotifications()) {
+                            subscribersWithMobileNotifications.add(user);
+                        }
                     }
                     if (!sendDigestByEmailsDTO.getRecipients().isEmpty()) {
                         mailManService.sendEmail(sendDigestByEmailsDTO).block();
                     }
+                    List<FcmToken> expiredFcmTokens = new ArrayList<>();
+                    for (var fcmToken : fcmTokenService.getTokensByUser(subscribersWithMobileNotifications)) {
+                        var subscriptionsTitle = digestES.getTitle();
+                        Map<String, String> data = new HashMap<>();
+                        data.put("title", subscriptionsTitle);
+                        data.put("id", digestESId);
+                        try {
+                            firebaseMessagingService.sendNotification(fcmToken.getToken(), subscriptionsTitle, data).block();
+                        } catch (ConnectionClosedException e) {
+                            expiredFcmTokens.add(fcmToken);
+                        }
+                    }
+                    fcmTokenService.deleteAllExpiredTokens(expiredFcmTokens);
                 }
             }
         }

@@ -374,6 +374,20 @@ public class UserController {
         }
         return ResponseEntity.ok(HttpStatus.OK);
     }
+    @Operation(
+            summary = "Create a fcm token for user",
+            description = "This endpoint lets you Create a fcm token for user"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully created a fcm token for user")
+    })
+    @PostMapping("/create_fcm_token")
+    public ResponseEntity<?> createFcmTokenForUser(@RequestParam String fcmToken) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+        userService.createFcmTokenForUser(crosswordUserDetails.getUser(), fcmToken);
+        return ResponseEntity.ok(HttpStatus.OK);
+    }
     // TODO добавить удаление пользователя, учтя тот факт, что перед удалением необходимо очистить связанные с ним данные
     /*@DeleteMapping("/{id}")
     public ResponseEntity<?> deleteUserById(@PathVariable Long id) {

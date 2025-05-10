@@ -5,9 +5,9 @@ import com.backend.crosswords.corpus.models.DocMeta;
 import com.backend.crosswords.corpus.models.Package;
 import com.backend.crosswords.corpus.models.PackageId;
 import com.backend.crosswords.corpus.repositories.jpa.PackageRepository;
-import jakarta.transaction.Transactional;
 import org.hibernate.Hibernate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
@@ -19,6 +19,7 @@ public class PackageService {
         this.packageRepository = packageRepository;
     }
 
+    @Transactional
     public void createPackage(String name, User user) {
         // Ограничение на максимальный размер имени папки, больше 225 символов - запрещено
         if (name.length() > 255) {

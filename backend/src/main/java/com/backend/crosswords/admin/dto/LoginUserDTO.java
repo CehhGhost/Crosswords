@@ -1,5 +1,6 @@
 package com.backend.crosswords.admin.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "DTO to login a user")
@@ -14,12 +15,21 @@ public class LoginUserDTO {
     )
     private String password;
 
+    @JsonProperty("fcm_token")
+    private String fcmToken;
+
     public LoginUserDTO(String username, String password) {
         this.username = username;
         this.password = password;
     }
 
     public LoginUserDTO() {
+    }
+
+    public LoginUserDTO(String username, String password, String fcmToken) {
+        this.username = username;
+        this.password = password;
+        this.fcmToken = fcmToken;
     }
 
     public String getUsername() {
@@ -38,11 +48,20 @@ public class LoginUserDTO {
         this.password = password;
     }
 
+    public String getFcmToken() {
+        return fcmToken;
+    }
+
+    public void setFcmToken(String fcmToken) {
+        this.fcmToken = fcmToken;
+    }
+
     @Override
     public String toString() {
         return "LoginUserDTO{" +
                 "username='" + username + '\'' +
                 ", password='" + password + '\'' +
+                ", fcmToken='" + fcmToken + '\'' +
                 '}';
     }
 }

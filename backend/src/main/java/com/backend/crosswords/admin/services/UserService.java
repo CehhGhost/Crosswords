@@ -36,10 +36,11 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final PackageService packageService;
     private final VerifyCodeService verifyCodeService;
+    private final FcmTokenService fcmTokenService;
     @Value("${default-admins-password}")
     private String defaultAdminsPassword;
 
-    public UserService(ModelMapper modelMapper, UserRepository userRepository, AuthenticationManager authenticationManager, JWTUtil jwtUtil, RefreshTokenService refreshTokenService, PasswordEncoder passwordEncoder, PackageService packageService, VerifyCodeService verifyCodeService) {
+    public UserService(ModelMapper modelMapper, UserRepository userRepository, AuthenticationManager authenticationManager, JWTUtil jwtUtil, RefreshTokenService refreshTokenService, PasswordEncoder passwordEncoder, PackageService packageService, VerifyCodeService verifyCodeService, FcmTokenService fcmTokenService) {
         this.modelMapper = modelMapper;
         this.userRepository = userRepository;
         this.authenticationManager = authenticationManager;
@@ -48,8 +49,10 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
         this.packageService = packageService;
         this.verifyCodeService = verifyCodeService;
+        this.fcmTokenService = fcmTokenService;
     }
 
+    @Transactional
     public List<String> registerUser(RegisterUserDTO registerUserDTO, String ipAddress, String userAgent) {
         var usernameFromEmail = registerUserDTO.getEmail().split("@")[0];
         var user = modelMapper.map(registerUserDTO, User.class);
@@ -63,7 +66,7 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(registerUserDTO.getPassword()));
         for (var role : RoleEnum.values()) {
             for (var username : role.getUsersWhiteList()) {
-                if (Objects.equals(username, user.getUsername()) || Objects.equals(username, user.getEmail())) {
+                if (Objects.equals(username.getEmail(), user.getEmail())) {
                     user.setRole(role);
                 }
             }
@@ -76,8 +79,9 @@ public class UserService {
         user.setSendToMail(false);
 
         user = userRepository.save(user);
+
         packageService.createPackage(Package.favouritesName, user);
-        return this.loginUser(new LoginUserDTO(registerUserDTO.getEmail(), registerUserDTO.getPassword()), ipAddress, userAgent);
+        return this.loginUser(new LoginUserDTO(registerUserDTO.getEmail(), registerUserDTO.getPassword(), registerUserDTO.getFcmToken()), ipAddress, userAgent);
     }
 
     public List<String> loginUser(LoginUserDTO loginUserDTO, String ipAddress, String userAgent) {
@@ -91,6 +95,10 @@ public class UserService {
             refreshToken = refreshTokenService.generateRefreshToken(ipAddress, userAgent, user);
         } else {
             refreshToken = optionalRefreshToken;
+        }
+        var fcmToken = loginUserDTO.getFcmToken();
+        if (fcmToken != null && !fcmToken.isEmpty()) {
+            fcmTokenService.createFcmTokenForUser(user, fcmToken);
         }
         List<String> jwt = new ArrayList<>();
         jwt.add(accessToken);
@@ -231,5 +239,9 @@ public class UserService {
             user.setVerified(true);
             userRepository.save(user);
         }
+    }
+
+    public void createFcmTokenForUser(User user, String fcmToken) {
+        fcmTokenService.createFcmTokenForUser(user, fcmToken);
     }
 }
