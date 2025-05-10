@@ -25,7 +25,7 @@ public class FcmTokenService {
     }
 
     public List<FcmToken> getTokensByUser(List<User> users) {
-        return fcmTokenRepository.findAllByUserContains(users);
+        return fcmTokenRepository.findAllByUserIn(users);
     }
 
     public void deleteAllExpiredTokens(List<FcmToken> expiredFcmTokens) {
