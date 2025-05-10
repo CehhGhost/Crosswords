@@ -60,7 +60,6 @@ public class CrosswordsApplication {
 	public WebClient digestGeneratorWebClient(WebClient.Builder webClientBuilder) {
 		return webClientBuilder
 				.baseUrl(digestGeneratorProperties.getUrl())
-				.defaultHeader("Host", "digest_service:5000")
 				.clientConnector(new ReactorClientHttpConnector(
 						HttpClient.create()
 								.responseTimeout(Duration.ofMillis(digestGeneratorProperties.getResponseTimeout()))
