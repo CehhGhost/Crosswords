@@ -28,7 +28,7 @@ public class FirebaseMessagingService {
                         "token", token,
                         "notification", Map.of(
                                 "title", "Новый дайджест!",
-                                "body", "Новый дайджест по теме: " + subscriptionTitle
+                                "body", subscriptionTitle
                         ),
                         "data", data
                 )
