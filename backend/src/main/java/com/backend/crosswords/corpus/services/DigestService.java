@@ -26,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.function.Consumer;
 
 @Service
 public class DigestService {
@@ -76,8 +77,8 @@ public class DigestService {
         core.setDocs(docMetas);
         core.setTemplate(template);
 
-        core = coreRepository.save(core);
-        docService.setCoreForDocs(core, docMetas);
+        final DigestCore finalCore = coreRepository.save(core);
+        docService.setCoreForDocs(finalCore, docMetas);
         // StringBuilder docMetasText = new StringBuilder();
         GenerateDigestDTO generateDigestDTO = new GenerateDigestDTO();
         for (var docMeta : docMetas) {
@@ -87,11 +88,16 @@ public class DigestService {
             GenerateDigestsDocumentsDTO generateDigestsDocumentsDTO =  new GenerateDigestsDocumentsDTO(text, summary);
             generateDigestDTO.getDocuments().add(generateDigestsDocumentsDTO);
         }
-        var digestText = generatorService.generateDigest(generateDigestDTO).block();
+        generatorService.generateDigest(generateDigestDTO)
+                .doOnSuccess(digestText -> this.asyncCreateDigestCoreWithText(finalCore, digestText))
+                .doOnError(error -> {})
+                .subscribe();
         //var digestText = docMetasText.toString();
+        return finalCore;
+    }
+    private void asyncCreateDigestCoreWithText(DigestCore core, String digestText) {
         core.setText(digestText);
-        core = coreRepository.save(core);
-        return core;
+        coreRepository.save(core);
     }
     private void createNewDigests() throws ConnectionClosedException {
         List<Digest> digests = new ArrayList<>();

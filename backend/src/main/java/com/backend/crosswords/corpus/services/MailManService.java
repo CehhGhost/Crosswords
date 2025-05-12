@@ -22,18 +22,14 @@ public class MailManService {
         this.properties = properties;
     }
     public Mono<String> sendEmail(SendDigestByEmailsDTO request) throws ConnectionClosedException {
-        try {
-            return webClient.post()
-                    .uri(properties.getSendEmailPath())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .bodyValue(request)
-                    .retrieve()
-                    .onStatus(HttpStatusCode::isError, error -> Mono.error(new ConnectionClosedException("Connection with mailman error")))
-                    .bodyToMono(String.class)
-                    .onErrorMap(Exception.class, ex -> new ConnectionClosedException(ex.getMessage()));
-        } catch (Exception e) {
-            throw new ConnectionClosedException(e.getMessage());
-        }
+        return webClient.post()
+                .uri(properties.getSendEmailPath())
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(request)
+                .retrieve()
+                .onStatus(HttpStatusCode::isError, error -> Mono.error(new ConnectionClosedException("Connection with mailman error")))
+                .bodyToMono(String.class)
+                .onErrorResume(e -> Mono.error(new ConnectionClosedException(e.getMessage())));
     }
     public Mono<String> sendVerificationCode(SendVerificationCodeDTO request) throws ConnectionClosedException {
         try {

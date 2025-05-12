@@ -21,19 +21,15 @@ public class DigestGeneratorService {
         this.webClient = webClient;
         this.properties = properties;
     }
-    public Mono<String> generateDigest(GenerateDigestDTO request) throws ConnectionClosedException {
-        try {
-            return webClient.post()
-                    .uri(properties.getGenerateDigestPath())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .bodyValue(request)
-                    .retrieve()
-                    .bodyToMono(GenerateDigestResponseDTO.class)
-                    .timeout(Duration.ofMillis(properties.getResponseTimeout()))
-                    .map(GenerateDigestResponseDTO::getResponse)
-                    .onErrorMap(Exception.class, ex -> new ConnectionClosedException(ex.getMessage()));
-        } catch (Exception e) {
-            throw new ConnectionClosedException(e.getMessage());
-        }
+    public Mono<String> generateDigest(GenerateDigestDTO request) {
+        return webClient.post()
+                .uri(properties.getGenerateDigestPath())
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(request)
+                .retrieve()
+                .bodyToMono(GenerateDigestResponseDTO.class)
+                .timeout(Duration.ofMillis(properties.getResponseTimeout()))
+                .map(GenerateDigestResponseDTO::getResponse)
+                .onErrorResume(e -> Mono.error(new ConnectionClosedException(e.getMessage())));
     }
 }
