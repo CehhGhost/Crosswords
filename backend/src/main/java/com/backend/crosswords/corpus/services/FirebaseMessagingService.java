@@ -9,6 +9,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 @Service
 public class FirebaseMessagingService {
@@ -20,7 +21,7 @@ public class FirebaseMessagingService {
         this.firebaseWebClient = firebaseWebClient;
     }
 
-    public Mono<Void> sendNotification(String token, String subscriptionTitle, Map<String, String> data) throws ConnectionClosedException {
+    public Mono<Void> sendNotification(String token, String subscriptionTitle, Map<String, String> data) {
         String url = String.format("/projects/%s/messages:send", projectId);
 
         Map<String, Object> message = Map.of(
@@ -33,19 +34,14 @@ public class FirebaseMessagingService {
                         "data", data
                 )
         );
-
-        try {
-            return firebaseWebClient.post()
-                    .uri(url)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .bodyValue(message)
-                    .retrieve()
-                    .bodyToMono(String.class)
-                    .doOnNext(response -> System.out.println("FCM response: " + response))
-                    .then()
-                    .onErrorResume(e -> Mono.error(new ConnectionClosedException(e.getMessage())));
-        } catch (Exception e) {
-            throw new ConnectionClosedException(e.getMessage());
-        }
+        return firebaseWebClient.post()
+                .uri(url)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(message)
+                .retrieve()
+                .bodyToMono(String.class)
+                .doOnNext(response -> System.out.println("FCM response: " + response))
+                .then()
+                .onErrorResume(e -> Mono.error(new ConnectionClosedException(e.getMessage())));
     }
 }

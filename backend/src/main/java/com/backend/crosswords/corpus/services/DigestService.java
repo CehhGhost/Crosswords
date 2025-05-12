@@ -141,14 +141,10 @@ public class DigestService {
                         Map<String, String> data = new HashMap<>();
                         data.put("title", subscriptionsTitle);
                         data.put("id", digestESId);
-                        try {
-                            firebaseMessagingService.sendNotification(fcmToken.getToken(), subscriptionsTitle, data)
-                                    .doOnSuccess(digestText -> {})
-                                    .doOnError(e -> fcmTokenService.deleteFcmTokenFormUser(fcmToken.getUser(), fcmToken.getToken()))
-                                    .subscribe();
-                        } catch (ConnectionClosedException e) {
-                            expiredFcmTokens.add(fcmToken);
-                        }
+                        firebaseMessagingService.sendNotification(fcmToken.getToken(), subscriptionsTitle, data)
+                                .doOnSuccess(digestText -> {})
+                                .doOnError(e -> fcmTokenService.deleteFcmTokenFormUser(fcmToken.getUser(), fcmToken.getToken()))
+                                .subscribe();
                     }
                     fcmTokenService.deleteAllExpiredTokens(expiredFcmTokens);
                 }

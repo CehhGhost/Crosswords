@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.http.ConnectionClosedException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -36,6 +37,8 @@ public class DigestController {
     private final DigestService digestService;
     private final DigestSubscriptionService subscriptionService;
     private final PdfService pdfService;
+    @Value("${backend-secret-key}")
+    private String backendSecretKey;
 
     public DigestController(DigestService digestService, DigestSubscriptionService subscriptionService, PdfService pdfService) {
         this.digestService = digestService;
@@ -265,7 +268,14 @@ public class DigestController {
         return ResponseEntity.ok(HttpStatus.OK);
     }
     @PostMapping("/create")
-    public ResponseEntity<?> createDigests() {
+    public ResponseEntity<?> createDigests(@RequestHeader("Authorization") String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Missing or invalid Authorization header");
+        }
+        String token = authHeader.substring(7);
+        if (!backendSecretKey.equals(token)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Your token is incorrect!");
+        }
         try {
             digestService.scheduledDigestCreation();
         } catch (ConnectionClosedException e) {
