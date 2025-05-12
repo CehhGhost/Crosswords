@@ -42,7 +42,8 @@ public class FirebaseMessagingService {
                     .retrieve()
                     .bodyToMono(String.class)
                     .doOnNext(response -> System.out.println("FCM response: " + response))
-                    .then();
+                    .then()
+                    .onErrorResume(e -> Mono.error(new ConnectionClosedException(e.getMessage())));
         } catch (Exception e) {
             throw new ConnectionClosedException(e.getMessage());
         }

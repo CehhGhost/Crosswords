@@ -142,7 +142,10 @@ public class DigestService {
                         data.put("title", subscriptionsTitle);
                         data.put("id", digestESId);
                         try {
-                            firebaseMessagingService.sendNotification(fcmToken.getToken(), subscriptionsTitle, data).block();
+                            firebaseMessagingService.sendNotification(fcmToken.getToken(), subscriptionsTitle, data)
+                                    .doOnSuccess(digestText -> {})
+                                    .doOnError(e -> fcmTokenService.deleteFcmTokenFormUser(fcmToken.getUser(), fcmToken.getToken()))
+                                    .subscribe();
                         } catch (ConnectionClosedException e) {
                             expiredFcmTokens.add(fcmToken);
                         }
