@@ -57,3 +57,21 @@ jobs:
           tags: |
             cehhghost/crosswords_backend:latest
             cehhghost/crosswords_backend:${{ steps.version.outputs.VERSION }}
+  deploy:
+    if: github.actor == 'cehhghost'
+    env:
+      REPO: ${{ github.event.repository.name }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Redeploy compose stack
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.PRIVATE_KEY }}
+          passphrase: ${{ secrets.PASSPHRASE }}
+          script: |
+            cd ~/Crosswords
+            docker compose pull
+            docker compose up -d --force-recreate --wait
+            docker ps
