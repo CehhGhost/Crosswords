@@ -155,8 +155,8 @@ public class DigestService {
 
     @Scheduled(cron = "${scheduler.cron}")
     public void scheduledDigestCreation() throws ConnectionClosedException {
-        startOfDay = Timestamp.valueOf(LocalDate.now().atStartOfDay());
-        endOfDay = Timestamp.valueOf(LocalDate.now().plusDays(1).atStartOfDay());
+        startOfDay = Timestamp.valueOf(LocalDate.now().minusDays(1).atStartOfDay());
+        endOfDay = Timestamp.valueOf(LocalDate.now().atStartOfDay());
         templates.addAll(templateService.getAllTemplates());
         this.createNewDigests();
     }
