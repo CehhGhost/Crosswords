@@ -45,13 +45,11 @@ public class JWTFilter extends OncePerRequestFilter {
             for (Cookie cookie : request.getCookies()) {
                 if ("access_token".equals(cookie.getName())) {
                     accessToken = cookie.getValue();
-                    System.out.println("Old access token: " + accessToken);
                     if (oldRefreshToken != null) {
                         break;
                     }
                 } else if ("refresh_token".equals(cookie.getName())) {
                     oldRefreshToken = cookie.getValue();
-                    System.out.println("Old refresh token: " + oldRefreshToken);
                     if (accessToken != null) {
                         break;
                     }
@@ -65,7 +63,6 @@ public class JWTFilter extends OncePerRequestFilter {
             } catch (UsernameNotFoundException | JWTVerificationException exception) {
                 refreshUser(oldRefreshToken, request, response);
             } catch (IllegalAccessException e) {
-                System.out.println("Dropping cookies");
                 this.setCookies(response, "", "");
                 AnonymousAuthenticationToken anonymousToken = new AnonymousAuthenticationToken(
                         "anonymous", "anonymousUser", AuthorityUtils.createAuthorityList("ROLE_ANONYMOUS"));
@@ -122,7 +119,6 @@ public class JWTFilter extends OncePerRequestFilter {
         } catch (ObjectOptimisticLockingFailureException ex) {
             refreshUser(oldToken, request, response);
         } catch (TokenExpiredException | NoSuchElementException | SecurityException | IllegalAccessException e) {
-            System.out.println("Dropping cookies, because refresh is bad, exception: " + e.getClass());
             AnonymousAuthenticationToken anonymousToken = new AnonymousAuthenticationToken(
                     "anonymous", "anonymousUser", AuthorityUtils.createAuthorityList("ROLE_ANONYMOUS"));
             SecurityContextHolder.getContext().setAuthentication(anonymousToken);

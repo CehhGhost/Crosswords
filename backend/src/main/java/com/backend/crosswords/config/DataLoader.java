@@ -55,7 +55,6 @@ public class DataLoader implements ApplicationRunner, DisposableBean {
             if (indexOps.exists()) {
                 boolean isDeleted = indexOps.delete();
                 if (isDeleted) {
-                    System.out.println("Index '" + "document" + "' deleted successfully.");
                 } else {
                     throw new RequestRejectedException("Failed to delete index '" + "document" + "'.");
                 }

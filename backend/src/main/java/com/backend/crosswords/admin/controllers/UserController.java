@@ -49,9 +49,7 @@ public class UserController {
         refreshTokenCookie.setSecure(true);
         refreshTokenCookie.setPath("/");
         response.addCookie(accessTokenCookie);
-        System.out.println("Set access token into cookie: " + accessTokenCookie);
         response.addCookie(refreshTokenCookie);
-        System.out.println("Set refresh token into cookie: " + refreshTokenCookie);
         return ResponseEntity.ok(HttpStatus.OK);
     }
 

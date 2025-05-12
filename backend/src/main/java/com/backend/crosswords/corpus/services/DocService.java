@@ -201,7 +201,6 @@ public class DocService {
                 var docES = hit.getContent();
                 var docMeta = docMetaRepository.findById(docES.getId()).orElseThrow();
                 resultHits.add(this.transformDocIntoDocDTO(docMeta, false));
-                System.out.println("Score for a hit: " + hit.getScore());
             });
             int nextPage = pageNumber + 1;
             if (searchHits.getTotalHits() <= (long) nextPage * matchesPerPage) {
@@ -332,7 +331,6 @@ public class DocService {
             if (indexOps.exists()) {
                 boolean isDeleted = indexOps.delete();
                 if (isDeleted) {
-                    System.out.println("Index '" + "document" + "' deleted successfully.");
                 } else {
                     throw new RequestRejectedException("Failed to delete index '" + "document" + "'.");
                 }

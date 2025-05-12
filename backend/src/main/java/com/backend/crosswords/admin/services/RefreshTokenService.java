@@ -69,7 +69,6 @@ public class RefreshTokenService {
                         refreshTokenRepository.flush();
                     });
         } catch (ObjectOptimisticLockingFailureException ex) {
-            System.out.println("Что-то явно пошло не так из-за оптимистичной блокировке");
         }
     }
 

@@ -136,7 +136,6 @@ public class DigestService {
                     List<FcmToken> expiredFcmTokens = new ArrayList<>();
                     var fcmTokens = fcmTokenService.getTokensByUsers(subscribersWithMobileNotifications);
                     for (var fcmToken : fcmTokens) {
-                        System.out.println(fcmTokens.size());
                         var subscriptionsTitle = digestES.getTitle();
                         Map<String, String> data = new HashMap<>();
                         data.put("title", subscriptionsTitle);
@@ -158,10 +157,8 @@ public class DigestService {
     public void scheduledDigestCreation() throws ConnectionClosedException {
         startOfDay = Timestamp.valueOf(LocalDate.now().atStartOfDay());
         endOfDay = Timestamp.valueOf(LocalDate.now().plusDays(1).atStartOfDay());
-        System.out.println("The start of creating digests");
         templates.addAll(templateService.getAllTemplates());
         this.createNewDigests();
-        System.out.println("The end of creating digests");
     }
 
     public Digest getDigestById(String digestId) {
