@@ -61,6 +61,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/users/personal_info").authenticated()
                         .requestMatchers(HttpMethod.POST, "/users/logout/**").authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/users/change/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/users/fcm_token/create").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/users/fcm_token/delete").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/documents/{id}/edit").hasAuthority(AuthorityEnum.EDIT_DELETE_DOCS.name())
                         .requestMatchers(HttpMethod.DELETE, "/documents/{id}").hasAuthority(AuthorityEnum.EDIT_DELETE_DOCS.name())
                         .requestMatchers("/packages/**").authenticated()

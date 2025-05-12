@@ -128,7 +128,7 @@ public class DigestService {
                         mailManService.sendEmail(sendDigestByEmailsDTO).block();
                     }
                     List<FcmToken> expiredFcmTokens = new ArrayList<>();
-                    for (var fcmToken : fcmTokenService.getTokensByUser(subscribersWithMobileNotifications)) {
+                    for (var fcmToken : fcmTokenService.getTokensByUsers(subscribersWithMobileNotifications)) {
                         var subscriptionsTitle = digestES.getTitle();
                         Map<String, String> data = new HashMap<>();
                         data.put("title", subscriptionsTitle);

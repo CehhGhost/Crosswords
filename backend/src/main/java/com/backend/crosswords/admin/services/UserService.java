@@ -244,4 +244,8 @@ public class UserService {
     public void createFcmTokenForUser(User user, String fcmToken) {
         fcmTokenService.createFcmTokenForUser(user, fcmToken);
     }
+
+    public void deleteFcmTokenForUser(User user, String fcmToken) throws NoSuchElementException {
+        fcmTokenService.deleteFcmTokenFormUser(user, fcmToken);
+    }
 }

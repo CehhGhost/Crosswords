@@ -376,16 +376,37 @@ public class UserController {
     }
     @Operation(
             summary = "Create a fcm token for user",
-            description = "This endpoint lets you Create a fcm token for user"
+            description = "This endpoint lets you create a fcm token for user"
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "You successfully created a fcm token for user")
+            @ApiResponse(responseCode = "200", description = "You successfully created a fcm token for user"),
+            @ApiResponse(responseCode = "401", description = "You are trying to create a fcm token for user while not authenticated")
     })
-    @PostMapping("/create_fcm_token")
+    @PostMapping("/fcm_token/create")
     public ResponseEntity<?> createFcmTokenForUser(@RequestParam String fcmToken) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
         userService.createFcmTokenForUser(crosswordUserDetails.getUser(), fcmToken);
+        return ResponseEntity.ok(HttpStatus.OK);
+    }
+    @Operation(
+            summary = "Delete a fcm token for user",
+            description = "This endpoint lets you delete a fcm token for user"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "You successfully deleted a fcm token for user"),
+            @ApiResponse(responseCode = "404", description = "There is no such fcm tokens for this user"),
+            @ApiResponse(responseCode = "401", description = "You are trying to delete a fcm token for user while not authenticated")
+    })
+    @DeleteMapping("/fcm_token/delete")
+    public ResponseEntity<?> deleteFcmToken(@RequestParam String fcmToken) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+        try {
+            userService.deleteFcmTokenForUser(crosswordUserDetails.getUser(), fcmToken);
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
         return ResponseEntity.ok(HttpStatus.OK);
     }
     // TODO добавить удаление пользователя, учтя тот факт, что перед удалением необходимо очистить связанные с ним данные

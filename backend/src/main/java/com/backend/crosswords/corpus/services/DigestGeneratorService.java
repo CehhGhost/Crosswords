@@ -30,8 +30,8 @@ public class DigestGeneratorService {
                     .retrieve()
                     .bodyToMono(GenerateDigestResponseDTO.class)
                     .timeout(Duration.ofMillis(properties.getResponseTimeout()))
-                    .map(GenerateDigestResponseDTO::getResponse);
-                    // .onErrorResume(e -> Mono.just("Error: " + e.getMessage()));
+                    .map(GenerateDigestResponseDTO::getResponse)
+                    .onErrorMap(Exception.class, ex -> new ConnectionClosedException(ex.getMessage()));
         } catch (Exception e) {
             throw new ConnectionClosedException(e.getMessage());
         }

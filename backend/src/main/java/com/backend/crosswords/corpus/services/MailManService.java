@@ -29,7 +29,8 @@ public class MailManService {
                     .bodyValue(request)
                     .retrieve()
                     .onStatus(HttpStatusCode::isError, error -> Mono.error(new ConnectionClosedException("Connection with mailman error")))
-                    .bodyToMono(String.class);
+                    .bodyToMono(String.class)
+                    .onErrorMap(Exception.class, ex -> new ConnectionClosedException(ex.getMessage()));
         } catch (Exception e) {
             throw new ConnectionClosedException(e.getMessage());
         }
@@ -42,7 +43,8 @@ public class MailManService {
                     .bodyValue(request)
                     .retrieve()
                     .onStatus(HttpStatusCode::isError, error -> Mono.error(new ConnectionClosedException("Connection with mailman error")))
-                    .bodyToMono(String.class);
+                    .bodyToMono(String.class)
+                    .onErrorMap(Exception.class, ex -> new ConnectionClosedException(ex.getMessage()));
         } catch (Exception e) {
             throw new ConnectionClosedException(e.getMessage());
         }

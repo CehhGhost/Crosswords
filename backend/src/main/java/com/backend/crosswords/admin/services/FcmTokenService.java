@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Set;
+import java.util.NoSuchElementException;
 
 @Service
 public class FcmTokenService {
@@ -24,13 +24,22 @@ public class FcmTokenService {
         }
     }
 
-    public List<FcmToken> getTokensByUser(List<User> users) {
+    public List<FcmToken> getTokensByUsers(List<User> users) {
         return fcmTokenRepository.findAllByUserIn(users);
     }
 
     public void deleteAllExpiredTokens(List<FcmToken> expiredFcmTokens) {
         if (!expiredFcmTokens.isEmpty()) {
             fcmTokenRepository.deleteAll(expiredFcmTokens);
+        }
+    }
+
+    public void deleteFcmTokenFormUser(User user, String fcmToken) throws NoSuchElementException {
+        var fcmExistence = fcmTokenRepository.findByUserAndToken(user, fcmToken);
+        if (fcmExistence.isPresent()) {
+            fcmTokenRepository.delete(fcmExistence.get());
+        } else {
+            throw new NoSuchElementException("There is no such tokens for this user!");
         }
     }
 }
