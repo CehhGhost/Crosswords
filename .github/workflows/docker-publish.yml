@@ -58,6 +58,7 @@ jobs:
             cehhghost/crosswords_backend:latest
             cehhghost/crosswords_backend:${{ steps.version.outputs.VERSION }}
   deploy:
+    if: github.actor == 'cehhghost'
     env:
       REPO: ${{ github.event.repository.name }}
     runs-on: ubuntu-latest
