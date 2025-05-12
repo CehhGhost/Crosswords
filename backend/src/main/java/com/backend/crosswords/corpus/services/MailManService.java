@@ -28,8 +28,7 @@ public class MailManService {
                 .bodyValue(request)
                 .retrieve()
                 .onStatus(HttpStatusCode::isError, error -> Mono.error(new ConnectionClosedException("Connection with mailman error")))
-                .bodyToMono(String.class)
-                .onErrorResume(e -> Mono.error(new ConnectionClosedException(e.getMessage())));
+                .bodyToMono(String.class);
     }
     public Mono<String> sendVerificationCode(SendVerificationCodeDTO request) throws ConnectionClosedException {
         try {
@@ -39,8 +38,7 @@ public class MailManService {
                     .bodyValue(request)
                     .retrieve()
                     .onStatus(HttpStatusCode::isError, error -> Mono.error(new ConnectionClosedException("Connection with mailman error")))
-                    .bodyToMono(String.class)
-                    .onErrorMap(Exception.class, ex -> new ConnectionClosedException(ex.getMessage()));
+                    .bodyToMono(String.class);
         } catch (Exception e) {
             throw new ConnectionClosedException(e.getMessage());
         }

@@ -91,7 +91,7 @@ public class DigestService {
         generatorService.generateDigest(generateDigestDTO)
                 .doOnSuccess(digestText -> this.asyncCreateDigestCoreWithText(finalCore, digestText))
                 .doOnError(error -> {})
-                .subscribe();
+                .block();
         //var digestText = docMetasText.toString();
         return finalCore;
     }
