@@ -90,12 +90,12 @@ public class DigestService {
         }
         generatorService.generateDigest(generateDigestDTO)
                 .doOnSuccess(digestText -> this.asyncCreateDigestCoreWithText(finalCore, digestText))
-                .doOnError(error -> {})
+                .doOnError(error -> this.asyncCreateDigestCoreWithText(finalCore, "Digest couldn't create"))
                 .block();
         //var digestText = docMetasText.toString();
         return finalCore;
     }
-    private void asyncCreateDigestCoreWithText(DigestCore core, String digestText) {
+    protected void asyncCreateDigestCoreWithText(DigestCore core, String digestText) {
         core.setText(digestText);
         coreRepository.save(core);
     }
@@ -105,7 +105,7 @@ public class DigestService {
         while (!templates.isEmpty()) {
             var template = templates.poll();
             var core = this.createNewDigestCore(template);
-            if (core != null) {
+            if (core != null && !core.getText().equals("Digest couldn't create")) {
                 for (var subscription : subscriptionService.getAllDigestSubscriptionsByTemplate(template)) {
                     var coreId = core.getId();
                     var subscriptionId = subscription.getId();
@@ -131,7 +131,7 @@ public class DigestService {
                         }
                     }
                     if (!sendDigestByEmailsDTO.getRecipients().isEmpty()) {
-                        mailManService.sendEmail(sendDigestByEmailsDTO).block();
+                        mailManService.sendEmail(sendDigestByEmailsDTO).subscribe();
                     }
                     List<FcmToken> expiredFcmTokens = new ArrayList<>();
                     for (var fcmToken : fcmTokenService.getTokensByUsers(subscribersWithMobileNotifications)) {
