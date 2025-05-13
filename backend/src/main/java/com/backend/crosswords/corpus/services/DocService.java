@@ -60,10 +60,11 @@ public class DocService {
     private DocDTO transformDocIntoDocDTO(DocMeta docMeta, Boolean includeAnnotations) {
         var docDTO = modelMapper.map(docMeta, DocDTO.class);
         var docES = docSearchRepository.findById(docDTO.getId()).orElseThrow();
+        User user;
         try {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
-            var user = crosswordUserDetails.getUser();
+            user = crosswordUserDetails.getUser();
             docDTO.setFavourite(packageService.checkDocInFavourites(user, docMeta));
             var rating = ratingService.getRatingsForDocumentByUser(docMeta, user);
             docDTO.setRatingSummary(rating.get(0));
@@ -74,6 +75,7 @@ public class DocService {
             docDTO.setRatingClassification(null);
             docDTO.setRatingSummary(null);
             docDTO.setAuthed(false);
+            user = null;
         }
         docDTO.setTagNames(new ArrayList<>());
         for (var tag : docMeta.getTags()) {
@@ -82,10 +84,12 @@ public class DocService {
         docDTO.setText(docES.getText());
         docDTO.setTitle(docES.getTitle());
         docDTO.setRusSource(docMeta.getSource().getRussianName());
-        if (includeAnnotations != null && includeAnnotations) {
+        if (includeAnnotations != null && includeAnnotations && user != null) {
             docDTO.setDocsAnnotations(new ArrayList<>());
             for (var annotation : docMeta.getAnnotations()) {
-                docDTO.getDocsAnnotations().add(modelMapper.map(annotation, AnnotationDTO.class));
+                if (user.getId().equals(annotation.getOwner().getId())) {
+                    docDTO.getDocsAnnotations().add(modelMapper.map(annotation, AnnotationDTO.class));
+                }
             }
         }
         return docDTO;
