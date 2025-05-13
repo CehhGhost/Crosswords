@@ -3,7 +3,8 @@ name: Docker Build and Push
 on:
   push:
     branches:
-      - main  # Триггер на изменения в ветке main
+      - main
+      - development
 
 jobs:
   build-and-push:
@@ -58,7 +59,7 @@ jobs:
             cehhghost/crosswords_backend:latest
             cehhghost/crosswords_backend:${{ steps.version.outputs.VERSION }}
   deploy:
-    if: github.actor == 'cehhghost'
+    if: github.actor == 'cehhghost' && github.ref == 'refs/heads/main'
     needs: build-and-push
     env:
       REPO: ${{ github.event.repository.name }}
