@@ -288,4 +288,4 @@ export const availableLanguages = [
 ]
 
 export const backendURL = '/api/'
-//export const backendURL = "http://localhost:8081/"
+// export const backendURL = "http://localhost:8081/"

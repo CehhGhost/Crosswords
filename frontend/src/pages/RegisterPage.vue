@@ -1,19 +1,15 @@
 <template>
   <q-page class="flex flex-center q-pa-sm">
     <div class="login-container">
-      <!-- Логотип, располагается чуть выше центра -->
       <div class="logo-container">
         <q-img :src="logoSrc" alt="Логотип" class="logo-img" />
       </div>
 
-      <!-- Заголовок -->
       <div class="title text-center q-mt-sm">
         <h4 class="caption">Создайте аккаунт</h4>
       </div>
 
-      <!-- Форма регистрации -->
       <q-form @submit.prevent="register" class="q-mt-md">
-        <!-- Поля для ввода -->
         <q-input
           filled
           v-model="name"
@@ -45,12 +41,10 @@
           :color="$q.dark.isActive ? 'primary' : 'accent'"
         />
 
-        <!-- Текст с предложением входа -->
         <div class="text-center q-mb-md">
           <p>Уже есть зарегистрированный аккаунт? <a href="/login">Войти</a></p>
         </div>
 
-        <!-- Кнопка регистрации -->
         <q-btn
           type="submit"
           label="Зарегистрироваться"

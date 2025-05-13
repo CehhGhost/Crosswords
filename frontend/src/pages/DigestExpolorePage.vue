@@ -110,7 +110,6 @@
         />
       </div>
 
-      <!-- Даты -->
       <div class="row q-col-gutter-md items-center">
         <div class="col-6">
           <q-input
@@ -171,7 +170,6 @@
         </div>
       </div>
 
-      <!-- Теги и Источники -->
       <div class="row q-col-gutter-md items-center">
         <div class="col-6">
           <filter-selector
@@ -198,7 +196,6 @@
         </div>
       </div>
 
-      <!-- Чекбокс и кнопка -->
       <div class="row q-col-gutter-md items-center q-mb-md justify-between">
         <div class="col-auto">
           <q-checkbox
@@ -220,7 +217,6 @@
         </div>
       </div>
 
-      <!-- Список дайджестов -->
       <div>
         <digest-card
           v-for="digest in digests"

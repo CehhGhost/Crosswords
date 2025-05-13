@@ -1,6 +1,5 @@
 <template>
   <div class="subscription-btn-wrapper">
-    <!-- Если пользователь не подписан, показываем кнопку "Подписаться" -->
     <q-btn
       v-if="!subscribed"
       label="Подписаться"
@@ -14,7 +13,6 @@
       :disable="loadingSubscription"
     />
 
-    <!-- Если пользователь подписан, показываем dropdown для управления подпиской -->
     <q-btn-dropdown
       v-else
       outline
@@ -67,7 +65,6 @@
       </q-list>
     </q-btn-dropdown>
 
-    <!-- Диалог для передачи прав владельца (popup) -->
     <owner-transfer-dialog
       v-model="showOwnerTransferDialog"
       :subscriberEmails="subscriberEmails"
