@@ -72,7 +72,7 @@ public class DocService {
             docDTO.setRatingClassification(rating.get(1));
             docDTO.setAuthed(true);
             boolean moderator = false;
-            if (user.getRole().getAuthorities() != null) {
+            if (user.getRole() != null && user.getRole().getAuthorities() != null) {
                 for (var authority : user.getRole().getAuthorities()) {
                     if (authority.equals(AuthorityEnum.EDIT_DELETE_DOCS)) {
                         moderator = true;
