@@ -21,7 +21,6 @@ import java.time.Duration;
 
 @EnableScheduling
 @SpringBootApplication(exclude = {ElasticsearchDataAutoConfiguration.class})
-// TODO check
 public class CrosswordsApplication {
 	private final MailmanProperties mailmanProperties;
 	private final DigestGeneratorProperties digestGeneratorProperties;
