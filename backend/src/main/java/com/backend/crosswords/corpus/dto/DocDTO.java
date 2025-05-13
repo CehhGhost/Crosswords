@@ -49,6 +49,8 @@ public class DocDTO {
     @Schema(example = "https://www.interfax.ru/business/1001194")
     @JsonProperty("URL")
     private String url;
+    @JsonProperty("is_moderator")
+    private Boolean isModerator;
     @JsonProperty("annotations")
     private List<AnnotationDTO> docsAnnotations;
     public DocDTO(Long id, String summary, Timestamp date, String url, String language, String text, String title) {
@@ -184,6 +186,14 @@ public class DocDTO {
         this.docsAnnotations = docsAnnotations;
     }
 
+    public Boolean getIsModerator() {
+        return isModerator;
+    }
+
+    public void setIsModerator(Boolean moderator) {
+        isModerator = moderator;
+    }
+
     @Override
     public String toString() {
         return "DocDTO{" +
@@ -201,6 +211,7 @@ public class DocDTO {
                 ", authed=" + authed +
                 ", language='" + language + '\'' +
                 ", url='" + url + '\'' +
+                ", isModerator=" + isModerator +
                 ", docsAnnotations=" + docsAnnotations +
                 '}';
     }
