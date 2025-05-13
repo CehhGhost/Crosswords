@@ -3,7 +3,7 @@ version: '3.8'
 services:
   app:
     image: cehhghost/crosswords_backend:0.3.0-DEVELOPMENT
-    # cehhghost/crosswords_backend:latest
+    # cehhghost/crosswords_backend:0.3.0-DEVELOPMENT
     ports:
       - "8081:8081"  # Пробрасываем порт Spring Boot
     depends_on:
