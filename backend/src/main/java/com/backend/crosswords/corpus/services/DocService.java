@@ -72,12 +72,15 @@ public class DocService {
             docDTO.setRatingClassification(rating.get(1));
             docDTO.setAuthed(true);
             boolean moderator = false;
-            for (var authority : user.getRole().getAuthorities()) {
-                if (authority.equals(AuthorityEnum.EDIT_DELETE_DOCS)) {
-                    moderator = true;
-                    break;
+            if (user.getRole().getAuthorities() != null) {
+                for (var authority : user.getRole().getAuthorities()) {
+                    if (authority.equals(AuthorityEnum.EDIT_DELETE_DOCS)) {
+                        moderator = true;
+                        break;
+                    }
                 }
             }
+
             docDTO.setIsModerator(moderator);
         } catch (ClassCastException e) {
             docDTO.setFavourite(null);
