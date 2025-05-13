@@ -69,6 +69,7 @@ public class DigestService {
     protected DigestCore createNewDigestCore(DigestTemplate template) throws ConnectionClosedException {
         template = templateService.getTemplateFromId(template.getUuid()); // необходимо, чтобы сделать полную загрузку данных, избегаю ленивую
         var docMetas = docService.getAllDocsByTemplateForToday(template);
+        System.out.println("Число подходящих документов: " + docMetas.size());
         if (docMetas.size() == 0) {
             return null;
         }
@@ -96,6 +97,7 @@ public class DigestService {
         return finalCore;
     }
     protected void asyncCreateDigestCoreWithText(DigestCore core, String digestText) {
+        System.out.println(digestText);
         core.setText(digestText);
         coreRepository.save(core);
     }
@@ -105,6 +107,11 @@ public class DigestService {
         while (!templates.isEmpty()) {
             var template = templates.poll();
             var core = this.createNewDigestCore(template);
+            if (core != null) {
+                System.out.println(core.getText());
+            } else {
+                System.out.println("Ядро не создалось!");
+            }
             if (core != null && !core.getText().equals("Digest couldn't create")) {
                 for (var subscription : subscriptionService.getAllDigestSubscriptionsByTemplate(template)) {
                     var coreId = core.getId();
@@ -444,4 +451,8 @@ public class DigestService {
         Slice<Digest> digestPage = digestRepository.findAllPrivateUsersDigests(user.getId(), pageable);
         return this.transformDigestsIntoDigestsDTO(digestPage.getContent(), user, digestPage.hasNext() ? pageNumber + 1 : -1);
     }
+
+    /*public void deleteDigestById(String digestId) {
+        var digest = this.getDigestById(digestId);
+    }*/
 }
