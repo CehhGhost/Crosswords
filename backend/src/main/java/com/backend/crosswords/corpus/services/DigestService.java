@@ -69,6 +69,7 @@ public class DigestService {
     protected DigestCore createNewDigestCore(DigestTemplate template) throws ConnectionClosedException {
         template = templateService.getTemplateFromId(template.getUuid()); // необходимо, чтобы сделать полную загрузку данных, избегаю ленивую
         var docMetas = docService.getAllDocsByTemplateForToday(template);
+        System.out.println("Число подходящих документов: " + docMetas.size());
         if (docMetas.size() == 0) {
             return null;
         }
