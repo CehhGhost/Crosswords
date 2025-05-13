@@ -96,6 +96,7 @@ public class DigestService {
         return finalCore;
     }
     protected void asyncCreateDigestCoreWithText(DigestCore core, String digestText) {
+        System.out.println(digestText);
         core.setText(digestText);
         coreRepository.save(core);
     }
