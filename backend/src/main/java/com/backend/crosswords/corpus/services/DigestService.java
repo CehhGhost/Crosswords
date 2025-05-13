@@ -105,6 +105,11 @@ public class DigestService {
         while (!templates.isEmpty()) {
             var template = templates.poll();
             var core = this.createNewDigestCore(template);
+            if (core != null) {
+                System.out.println(core.getText());
+            } else {
+                System.out.println("Ядро не создалось!");
+            }
             if (core != null && !core.getText().equals("Digest couldn't create")) {
                 for (var subscription : subscriptionService.getAllDigestSubscriptionsByTemplate(template)) {
                     var coreId = core.getId();
@@ -444,4 +449,8 @@ public class DigestService {
         Slice<Digest> digestPage = digestRepository.findAllPrivateUsersDigests(user.getId(), pageable);
         return this.transformDigestsIntoDigestsDTO(digestPage.getContent(), user, digestPage.hasNext() ? pageNumber + 1 : -1);
     }
+
+    /*public void deleteDigestById(String digestId) {
+        var digest = this.getDigestById(digestId);
+    }*/
 }
