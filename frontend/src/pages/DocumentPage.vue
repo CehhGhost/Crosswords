@@ -36,7 +36,6 @@
           </div>
         </div>
 
-        <!-- Аккордеон с кратким содержанием -->
         <q-expansion-item expand-separator>
           <template v-slot:header>
             <q-item-section avatar>

@@ -2,10 +2,8 @@
     <q-layout view="hhh Lpr fff">
       <Navbar />
   
-      <!-- Боковое меню -->
       <Drawer />
   
-      <!-- Контейнер для страниц -->
       <q-page-container>
         <router-view />
       </q-page-container>
