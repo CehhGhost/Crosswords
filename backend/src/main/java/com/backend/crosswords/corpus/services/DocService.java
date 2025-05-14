@@ -138,9 +138,9 @@ public class DocService {
         return result;
     }
 
-    public DocDTO getDocByIdAndTransformIntoDTO(Long id) {
+    public DocDTO getDocByIdAndTransformIntoDTO(Long id, Boolean includeAnnotations) {
         var docMeta = docMetaRepository.findById(id).orElseThrow(() -> new NoSuchElementException("No documents with such id!"));
-        return this.transformDocIntoDocDTO(docMeta, true);
+        return this.transformDocIntoDocDTO(docMeta, includeAnnotations);
     }
 
     private SearchResultDTO formSearchResultDTO(int pageNumber, List<DocDTO> resultHits) {
@@ -184,12 +184,16 @@ public class DocService {
         {
             switch (searchDocDTO.getSearchMode()) {
                 case "id" -> {
-                    resultHits.add(this.getDocByIdAndTransformIntoDTO(Long.parseLong(searchDocDTO.getSearchTerm())));
-                    return this.formSearchResultDTO(searchDocDTO.getPageNumber(), resultHits);
+                    try {
+                        resultHits.add(this.getDocByIdAndTransformIntoDTO(Long.parseLong(searchDocDTO.getSearchTerm()), false));
+                    } catch (IllegalArgumentException | NoSuchElementException e) {
+                        return this.formSearchResultDTO(-1, resultHits);
+                    }
+                    return this.formSearchResultDTO(-1, resultHits);
                 }
                 case "semantic", "syntax" -> {
                     if (searchDocDTO.getMatchesPerPage() <= 0) {
-                        return this.formSearchResultDTO(searchDocDTO.getPageNumber(), resultHits);
+                        return this.formSearchResultDTO(-1, resultHits);
                     }
                     queryBuilder = QueryBuilders.boolQuery()
                             .should(QueryBuilders.matchQuery(field, searchDocDTO.getSearchTerm()).fuzziness(Fuzziness.AUTO))
@@ -209,7 +213,7 @@ public class DocService {
         int matchesPerPage = searchDocDTO.getMatchesPerPage() == null ? 10 : searchDocDTO.getMatchesPerPage();
         var searchQuery = searchQueryBuilder
                 .withPageable(PageRequest.of(pageNumber, matchesPerPage))
-                .withSort(Sort.by(Sort.Order.desc("date")))
+                .withSort(Sort.by(Sort.Order.desc("id")))
                 .build();
         try {
             var searchHits = elasticsearchOperations.search(searchQuery, DocES.class, IndexCoordinates.of("document"));
