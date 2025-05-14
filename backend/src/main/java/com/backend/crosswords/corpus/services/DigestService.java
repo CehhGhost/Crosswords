@@ -26,7 +26,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.function.Consumer;
 
 @Service
 public class DigestService {
@@ -89,13 +88,13 @@ public class DigestService {
             generateDigestDTO.getDocuments().add(generateDigestsDocumentsDTO);
         }
         generatorService.generateDigest(generateDigestDTO)
-                .doOnSuccess(digestText -> this.asyncCreateDigestCoreWithText(finalCore, digestText))
-                .doOnError(error -> this.asyncCreateDigestCoreWithText(finalCore, "Digest couldn't create"))
+                .doOnSuccess(digestText -> this.saveDigestCoreWithText(finalCore, digestText))
+                .doOnError(error -> this.saveDigestCoreWithText(finalCore, "Digest couldn't create"))
                 .block();
         //var digestText = docMetasText.toString();
         return finalCore;
     }
-    protected void asyncCreateDigestCoreWithText(DigestCore core, String digestText) {
+    protected void saveDigestCoreWithText(DigestCore core, String digestText) {
         core.setText(digestText);
         coreRepository.save(core);
     }

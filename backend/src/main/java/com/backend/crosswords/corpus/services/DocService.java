@@ -196,7 +196,7 @@ public class DocService {
         int matchesPerPage = searchDocDTO.getMatchesPerPage() == null ? 10 : searchDocDTO.getMatchesPerPage();
         var searchQuery = searchQueryBuilder
                 .withPageable(PageRequest.of(pageNumber, matchesPerPage))
-                .withSort(Sort.by(Sort.Order.desc("date")))
+                .withSort(Sort.by(Sort.Order.desc("id")))
                 .build();
         try {
             var searchHits = elasticsearchOperations.search(searchQuery, DocES.class, IndexCoordinates.of("document"));
@@ -443,7 +443,7 @@ public class DocService {
     public List<DocMeta> getAllDocsByTemplateForToday(DigestTemplate template) {
         List<DocMeta> docs = new ArrayList<>();
         for (var doc : docMetaRepository.findAllWithTagsForToday(DigestService.startOfDay, DigestService.endOfDay)) {
-            Boolean first = (template.getTags().isEmpty() || tagService.getSetOfTagsNames(doc.getTags()).containsAll(tagService.getSetOfTagsNames(template.getTags())));
+            Boolean first = (template.getTags().isEmpty() || tagService.getSetOfTagsNames(doc.getTags()).stream().anyMatch(tagService.getSetOfTagsNames(template.getTags())::contains));
             Boolean second = (template.getSources().isEmpty() || template.getSources().contains(doc.getSource()));
             if (first && second) {
                 docs.add(doc);

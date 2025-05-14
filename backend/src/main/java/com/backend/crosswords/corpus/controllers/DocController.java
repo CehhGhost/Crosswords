@@ -177,35 +177,6 @@ public class DocController {
         return ResponseEntity.ok(HttpStatus.OK);
     }
 
-    // Очистка индекса документов из ES, если предварительно не почистить доки из Postgres, то дальше возникнут ошибки
-    @Operation(
-            summary = "Delete index from ES",
-            description = "This endpoint lets clean the documents' index from ES, if you do not clean the docs from Postgres at the same time, then errors may occur",
-            deprecated = true)
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "You successfully deleted the documents' index"),
-            @ApiResponse(responseCode = "404", description = "You are trying to delete index, that doesn't exist (maybe it has been already deleted)"),
-            @ApiResponse(responseCode = "500", description = "This error means, that something is wrong with ES itself, it has an index, but couldn't delete it")
-    })
-    @DeleteMapping("/ES/itself")
-    public ResponseEntity<?> deleteDocumentsItself(@RequestHeader("Authorization") String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Missing or invalid Authorization header");
-        }
-        String token = authHeader.substring(7);
-        if (!backendSecretKey.equals(token)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Your token is incorrect!");
-        }
-        try {
-            docService.deleteDocumentsItself();
-        } catch (NoSuchElementException e) {
-            ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        } catch (RequestRejectedException e) {
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-        }
-        return ResponseEntity.ok(HttpStatus.OK);
-    }
-
     @Operation(summary = "Add doc into the package", description = "This endpoint lets add document by its id into the user's package, specified by its name")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "You successfully added a document into the package"),
