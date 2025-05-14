@@ -36,7 +36,6 @@
           </div>
         </div>
 
-        <!-- Аккордеон с кратким содержанием -->
         <q-expansion-item expand-separator>
           <template v-slot:header>
             <q-item-section avatar>
@@ -86,7 +85,7 @@
           class="col-auto"
         />
 
-        <div v-if="documentData.is_authed" class="row items-start wrap col-auto">
+        <div v-if="documentData.is_moderator" class="row items-start wrap col-auto">
           <q-btn
             label="Редактировать"
             color="primary"
@@ -140,6 +139,7 @@
 <script setup>
 import { ref, onMounted, computed, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useQuasar } from 'quasar'
 import DocumentTags from '../components/DocumentTags.vue'
 import ConfirmDialog from '../components/ConfirmDialog.vue'
 import BackButton from 'src/components/BackButton.vue'
@@ -154,6 +154,7 @@ import { backendURL } from 'src/data/lookups'
 
 const route = useRoute()
 const router = useRouter()
+const $q = useQuasar()
 
 const documentData = ref(null)
 const textContainer = ref(null)
@@ -190,6 +191,9 @@ onMounted(async () => {
     }
 
     documentData.value = await response.json()
+    if (documentData.value.rating_classification == null) {
+      documentData.value.rating_classification = 0;
+    }
   } catch (error) {
     console.error('Ошибка при загрузке документа:', error)
   } finally {
@@ -393,8 +397,10 @@ async function onRatingChange(newRating) {
       }
     } else {
       documentData.value.rating_classification = newRating
+      $q.notify({ message: "Рейтинг сохранен, спасибо!", type: 'positive', position: 'top' })
     }
   } catch (err) {
+    $q.notify({ message: "Ошибка при сохранении рейтинга", type: 'negative', position: 'top' })
     console.error('Ошибка при отправке рейтинга:', err)
   }
 }

@@ -13,7 +13,7 @@ import { useQuasar } from 'quasar';
 const $q = useQuasar();
 
 const grafanaUrl = ref('');
-const initialGrafanaUrl = 'http://localhost:4000'; 
+const initialGrafanaUrl = 'https://grafana.nt.fyi/login'; 
 
 
 const updateGrafanaUrl = () => {

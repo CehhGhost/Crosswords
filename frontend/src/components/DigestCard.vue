@@ -4,7 +4,6 @@
       <div class="row items-center justify-between">
         <div><b>ID:</b> {{ props.digest.id }}</div>
         <div class="row items-center">
-          <!-- Рейтинг -->
           <div>
             <b class="q-mr-sm">
               <q-icon name="star" color="primary" />
@@ -12,7 +11,6 @@
             </b>
           </div>
 
-          <!-- Статус подписки -->
           <b v-if="props.is_authed && hasSubscribeOptions">
             {{ subscribed ? 'Подписан' : 'Не подписан' }}
           </b>
@@ -21,7 +19,6 @@
             <q-icon v-if="mobileNotifications && props.is_authed" name="phone_iphone" class="q-ml-xs" />
           </span>
 
-          <!-- Дата -->
           <span class="q-ml-sm"><b>Дата:</b> {{ props.digest.date }}</span>
         </div>
       </div>
@@ -32,7 +29,6 @@
 
       <div class="q-mt-sm">{{ truncatedText }}</div>
 
-      <!-- Тэги -->
       <div v-if="props.digest.tags && props.digest.tags.length" class="q-mt-sm row wrap">
         <DocumentTags :tags="props.digest.tags" />
       </div>

@@ -16,11 +16,9 @@
               @click="toggleFolder(folder)"
               :class="folder.is_included ? ($q.dark.isActive ? 'text-primary' : 'text-accent') : ''"
             >
-              <!-- Левая секция с названием папки -->
               <q-item-section>
                 <div class="folder-name">{{ folder.name }}</div>
               </q-item-section>
-              <!-- Правая секция с индикатором или галочкой -->
               <q-item-section side>
                 <q-spinner-dots
                   v-if="folder.pending"
