@@ -295,7 +295,7 @@ public class DigestService {
         }
         var searchQuery = searchQueryBuilder
                 .withPageable(PageRequest.of(pageNumber, matchesPerPage))
-                .withSort(Sort.by(Sort.Order.desc("date")))
+                .withSort(Sort.by(Sort.Order.desc("_score"), Sort.Order.desc("date")))
                 .build();
         var searchHits = elasticsearchOperations.search(searchQuery, DigestES.class, IndexCoordinates.of("digest"));
         digests = new ArrayList<>();
