@@ -6,14 +6,11 @@
         <q-img :src="logoSrc" alt="Логотип" class="logo-img" />
       </div>
 
-      <!-- Заголовок -->
       <div class="title text-center q-mt-sm">
         <h4 class="caption">Добро пожаловать!</h4>
       </div>
 
-      <!-- Форма входа -->
       <q-form @submit.prevent="login" class="q-mt-md">
-        <!-- Поля для ввода -->
         <q-input
           filled
           v-model="email"
@@ -31,12 +28,10 @@
           :color="$q.dark.isActive ? 'primary' : 'accent'"
         />
 
-        <!-- Текст с предложением регистрации -->
         <div class="text-center q-mb-md">
           <p>Нет аккаунта? <a href="/register">Зарегистрируйтесь - это быстро!</a></p>
         </div>
 
-        <!-- Кнопка входа -->
         <q-btn
           type="submit"
           label="Войти"
@@ -98,7 +93,6 @@ async function login() {
 
 <style scoped>
 .login-container {
-  /* Поднимаем контейнер чуть выше центра */
   margin-top: -50px;
 }
 

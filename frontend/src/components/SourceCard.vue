@@ -1,21 +1,23 @@
 <template>
-  <div class="source-card">
-    <div
-      class="card-background"
-      :style="{ backgroundImage: `url(${background})` }"
-    ></div>
-  </div>
+  <a :href="link" target="_blank" class="source-card">
+    <div class="card-background" :style="{ backgroundImage: `url(${background})` }"></div>
+  </a>
 </template>
 
 <script setup>
 const props = defineProps({
   background: {
     type: String,
-    required: true
-  }
+    required: true,
+  },
+  link: {
+    type: String,
+    required: true,
+  },
 })
 
-const {background } = props
+
+const { background } = props
 </script>
 
 <style scoped>

@@ -155,18 +155,15 @@ async function checkAuth() {
 }
 
 @media (min-width: 992px) {
-  /* md по умолчанию у Quasar ~ 992px */
   .hidden-sm-and-down {
     display: flex;
   }
 }
 
-/* Чтобы курсор не был "кликабельным" по всей шапке */
 .no-pointer {
   cursor: default;
 }
 
-/* Явно указываем фон для Drawer  */
 .mobile-drawer {
   color: $secondary;
 }

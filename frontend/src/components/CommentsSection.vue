@@ -1,6 +1,5 @@
 <template>
   <div>
-    <!-- Поле для ввода нового комментария -->
     <div class="q-py-md">
       <q-input
         v-model="newCommentText"
@@ -22,7 +21,6 @@
       </div>
     </div>
 
-    <!-- Лоадер, если комментарии загружаются -->
     <div v-if="isLoadingComments" class="row justify-center q-pa-md">
       <q-spinner-dots size="30px" color="primary" />
     </div>
@@ -62,7 +60,6 @@
               <q-btn label="Отмена" no-caps color="secondary" flat @click="cancelEdit" />
             </div>
           </div>
-          <!-- Текст комментария -->
           <div v-else>
             {{ comment.text }}
           </div>

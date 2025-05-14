@@ -4,15 +4,12 @@
     <div class="text-h4 caption q-mb-lg">Управление папками</div>
     <q-card>
       <q-card-section>
-        <!-- Если список пуст, выводим сообщение -->
         <div v-if="folders.length === 0" class="text-center q-pa-md">
           У вас нет папок, создайте их на странице с документами
         </div>
-        <!-- Если есть папки, выводим их список -->
         <div v-else>
           <div v-for="(folder, index) in folders" :key="folder.name" class="q-mb-md">
             <div class="row items-center">
-              <!-- Отображение названия или поля редактирования -->
               <div class="col">
                 <div v-if="!folder.editing">
                   <span>{{ folder.name }}</span>
@@ -60,7 +57,6 @@
                   />
                   <q-spinner-dots v-else size="18px" color="primary" />
                 </template>
-                <!-- Скачать -->
                 <q-btn
                   round
                   dense
@@ -79,7 +75,6 @@
                     Выгрузить документы из папки в формате JSON
                   </q-tooltip>
                 </q-btn>
-                <!-- Удалить -->
                 <q-btn round dense flat icon="delete" color="negative" @click="deleteFolder(index)">
                   <q-tooltip
                     anchor="top middle"
@@ -93,10 +88,8 @@
                 </q-btn>
               </div>
             </div>
-            <!-- Разделитель между папками -->
             <q-separator v-if="index < folders.length - 1" />
           </div>
-          <!-- Toggle для включения аннотаций -->
           <div class="q-mt-lg">
             <q-toggle v-model="includeAnnotations" label="Включить аннотации в выгрузку">
               <q-tooltip
@@ -113,7 +106,6 @@
         </div>
       </q-card-section>
     </q-card>
-    <!-- Диалог подтверждения удаления -->
     <ConfirmDialog
       v-model="deleteDialog"
       title="Внимание!"
@@ -134,12 +126,6 @@ import { useQuasar } from 'quasar'
 const { toggleDrawer } = useDrawer()
 const $q = useQuasar()
 
-/* Массив папок. Каждый объект содержит:
-     - name: текущее название,
-     - newName: значение для редактирования,
-     - editing: режим редактирования,
-     - error: сообщение об ошибке (если есть),
-     - loading: флаг ожидания ответа от сервера при сохранении */
 const folders = ref([])
 
 
@@ -283,5 +269,4 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Добавьте свои стили при необходимости */
 </style>
