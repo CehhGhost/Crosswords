@@ -200,7 +200,7 @@ public class DocService {
         int matchesPerPage = searchDocDTO.getMatchesPerPage() == null ? 10 : searchDocDTO.getMatchesPerPage();
         var searchQuery = searchQueryBuilder
                 .withPageable(PageRequest.of(pageNumber, matchesPerPage))
-                .withSort(Sort.by(Sort.Order.desc("id")))
+                .withSort(Sort.by(Sort.Order.desc("_score"), Sort.Order.desc("date")))
                 .build();
         try {
             var searchHits = elasticsearchOperations.search(searchQuery, DocES.class, IndexCoordinates.of("document"));
