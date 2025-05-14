@@ -88,7 +88,7 @@ public class DocController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getDocById(@PathVariable Long id) {
         try {
-            return ResponseEntity.ok(docService.getDocByIdAndTransformIntoDTO(id));
+            return ResponseEntity.ok(docService.getDocByIdAndTransformIntoDTO(id, true));
         } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No documents with such id!");
         }
