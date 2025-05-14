@@ -443,7 +443,7 @@ public class DocService {
     public List<DocMeta> getAllDocsByTemplateForToday(DigestTemplate template) {
         List<DocMeta> docs = new ArrayList<>();
         for (var doc : docMetaRepository.findAllWithTagsForToday(DigestService.startOfDay, DigestService.endOfDay)) {
-            Boolean first = (template.getTags().isEmpty() || tagService.getSetOfTagsNames(doc.getTags()).containsAll(tagService.getSetOfTagsNames(template.getTags())));
+            Boolean first = (template.getTags().isEmpty() || tagService.getSetOfTagsNames(doc.getTags()).stream().anyMatch(tagService.getSetOfTagsNames(template.getTags())::contains));
             Boolean second = (template.getSources().isEmpty() || template.getSources().contains(doc.getSource()));
             if (first && second) {
                 docs.add(doc);
