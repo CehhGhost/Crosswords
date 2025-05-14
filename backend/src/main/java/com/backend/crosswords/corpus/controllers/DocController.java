@@ -178,7 +178,7 @@ public class DocController {
     }
 
     // Очистка индекса документов из ES, если предварительно не почистить доки из Postgres, то дальше возникнут ошибки
-    @Operation(
+    /*@Operation(
             summary = "Delete index from ES",
             description = "This endpoint lets clean the documents' index from ES, if you do not clean the docs from Postgres at the same time, then errors may occur",
             deprecated = true)
@@ -204,7 +204,7 @@ public class DocController {
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
         return ResponseEntity.ok(HttpStatus.OK);
-    }
+    }*/
 
     @Operation(summary = "Add doc into the package", description = "This endpoint lets add document by its id into the user's package, specified by its name")
     @ApiResponses({

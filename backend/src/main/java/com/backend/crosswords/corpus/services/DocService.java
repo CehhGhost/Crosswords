@@ -336,7 +336,7 @@ public class DocService {
         return ResponseEntity.ok(HttpStatus.OK);
     }
 
-    @Deprecated
+    /*@Deprecated
     public void deleteDocumentsItself() {
         List<IndexOperations> indexOpsList = List.of(
                 elasticsearchOperations.indexOps(IndexCoordinates.of("document")),
@@ -355,7 +355,7 @@ public class DocService {
                 throw new NoSuchElementException("Index '" + "document" + "' does not exist.");
             }
         }
-    }
+    }*/
 
     public void addDocByIdIntoPackageByName(User user, Long docId, String packageName) {
         var check = docMetaRepository.findById(docId);
@@ -456,7 +456,7 @@ public class DocService {
     public List<DocMeta> getAllDocsByTemplateForToday(DigestTemplate template) {
         List<DocMeta> docs = new ArrayList<>();
         for (var doc : docMetaRepository.findAllWithTagsForToday(DigestService.startOfDay, DigestService.endOfDay)) {
-            Boolean first = (template.getTags().isEmpty() || tagService.getSetOfTagsNames(doc.getTags()).containsAll(tagService.getSetOfTagsNames(template.getTags())));
+            Boolean first = (template.getTags().isEmpty() || tagService.getSetOfTagsNames(doc.getTags()).stream().anyMatch(tagService.getSetOfTagsNames(template.getTags())::contains));
             Boolean second = (template.getSources().isEmpty() || template.getSources().contains(doc.getSource()));
             if (first && second) {
                 docs.add(doc);
