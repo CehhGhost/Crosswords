@@ -113,7 +113,7 @@ public class DigestService {
                 System.out.println("Ядро не создалось!");
             }
             if (core != null && !core.getText().equals("Digest couldn't create")) {
-                for (var subscription : subscriptionService.getAllDigestSubscriptionsByTemplate(template)) {
+                for (var subscription : subscriptionService.getAllDigestSubscriptionsByTemplateWithSettings(template)) {
                     var coreId = core.getId();
                     var subscriptionId = subscription.getId();
                     Digest digest = new Digest(new DigestId(coreId, subscriptionId), core, subscription);

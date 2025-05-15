@@ -8,8 +8,6 @@ import com.backend.crosswords.corpus.enums.Source;
 import com.backend.crosswords.corpus.models.*;
 import com.backend.crosswords.corpus.repositories.elasticsearch.DigestSubscriptionSearchRepository;
 import com.backend.crosswords.corpus.repositories.jpa.DigestSubscriptionRepository;
-import com.fasterxml.jackson.annotation.JsonFormat;
-import io.swagger.v3.oas.annotations.media.Schema;
 import org.modelmapper.ModelMapper;
 import org.opensearch.data.client.orhlc.NativeSearchQueryBuilder;
 import org.opensearch.index.query.QueryBuilder;
@@ -252,8 +250,8 @@ public class DigestSubscriptionService {
         return this.transformSubscriptionSettingsIntoUsersDigestSubscriptionsDTO(user, usersSubscriptions, true);
     }
 
-    public List<DigestSubscription> getAllDigestSubscriptionsByTemplate(DigestTemplate template) {
-        return subscriptionRepository.findAllByTemplate(template);
+    public List<DigestSubscription> getAllDigestSubscriptionsByTemplateWithSettings(DigestTemplate template) {
+        return subscriptionRepository.findAllByTemplateWithSettings(template);
     }
 
     public List<DigestSubscription> getAllDigestSubscriptionsBySearchTerm(String searchTerm) {
