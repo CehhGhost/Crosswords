@@ -288,5 +288,5 @@ export const availableLanguages = [
   { label: 'Английский', value: 'ENG' },
 ]
 
-export const backendURL = '/api/'
-// export const backendURL = "http://localhost:8081/"
+//export const backendURL = '/api/'
+export const backendURL = "http://localhost:8081/"
