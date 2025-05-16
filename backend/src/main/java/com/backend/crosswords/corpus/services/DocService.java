@@ -1,5 +1,6 @@
 package com.backend.crosswords.corpus.services;
 
+import com.backend.crosswords.admin.enums.AuthorityEnum;
 import com.backend.crosswords.admin.models.CrosswordUserDetails;
 import com.backend.crosswords.admin.models.User;
 import com.backend.crosswords.admin.services.UserService;
@@ -70,11 +71,23 @@ public class DocService {
             docDTO.setRatingSummary(rating.get(0));
             docDTO.setRatingClassification(rating.get(1));
             docDTO.setAuthed(true);
+            boolean moderator = false;
+            if (user.getRole() != null && user.getRole().getAuthorities() != null) {
+                for (var authority : user.getRole().getAuthorities()) {
+                    if (authority.equals(AuthorityEnum.EDIT_DELETE_DOCS)) {
+                        moderator = true;
+                        break;
+                    }
+                }
+            }
+
+            docDTO.setIsModerator(moderator);
         } catch (ClassCastException e) {
             docDTO.setFavourite(null);
             docDTO.setRatingClassification(null);
             docDTO.setRatingSummary(null);
             docDTO.setAuthed(false);
+            docDTO.setIsModerator(false);
             user = null;
         }
         docDTO.setTagNames(new ArrayList<>());
