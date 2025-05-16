@@ -66,6 +66,8 @@ public class DigestController {
             return ResponseEntity.ok(digestService.getDigestByIdAndTransformIntoDTO(id, user));
         } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (IllegalAccessException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         }
     }
     @GetMapping("/{id}/pdf")
@@ -86,6 +88,8 @@ public class DigestController {
                     .body(pdfService.generateDigestPdf(digestDTO));
         } catch (NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (IllegalAccessException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         } catch (Exception e) {
             throw new RuntimeException("An error occurred while creating a pdf!");
         }
