@@ -336,4 +336,13 @@ public class DigestController {
         }
         return ResponseEntity.ok(HttpStatus.OK);
     }
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateDigestById(@PathVariable String id, @RequestBody UpdateDigestDTO updateDigestDTO) {
+        try {
+            digestService.updateDigestById(id, updateDigestDTO);
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+        return ResponseEntity.ok(HttpStatus.OK);
+    }
  }

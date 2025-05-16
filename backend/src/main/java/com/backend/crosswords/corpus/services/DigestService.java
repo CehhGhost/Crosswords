@@ -487,6 +487,15 @@ public class DigestService {
         digestRepository.delete(digest);
     }
 
+    @Transactional
+    public void updateDigestById(String id, UpdateDigestDTO updateDigestDTO) throws NoSuchElementException {
+        var digest = this.getDigestById(id);
+        var core = digest.getCore();
+        core.setText(updateDigestDTO.getText());
+        coreRepository.save(core);
+        digestRepository.save(digest);
+    }
+
     /*public void deleteDigestById(String digestId) {
         var digest = this.getDigestById(digestId);
     }*/

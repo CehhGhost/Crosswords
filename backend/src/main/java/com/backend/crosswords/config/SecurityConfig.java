@@ -66,6 +66,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/documents/{id}/edit").hasAuthority(AuthorityEnum.EDIT_DELETE_DOCS.name())
                         .requestMatchers(HttpMethod.DELETE, "/documents/{id}").hasAuthority(AuthorityEnum.EDIT_DELETE_DOCS.name())
                         .requestMatchers(HttpMethod.DELETE, "/digests/{id}").hasAuthority(AuthorityEnum.EDIT_DELETE_DIGESTS.name())
+                        .requestMatchers(HttpMethod.PUT, "/digests/{id}").hasAuthority(AuthorityEnum.EDIT_DELETE_DIGESTS.name())
                         .requestMatchers("/packages/**").authenticated()
                         .requestMatchers(HttpMethod.GET,"/subscriptions/**").permitAll()
                         .requestMatchers("/subscriptions/**").authenticated()
