@@ -10,8 +10,8 @@ public enum Source {
     CBTAJ("Центробанк Таджикистана"),
     CBKIR("Центробанк Кыргызстана"),
     CBAZER("Центробанк Азербайджана"),
-    CBRF("Центробанк РФ");
-
+    CBRF("Центробанк РФ"),
+    CBGRUZ("Центробанк Грузии");
     private final String russianName;
     private static final Map<String, Source> RUSSIAN_NAME_MAP = new HashMap<>();
     static {

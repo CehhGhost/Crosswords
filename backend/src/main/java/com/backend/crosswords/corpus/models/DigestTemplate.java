@@ -15,7 +15,7 @@ public class DigestTemplate {
     @Column(name = "id", unique = true, nullable = false)
     private String uuid;
     @ElementCollection
-    @Enumerated(EnumType.ORDINAL)
+    @Enumerated(EnumType.STRING)
     @CollectionTable(name = "_digest_templates_sources", joinColumns = @JoinColumn(name = "digest_template_id"))
     private Set<Source> sources = new HashSet<>();
     @ManyToMany(cascade = {CascadeType.MERGE})
