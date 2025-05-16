@@ -10,61 +10,45 @@
         @click="toggleDrawer"
         icon="menu"
         aria-label="Toggle navigation"
-        class="q-ml-sm" 
+        class="q-ml-sm"
       />
 
       <div class="row items-center">
         <q-toolbar-title>
           <router-link to="/" class="flex items-center no-underline text-black">
-            <q-img
-  :src="logo"
-  alt="логотип"
-  style="width: 120px; max-width: 100%;"
-/>
+            <q-img :src="logo" alt="логотип" style="width: 120px; max-width: 100%" />
           </router-link>
         </q-toolbar-title>
         <div class="hidden-sm-and-down row items-center">
           <TopNavBarButton label="Домой" :to="{ name: 'home' }" />
           <TopNavBarButton label="Документы" :to="{ name: 'documents' }" />
           <TopNavBarButton label="Дайджесты" :to="{ name: 'digests' }" />
-          <TopNavBarButton label="Статистика" :to="{ name: 'stats' }" />
+          <q-btn
+            flat
+            dense
+            no-caps
+            class="q-mr-sm flat-button-text"
+            label="Статистика"
+            href="https://grafana.nt.fyi/login"
+            target="_blank"
+            rel="noopener"
+            aria-label="Open statistics site"
+          />
         </div>
       </div>
 
       <q-space />
-      <q-btn
-        flat
-        icon="brightness_4"
-        @click="toggleDarkMode"
-        aria-label="Toggle dark mode"
-      />
+      <q-btn flat icon="brightness_4" @click="toggleDarkMode" aria-label="Toggle dark mode" />
 
       <template v-if="isAuthenticated">
-        <q-btn
-          flat
-          round
-          icon="account_circle"
-          :to="{ name: 'privacy' }"
-          aria-label="Profile"
-        />
+        <q-btn flat round icon="account_circle" :to="{ name: 'privacy' }" aria-label="Profile" />
       </template>
       <template v-else>
-        <q-btn
-          flat
-          label="Войти"
-          :to="{ name: 'login' }"
-          aria-label="Login"
-        />
+        <q-btn flat label="Войти" :to="{ name: 'login' }" aria-label="Login" />
       </template>
     </q-toolbar>
 
-    <q-drawer
-      v-model="drawerOpen"
-      side="left"
-      overlay
-      behavior="mobile"
-      class="mobile-drawer"
-    >
+    <q-drawer v-model="drawerOpen" side="left" overlay behavior="mobile" class="mobile-drawer">
       <q-list padding>
         <q-item clickable :to="{ name: 'home' }" @click="toggleDrawer">
           <q-item-section>
@@ -84,7 +68,14 @@
           </q-item-section>
         </q-item>
 
-        <q-item clickable :to="{ name: 'stats' }" @click="toggleDrawer">
+        <q-item
+          clickable
+          tag="a"
+          href="https://grafana.nt.fyi/login"
+          target="_blank"
+          rel="noopener"
+          @click="toggleDrawer"
+        >
           <q-item-section>
             <q-item-label>Статистика</q-item-label>
           </q-item-section>
@@ -95,11 +86,11 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount} from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useQuasar } from 'quasar'
 import TopNavBarButton from '../components/TopNavbarButton.vue'
 import { backendURL } from 'src/data/lookups'
-import { emitter } from 'src/boot/emitter' 
+import { emitter } from 'src/boot/emitter'
 import logo from 'src/assets/crosswords.png'
 
 const drawerOpen = ref(false)
@@ -109,12 +100,12 @@ function toggleDrawer() {
 
 const $q = useQuasar()
 const isMobile = computed(() => $q.screen.lt.md)
-const isDark = ref($q.dark.isActive);
+const isDark = ref($q.dark.isActive)
 const isAuthenticated = ref(false)
 
 function toggleDarkMode() {
-  $q.dark.set(!isDark.value);
-  isDark.value = !isDark.value;
+  $q.dark.set(!isDark.value)
+  isDark.value = !isDark.value
 }
 
 onMounted(() => {
@@ -135,8 +126,7 @@ async function checkAuth() {
       isAuthenticated.value = false
       console.log('Пользователь не авторизован')
     }
-  }
-  catch {
+  } catch {
     isAuthenticated.value = false
     console.log('Пользователь не авторизован')
   }
