@@ -209,7 +209,7 @@ public class DigestService {
         return digestRepository.findById(id).orElseThrow(() -> new NoSuchElementException("There is no digests with such id!"));
     }
 
-    public CertainDigestDTO getDigestByIdAndTransformIntoDTO(String digestId, User user) {
+    public CertainDigestDTO getDigestByIdAndTransformIntoDTO(String digestId, User user) throws IllegalAccessException {
         CertainDigestDTO certainDigestDTO = new CertainDigestDTO();
         var digest = this.getDigestById(digestId);
         var core = digest.getCore();
@@ -222,10 +222,16 @@ public class DigestService {
             try {
                 subscriptionSettings = subscriptionSettingsService.getSubscriptionSettingsBySubscriptionAndUser(subscription, user);
             } catch (NoSuchElementException e) {
+                if (!subscription.getIsPublic()) {
+                    throw new IllegalAccessException("You can't get PDF of this private subscription, you are not its subscriber!");
+                }
                 subscriptionSettings = null;
             }
             certainDigestDTO.setIsAuthed(true);
         } else {
+            if (!subscription.getIsPublic()) {
+                throw new IllegalAccessException("You can't get PDF of this private subscription, you are not its subscriber!");
+            }
             subscriptionSettings = null;
             certainDigestDTO.setIsAuthed(null);
         }

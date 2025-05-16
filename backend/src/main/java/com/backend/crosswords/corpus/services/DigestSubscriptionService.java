@@ -320,6 +320,7 @@ public class DigestSubscriptionService {
         subscriptionWithDigestsDTO.setDate(subscription.getCreatedAt());
         subscriptionWithDigestsDTO.setTitle(subscriptionES.getTitle());
         subscriptionWithDigestsDTO.setDescription(subscription.getDescription());
+        subscriptionWithDigestsDTO.setIsPublic(subscription.getIsPublic());
         subscriptionWithDigestsDTO.setOwner(subscription.getOwner().getEmail());
 
         GetSubscribeOptionsDTO subscribeOptionsDTO = new GetSubscribeOptionsDTO();
