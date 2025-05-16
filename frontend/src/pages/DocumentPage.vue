@@ -194,6 +194,7 @@ onMounted(async () => {
     if (documentData.value.rating_classification == null) {
       documentData.value.rating_classification = 0;
     }
+    console.log(documentData)
   } catch (error) {
     console.error('Ошибка при загрузке документа:', error)
   } finally {

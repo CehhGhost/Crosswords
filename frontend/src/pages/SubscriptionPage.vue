@@ -16,6 +16,7 @@
         <subscription-button
           :digest="subscription"
           triggeredFrom="subscription_page"
+          v-if="isAuthed"
         />
       </div>
       <div v-if="subscription.description">
