@@ -67,7 +67,7 @@ public class CrosswordsApplication {
 				))
 				.build();
 	}
-	/*@Bean
+	@Bean
 	public TaskScheduler taskScheduler() {
 		ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
 		scheduler.setPoolSize(10);
@@ -75,5 +75,5 @@ public class CrosswordsApplication {
 		scheduler.setAwaitTerminationSeconds(60);
 		scheduler.setWaitForTasksToCompleteOnShutdown(true);
 		return scheduler;
-	} */
+	}
 }
