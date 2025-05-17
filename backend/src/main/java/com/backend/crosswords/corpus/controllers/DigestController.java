@@ -327,9 +327,13 @@ public class DigestController {
         CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
         return ResponseEntity.ok(digestService.getAllUsersPrivateDigests(crosswordUserDetails.getUser(), pageNumber, matchesPerPage));
     }
-    /*@DeleteMapping("/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteDigestById(@PathVariable String id) {
-        digestService.deleteDigestById(id);
+        try {
+            digestService.deleteDigestById(id);
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
         return ResponseEntity.ok(HttpStatus.OK);
-    }*/
-}
+    }
+ }
