@@ -162,12 +162,40 @@ public class DigestService {
 
     @Scheduled(cron = "${scheduler.cron}")
     public void scheduledDigestCreation() throws ConnectionClosedException {
-        System.out.println("Scheduled task number is starting!");
+        System.out.println("Scheduled digest creation is starting!");
         startOfDay = Timestamp.valueOf(LocalDate.now().minusDays(1).atStartOfDay());
         endOfDay = Timestamp.valueOf(LocalDate.now().atStartOfDay());
         templates.addAll(templateService.getAllTemplates());
         this.createNewDigests();
-        System.out.println("Scheduled task number is ending!");
+        System.out.println("Scheduled digest creation is ending!");
+    }
+    @Scheduled(cron = "0 0 4 * * *")
+    public void scheduledTask4() {
+        System.out.println("Scheduled digest creation at 04:00:00 is starting!");
+        System.out.println("Scheduled digest creation at 04:00:00 is ending!");
+    }
+
+    @Scheduled(cron = "0 0 5 * * *")
+    public void scheduledTask5() {
+        System.out.println("Scheduled digest creation at 05:00:00 is starting!");
+        System.out.println("Scheduled digest creation at 05:00:00 is ending!");
+    }
+
+    @Scheduled(cron = "0 0 6 * * *")
+    public void scheduledTask6() {
+        System.out.println("Scheduled digest creation at 06:00:00 is starting!");
+        System.out.println("Scheduled digest creation at 06:00:00 is ending!");
+    }
+
+    @Scheduled(cron = "0 0 7 * * *")
+    public void scheduledTask7() {
+        System.out.println("Scheduled digest creation at 07:00:00 is starting!");
+        System.out.println("Scheduled digest creation at 07:00:00 is ending!");
+    }
+    @Scheduled(cron = "0 0 8 * * *")
+    public void scheduledTask8() {
+        System.out.println("Scheduled digest creation at 08:00:00 is starting!");
+        System.out.println("Scheduled digest creation at 08:00:00 is ending!");
     }
 
     public Digest getDigestById(String digestId) {
