@@ -162,10 +162,12 @@ public class DigestService {
 
     @Scheduled(cron = "${scheduler.cron}")
     public void scheduledDigestCreation() throws ConnectionClosedException {
-        startOfDay = Timestamp.valueOf(LocalDate.now().minusDays(1).atStartOfDay());
+        System.out.println("Scheduled task number is starting!");
+        /*startOfDay = Timestamp.valueOf(LocalDate.now().minusDays(1).atStartOfDay());
         endOfDay = Timestamp.valueOf(LocalDate.now().atStartOfDay());
         templates.addAll(templateService.getAllTemplates());
-        this.createNewDigests();
+        this.createNewDigests();*/
+        System.out.println("Scheduled task number is ending!");
     }
 
     public Digest getDigestById(String digestId) {
