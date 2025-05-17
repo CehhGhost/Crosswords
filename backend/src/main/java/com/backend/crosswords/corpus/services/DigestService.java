@@ -105,7 +105,7 @@ public class DigestService {
             var template = templates.poll();
             var core = this.createNewDigestCore(template);
             if (core != null && !core.getText().equals("Digest couldn't create")) {
-                for (var subscription : subscriptionService.getAllDigestSubscriptionsByTemplate(template)) {
+                for (var subscription : subscriptionService.getAllDigestSubscriptionsByTemplateWithSettings(template)) {
                     var coreId = core.getId();
                     var subscriptionId = subscription.getId();
                     Digest digest = new Digest(new DigestId(coreId, subscriptionId), core, subscription);
@@ -154,10 +154,12 @@ public class DigestService {
 
     @Scheduled(cron = "${scheduler.cron}")
     public void scheduledDigestCreation() throws ConnectionClosedException {
+        System.out.println("Scheduled digests creation is starting!");
         startOfDay = Timestamp.valueOf(LocalDate.now().minusDays(1).atStartOfDay());
         endOfDay = Timestamp.valueOf(LocalDate.now().atStartOfDay());
         templates.addAll(templateService.getAllTemplates());
         this.createNewDigests();
+        System.out.println("Scheduled digests creation is ended!");
     }
 
     public Digest getDigestById(String digestId) {

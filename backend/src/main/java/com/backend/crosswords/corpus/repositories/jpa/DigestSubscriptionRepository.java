@@ -15,6 +15,8 @@ import java.util.Set;
 
 public interface DigestSubscriptionRepository extends JpaRepository<DigestSubscription, Long> {
     List<DigestSubscription> findAllByTemplate(DigestTemplate template);
+    @Query("SELECT s FROM DigestSubscription s LEFT JOIN FETCH s.subscriptionSettings WHERE s.template = :template")
+    List<DigestSubscription> findAllByTemplateWithSettings(DigestTemplate template);
     Set<DigestSubscription> findAllByIsPublic(Boolean isPublic);
     @Query("""
         SELECT d
