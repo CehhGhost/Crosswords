@@ -482,6 +482,11 @@ public class DigestService {
         return this.transformDigestsIntoDigestsDTO(digestPage.getContent(), user, digestPage.hasNext() ? pageNumber + 1 : -1);
     }
 
+    public void deleteDigestById(String digestId) throws NoSuchElementException {
+        var digest = this.getDigestById(digestId);
+        digestRepository.delete(digest);
+    }
+
     /*public void deleteDigestById(String digestId) {
         var digest = this.getDigestById(digestId);
     }*/
