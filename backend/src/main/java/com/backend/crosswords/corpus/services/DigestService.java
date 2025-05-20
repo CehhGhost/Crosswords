@@ -21,6 +21,7 @@ import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
@@ -64,7 +65,7 @@ public class DigestService {
         this.firebaseMessagingService = firebaseMessagingService;
         this.fcmTokenService = fcmTokenService;
     }
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     protected DigestCore createNewDigestCore(DigestTemplate template) throws ConnectionClosedException {
         template = templateService.getTemplateFromId(template.getUuid()); // необходимо, чтобы сделать полную загрузку данных, избегаю ленивую
         var docMetas = docService.getAllDocsByTemplateForToday(template);
@@ -88,11 +89,14 @@ public class DigestService {
             GenerateDigestsDocumentsDTO generateDigestsDocumentsDTO =  new GenerateDigestsDocumentsDTO(text, summary);
             generateDigestDTO.getDocuments().add(generateDigestsDocumentsDTO);
         }
-        generatorService.generateDigest(generateDigestDTO)
-                .doOnSuccess(digestText -> this.saveDigestCoreWithText(finalCore, digestText))
-                .doOnError(error -> this.saveDigestCoreWithText(finalCore, "Digest couldn't create"))
-                .block();
-        //var digestText = docMetasText.toString();
+        try {
+            generatorService.generateDigest(generateDigestDTO)
+                    .doOnSuccess(digestText -> this.saveDigestCoreWithText(finalCore, digestText))
+                    .block();
+        } catch (Exception e) {
+            System.out.println("Что-то пошло не так при создании дайджеста");
+            return null;
+        }
         return finalCore;
     }
     protected void saveDigestCoreWithText(DigestCore core, String digestText) {
@@ -106,11 +110,7 @@ public class DigestService {
             var template = templates.poll();
             var core = this.createNewDigestCore(template);
             if (core != null) {
-                System.out.println(core.getText());
-            } else {
-                System.out.println("Ядро не создалось!");
-            }
-            if (core != null && !core.getText().equals("Digest couldn't create")) {
+                System.out.println("Ядро успешно создалось: " + core.getText());
                 for (var subscription : subscriptionService.getAllDigestSubscriptionsByTemplateWithSettings(template)) {
                     var coreId = core.getId();
                     var subscriptionId = subscription.getId();
@@ -123,7 +123,7 @@ public class DigestService {
                     SendDigestByEmailsDTO sendDigestByEmailsDTO = new SendDigestByEmailsDTO();
                     sendDigestByEmailsDTO.setTitle(digestES.getTitle());
                     sendDigestByEmailsDTO.setText(core.getText());
-                    sendDigestByEmailsDTO.setWebLink("http://localhost/digests/" + digestESId);
+                    sendDigestByEmailsDTO.setWebLink("http://crosswords-corpus.press/digests/" + digestESId);
 
                     List<User> subscribersWithMobileNotifications = new ArrayList<>();
                     for (var subscriptionSettings : subscription.getSubscriptionSettings()) {
@@ -152,6 +152,8 @@ public class DigestService {
                     }
                     fcmTokenService.deleteAllExpiredTokens(expiredFcmTokens);
                 }
+            } else {
+                System.out.println("Ядро не создалось!");
             }
         }
         digestRepository.saveAll(digests);
