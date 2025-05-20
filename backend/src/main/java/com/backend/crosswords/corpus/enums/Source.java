@@ -6,11 +6,11 @@ import java.util.Map;
 public enum Source {
     INTER("Интерфакс"),
     COMMER("Коммерсантъ"),
-    CBUZ("ЦБ Узбекистан"),
-    CBTAJ("ЦБ Таджикистан"),
-    CBKIR("ЦБ Кыргызстан"),
-    CBAZER("ЦБ Азербайджан");
-
+    CBUZ("Центробанк Узбекистан"),
+    CBTAJ("Центробанк Таджикистан"),
+    CBKIR("Центробанк Кыргызстан"),
+    CBAZER("Центробанк Азербайджан"),
+    CBRF("Центробанк РФ");
     private final String russianName;
     private static final Map<String, Source> RUSSIAN_NAME_MAP = new HashMap<>();
     static {
