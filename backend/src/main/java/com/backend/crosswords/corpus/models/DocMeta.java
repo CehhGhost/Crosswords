@@ -29,7 +29,7 @@ public class DocMeta {
     private String url;
 
     @Column(name = "language")
-    @Enumerated(EnumType.ORDINAL)
+    @Enumerated(EnumType.STRING)
     private Language language;
 
     @Column(name = "source")
