@@ -33,7 +33,7 @@ public class DocMeta {
     private Language language;
 
     @Column(name = "source")
-    @Enumerated(EnumType.ORDINAL)
+    @Enumerated(EnumType.STRING)
     private Source source;
 
     @ManyToMany(mappedBy = "docs")
