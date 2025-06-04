@@ -34,7 +34,7 @@ public interface DocMetaRepository extends JpaRepository<DocMeta, Long> {
             "  AND (:tags IS NULL OR t.name IN :tags) " +
             "  AND ( " +
             "    (:packageNames IS NULL OR :userId IS NULL) " +
-            "    OR (p.name IN :packageNames AND p.owner.id = :userId) " +
+            "    OR (p.id.name IN :packageNames AND p.owner.id = :userId) " +
             "  ) " +
             "GROUP BY d.id " +
             "HAVING (:tags IS NULL OR COUNT(t) = :tagCount)")
