@@ -127,9 +127,15 @@ public class DigestSubscriptionController {
     })
     @GetMapping("/available")
     public ResponseEntity<?> getAllUsersAvailableDigestSubscriptions() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
-        UsersDigestSubscriptionsDTO usersDigestSubscriptionsDTO = digestSubscriptionService.getAllUsersAvailableDigestSubscriptionsAndTransformIntoUsersDigestSubscriptionsDTO(crosswordUserDetails.getUser());
+        User user;
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+            user = crosswordUserDetails.getUser();
+        } catch (ClassCastException e) {
+            user = null;
+        }
+        UsersDigestSubscriptionsDTO usersDigestSubscriptionsDTO = digestSubscriptionService.getAllUsersAvailableDigestSubscriptionsAndTransformIntoUsersDigestSubscriptionsDTO(user);
         return ResponseEntity.ok(usersDigestSubscriptionsDTO);
     }
 
