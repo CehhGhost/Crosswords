@@ -31,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class DocService {
@@ -165,12 +166,25 @@ public class DocService {
             searchDocDTO.setDateFrom(searchDocDTO.getDateTo());
             searchDocDTO.setDateTo(nothing);
         }
-        List<Long> filtersIds = new ArrayList<>();
-        for (var doc : docMetaRepository.findAll()) {
-            if (this.equalsMetaData(doc, searchDocDTO, user)) {
-                filtersIds.add(doc.getId());
-            }
-        }
+        List<Language> languages = searchDocDTO.getLanguage() != null
+                ? searchDocDTO.getLanguage().stream()
+                .map(Language::valueOf).toList()
+                : null;
+
+        List<Source> sources = searchDocDTO.getSources() != null
+                ? searchDocDTO.getSources().stream()
+                .map(Source::fromRussianName) // Ваш метод конвертации
+                .toList()
+                : null;
+        List<Long> filtersIds = docMetaRepository.findFilteredDocIds(
+                searchDocDTO.getDateFrom(),
+                searchDocDTO.getDateTo(),
+                languages,
+                sources,
+                searchDocDTO.getTags(),
+                searchDocDTO.getFolders(),
+                user == null ? null : user.getId()
+        );
         if (searchDocDTO.getPageNumber() == null || searchDocDTO.getPageNumber() < 0) {
             searchDocDTO.setPageNumber(0);
         }

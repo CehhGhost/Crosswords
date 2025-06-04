@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.backend</groupId>
 	<artifactId>crosswords</artifactId>
-	<version>0.3.2-DEVELOPMENT</version>
+	<version>0.3.3-DEVELOPMENT</version>
 	<name>crosswords</name>
 	<description>backend for Crosswords</description>
 	<url/>
