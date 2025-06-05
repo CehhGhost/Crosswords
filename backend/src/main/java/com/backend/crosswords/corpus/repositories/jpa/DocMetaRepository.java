@@ -36,8 +36,7 @@ public interface DocMetaRepository extends JpaRepository<DocMeta, Long> {
             "    (:packageNames IS NULL OR :userId IS NULL) " +
             "    OR (p.id.name IN :packageNames AND p.owner.id = :userId) " +
             "  ) " +
-            "GROUP BY d.id " +
-            "HAVING (:tags IS NULL OR COUNT(t) = :tagCount)")
+            "GROUP BY d.id ")
     List<Long> findFilteredDocIds(
             @Param("dateFrom") Timestamp dateFrom,
             @Param("dateTo") Timestamp dateTo,
