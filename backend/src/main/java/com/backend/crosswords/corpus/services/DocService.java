@@ -166,23 +166,25 @@ public class DocService {
             searchDocDTO.setDateFrom(searchDocDTO.getDateTo());
             searchDocDTO.setDateTo(nothing);
         }
-        List<Language> languages = searchDocDTO.getLanguage() != null
+        List<Language> languages = searchDocDTO.getLanguage() != null && !searchDocDTO.getLanguage().isEmpty()
                 ? searchDocDTO.getLanguage().stream()
                 .map(Language::valueOf).toList()
                 : null;
 
-        List<Source> sources = searchDocDTO.getSources() != null
+        List<Source> sources = searchDocDTO.getSources() != null && !searchDocDTO.getSources().isEmpty()
                 ? searchDocDTO.getSources().stream()
                 .map(Source::fromRussianName) // Ваш метод конвертации
                 .toList()
                 : null;
+        var tags = searchDocDTO.getTags();
+        var folders = searchDocDTO.getFolders();
         List<Long> filtersIds = docMetaRepository.findFilteredDocIds(
                 searchDocDTO.getDateFrom(),
                 searchDocDTO.getDateTo(),
                 languages,
                 sources,
-                searchDocDTO.getTags(),
-                searchDocDTO.getFolders(),
+                tags.isEmpty() ? null : tags,
+                folders.isEmpty() ? null : folders,
                 user == null ? null : user.getId()
         );
         System.out.println("Размер фильтрационной выборки: " + filtersIds.size());
