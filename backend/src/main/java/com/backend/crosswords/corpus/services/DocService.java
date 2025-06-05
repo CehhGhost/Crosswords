@@ -185,6 +185,7 @@ public class DocService {
                 searchDocDTO.getFolders(),
                 user == null ? null : user.getId()
         );
+        System.out.println("Размер фильтрационной выборки: " + filtersIds.size());
         if (searchDocDTO.getPageNumber() == null || searchDocDTO.getPageNumber() < 0) {
             searchDocDTO.setPageNumber(0);
         }
