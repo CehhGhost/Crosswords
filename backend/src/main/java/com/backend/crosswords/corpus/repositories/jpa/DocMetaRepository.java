@@ -23,20 +23,18 @@ public interface DocMetaRepository extends JpaRepository<DocMeta, Long> {
             "WHERE d IN :docMetas")
     List<DocMeta> findDocMetasWithCores(@Param("docMetas") List<DocMeta> docMetas);
 
-    @Query("SELECT d.id FROM DocMeta d " +
+    @Query("SELECT DISTINCT d.id FROM DocMeta d " +
             "LEFT JOIN d.tags t " +
             "LEFT JOIN d.packages p " +
             "WHERE " +
             "  (:dateFrom IS NULL OR d.date >= :dateFrom) " +
             "  AND (:dateTo IS NULL OR d.date <= :dateTo) " +
-            "  AND (:languages IS NULL OR d.language IN :languages) " +
-            "  AND (:sources IS NULL OR d.source IN :sources) " +
-            "  AND (:tags IS NULL OR t.name IN :tags) " +
-            "  AND ( " +
-            "    (:packageNames IS NULL OR :userId IS NULL) " +
-            "    OR (p.id.name IN :packageNames AND p.owner.id = :userId) " +
-            "  ) " +
-            "GROUP BY d.id ")
+            "  AND (COALESCE(:languages, NULL) IS NULL OR d.language IN :languages) " +
+            "  AND (COALESCE(:sources, NULL) IS NULL OR d.source IN :sources) " +
+            "  AND (COALESCE(:tags, NULL) IS NULL OR t.name IN :tags) " +
+            "  AND (COALESCE(:packageNames, NULL) IS NULL OR :userId IS NULL " +
+            "     OR EXISTS (SELECT 1 FROM d.packages pkg " +
+            "                WHERE pkg.id.name IN :packageNames AND pkg.owner.id = :userId))")
     List<Long> findFilteredDocIds(
             @Param("dateFrom") Timestamp dateFrom,
             @Param("dateTo") Timestamp dateTo,
