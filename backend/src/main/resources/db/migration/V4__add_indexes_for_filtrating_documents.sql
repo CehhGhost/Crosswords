@@ -1,5 +1,5 @@
 CREATE INDEX idx_documents_date ON _documents(date);
-CREATE INDEX idx_documents_source ON _documents(source);
+CREATE INDEX idx_documents_date ON _documents(source);
 CREATE INDEX idx_documents_source ON _documents(date, source);
 
 CREATE INDEX idx_tags_name ON _tags(name);

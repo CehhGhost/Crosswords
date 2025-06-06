@@ -183,8 +183,8 @@ public class DocService {
                 searchDocDTO.getDateTo(),
                 languages,
                 sources,
-                tags.isEmpty() ? null : tags,
-                folders.isEmpty() ? null : folders,
+                tags == null || tags.isEmpty() ? null : tags,
+                folders == null || folders.isEmpty() ? null : folders,
                 user == null ? null : user.getId()
         );
         if (searchDocDTO.getPageNumber() == null || searchDocDTO.getPageNumber() < 0) {
