@@ -159,19 +159,22 @@ public class DigestSubscriptionService {
                     usersDigestSubscriptionDTO.getFollowers().add(subscriptionSetting.getSubscriber().getUsername());
                 }
             }
-
-            try {
-                var usersSubscriptionSettings = subscriptionSettingsService.getSubscriptionSettingsBySubscriptionAndUser(usersSubscription, user);
-                var sendToMail = usersSubscriptionSettings.getSendToMail() == null ? usersSubscription.getSendToMail() : usersSubscriptionSettings.getSendToMail();
-                var mobileNotifications = usersSubscriptionSettings.getMobileNotifications() == null ? usersSubscription.getMobileNotifications() : usersSubscriptionSettings.getMobileNotifications();
-                usersDigestSubscriptionDTO.setSubscribeOptions(new GetSubscribeOptionsDTO(sendToMail, mobileNotifications, true));
-            } catch (NoSuchElementException e) {
+            if (user == null) {
                 usersDigestSubscriptionDTO.setSubscribeOptions(new GetSubscribeOptionsDTO(false, false, false));
+            } else {
+                try {
+                    var usersSubscriptionSettings = subscriptionSettingsService.getSubscriptionSettingsBySubscriptionAndUser(usersSubscription, user);
+                    var sendToMail = usersSubscriptionSettings.getSendToMail() == null ? usersSubscription.getSendToMail() : usersSubscriptionSettings.getSendToMail();
+                    var mobileNotifications = usersSubscriptionSettings.getMobileNotifications() == null ? usersSubscription.getMobileNotifications() : usersSubscriptionSettings.getMobileNotifications();
+                    usersDigestSubscriptionDTO.setSubscribeOptions(new GetSubscribeOptionsDTO(sendToMail, mobileNotifications, true));
+                } catch (NoSuchElementException e) {
+                    usersDigestSubscriptionDTO.setSubscribeOptions(new GetSubscribeOptionsDTO(false, false, false));
+                }
             }
 
             var ownersUsername = usersSubscription.getOwner().getUsername();
             usersDigestSubscriptionDTO.setOwnersUsername(ownersUsername);
-            usersDigestSubscriptionDTO.setIsOwner(Objects.equals(user.getUsername(), ownersUsername));
+            usersDigestSubscriptionDTO.setIsOwner(user != null && Objects.equals(user.getUsername(), ownersUsername));
 
             if (usersSubscription.getTemplate() != null) {
                 for (var source : usersSubscription.getTemplate().getSources()) {
@@ -243,11 +246,12 @@ public class DigestSubscriptionService {
     }
 
     public UsersDigestSubscriptionsDTO getAllUsersAvailableDigestSubscriptionsAndTransformIntoUsersDigestSubscriptionsDTO(User user) {
-        var usersSubscriptions = subscriptionSettingsService.getAllUsersDigestSubscriptions(user);
         var publicSubscriptions = subscriptionRepository.findAllByIsPublic(true);
-        usersSubscriptions.addAll(publicSubscriptions);
-
-        return this.transformSubscriptionSettingsIntoUsersDigestSubscriptionsDTO(user, usersSubscriptions, true);
+        if (user != null) {
+            var usersSubscriptions = subscriptionSettingsService.getAllUsersDigestSubscriptions(user);
+            publicSubscriptions.addAll(usersSubscriptions);
+        }
+        return this.transformSubscriptionSettingsIntoUsersDigestSubscriptionsDTO(user, publicSubscriptions, true);
     }
 
     public List<DigestSubscription> getAllDigestSubscriptionsByTemplateWithSettings(DigestTemplate template) {

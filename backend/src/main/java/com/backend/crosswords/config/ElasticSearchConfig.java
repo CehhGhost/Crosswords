@@ -46,7 +46,12 @@ public class ElasticSearchConfig {
 
             @Override
             public void customize(RestClientBuilder builder) {
-                // No additional customizations needed
+                builder.setRequestConfigCallback(requestConfigBuilder ->
+                        requestConfigBuilder
+                                .setConnectTimeout(5000)
+                                .setSocketTimeout(60000)
+                                .setConnectionRequestTimeout(1000)
+                );
             }
         };
     }
