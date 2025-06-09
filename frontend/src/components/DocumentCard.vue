@@ -23,14 +23,13 @@
         color="primary"
         no-caps
         text-color="secondary"
-        @click="viewDocument"
+        :to="`/documents/${props.doc.id}`"
       />
     </q-card-section>
   </q-card>
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import DocumentTags from '../components/DocumentTags.vue'
 import FolderBookmark from './FolderBookmark.vue'
@@ -41,11 +40,7 @@ const props = defineProps({
 })
 
 const $q = useQuasar()
-const router = useRouter()
 
-function viewDocument() {
-  router.push(`/documents/${props.doc.id}`)
-}
 </script>
 
 <style scoped>
