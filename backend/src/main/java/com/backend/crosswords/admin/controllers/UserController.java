@@ -25,6 +25,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 @RestController
@@ -406,6 +407,29 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
         return ResponseEntity.ok(HttpStatus.OK);
+    }
+
+    @Operation(
+            summary = "Generate Telegram link token",
+            description = "Generates a token for linking Telegram account"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Token generated successfully"),
+            @ApiResponse(responseCode = "401", description = "Not authenticated")
+    })
+    @PostMapping("/telegram/generate-token")
+    public ResponseEntity<?> generateTelegramLinkToken() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        CrosswordUserDetails crosswordUserDetails = (CrosswordUserDetails) authentication.getPrincipal();
+        User user = crosswordUserDetails.getUser();
+
+        String token = userService.generateTelegramLinkToken(user.getId());
+
+        return ResponseEntity.ok(Map.of(
+                "token", token,
+                "botUsername", "YourBotUsername", // Имя вашего бота
+                "link", "https://t.me/YourBotUsername?start=bind_" + user.getId() + "_" + token
+        ));
     }
     // TODO добавить удаление пользователя, учтя тот факт, что перед удалением необходимо очистить связанные с ним данные
     /*@DeleteMapping("/{id}")

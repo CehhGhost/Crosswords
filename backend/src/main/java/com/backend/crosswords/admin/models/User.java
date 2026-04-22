@@ -52,6 +52,9 @@ public class User {
     @Enumerated(EnumType.STRING)
     private RoleEnum role;
 
+    @Column(name = "telegram_id")
+    private Long telegramId;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DocRating> ratings;
 
@@ -203,5 +206,12 @@ public class User {
 
     public void setVerified(Boolean verified) {
         this.verified = verified;
+    }
+    public Long getTelegramId() {
+        return telegramId;
+    }
+
+    public void setTelegramId(Long telegramId) {
+        this.telegramId = telegramId;
     }
 }

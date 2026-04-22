@@ -34,6 +34,7 @@ public class DigestService {
     private final DigestSubscriptionService subscriptionService;
     private final DigestSubscriptionSettingsService subscriptionSettingsService;
     private final DigestTemplateService templateService;
+    private final TelegramNotificationService telegramNotificationService;
     private final DigestRepository digestRepository;
     private final DigestSearchRepository digestSearchRepository;
     private final DocService docService;
@@ -48,11 +49,12 @@ public class DigestService {
     private final Queue<DigestTemplate> templates = new LinkedList<>();
     public static Timestamp startOfDay;
     public static Timestamp endOfDay;
-    public DigestService(DigestCoreRepository digestCoreRepository, DigestSubscriptionService subscriptionService, DigestSubscriptionSettingsService subscriptionSettingsService, DigestTemplateService templateService, DigestRepository digestRepository, DigestSearchRepository digestSearchRepository, DocService docService, DigestRatingService ratingService, UserService userService, TagService tagService, ElasticsearchOperations elasticsearchOperations, MailManService mailManService, DigestGeneratorService generatorService, FirebaseMessagingService firebaseMessagingService, FcmTokenService fcmTokenService) {
+    public DigestService(DigestCoreRepository digestCoreRepository, DigestSubscriptionService subscriptionService, DigestSubscriptionSettingsService subscriptionSettingsService, DigestTemplateService templateService, TelegramNotificationService telegramNotificationService, DigestRepository digestRepository, DigestSearchRepository digestSearchRepository, DocService docService, DigestRatingService ratingService, UserService userService, TagService tagService, ElasticsearchOperations elasticsearchOperations, MailManService mailManService, DigestGeneratorService generatorService, FirebaseMessagingService firebaseMessagingService, FcmTokenService fcmTokenService) {
         this.coreRepository = digestCoreRepository;
         this.subscriptionService = subscriptionService;
         this.subscriptionSettingsService = subscriptionSettingsService;
         this.templateService = templateService;
+        this.telegramNotificationService = telegramNotificationService;
         this.digestRepository = digestRepository;
         this.digestSearchRepository = digestSearchRepository;
         this.docService = docService;
@@ -133,6 +135,14 @@ public class DigestService {
                         }
                         if (subscriptionSettings.getMobileNotifications()) {
                             subscribersWithMobileNotifications.add(user);
+                        }
+                        if (user.getTelegramId() != null && subscriptionSettings.getMobileNotifications()) {
+                            telegramNotificationService.sendDigestNotification(
+                                    user.getTelegramId(),
+                                    digestESId,
+                                    digestES.getTitle(),
+                                    core.getText()
+                            ).subscribe();
                         }
                     }
                     if (!sendDigestByEmailsDTO.getRecipients().isEmpty()) {
