@@ -58,6 +58,7 @@ onMounted(() => {
 
 function onSearch(newPayload) {
   nextPage.value = 0
+  documents.value = []
   currentSearchPayload.value = { ...newPayload }
   fetchDocuments(true)
 }
