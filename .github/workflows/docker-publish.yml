@@ -25,10 +25,7 @@ jobs:
 
       # Шаг 3: Сборка JAR-файла
       - name: Build JAR file
-        env:
-          KEY_STORE_BASE64: ${{ secrets.KEY_STORE_BASE64 }}
         run: |
-          echo -n $KEY_STORE_BASE64 | base64 -d > backend/src/main/resources/keystore.p12
           mvn -f backend/pom.xml clean package -DskipTests
 
       # Шаг 4: Настройка Docker Buildx
