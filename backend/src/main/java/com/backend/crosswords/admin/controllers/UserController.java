@@ -431,6 +431,7 @@ public class UserController {
                 "link", "https://t.me/YourBotUsername?start=bind_" + user.getId() + "_" + token
         ));
     }
+    //
     // TODO добавить удаление пользователя, учтя тот факт, что перед удалением необходимо очистить связанные с ним данные
     /*@DeleteMapping("/{id}")
     public ResponseEntity<?> deleteUserById(@PathVariable Long id) {
