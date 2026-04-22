@@ -71,6 +71,7 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script: |
             cd ~/Crosswords
+            git pull
             docker compose pull
             docker compose up -d --force-recreate --wait
             docker ps
