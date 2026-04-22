@@ -86,16 +86,33 @@
 
       <div class="row items-center q-mb-sm">
         <q-input
-          v-model="searchBody"
-          filled
-          label="Название дайджеста"
-          class="col"
-          :color="$q.dark.isActive ? 'primary' : 'accent'"
-        >
-          <template v-slot:append>
-            <q-icon name="search" />
-          </template>
-        </q-input>
+  v-model="searchBody"
+  filled
+  label="Название дайджеста"
+  class="col"
+  :color="$q.dark.isActive ? 'primary' : 'accent'"
+  @keyup.enter="onSearch"
+>
+  <template v-slot:append>
+    <q-btn
+      round
+      flat
+      dense
+      :icon="isRecording ? 'stop_circle' : 'mic'"
+      :color="isRecording ? 'negative' : 'secondary'"
+      :loading="isUploading"
+      :disable="isUploading"
+      @click.stop="toggleRecording"
+    />
+
+    <q-icon
+      name="search"
+      class="cursor-pointer q-ml-xs"
+      @click="onSearch"
+    />
+  </template>
+</q-input>
+
 
         <q-btn
           label="Найти"
@@ -109,6 +126,9 @@
           @click="onSearch"
         />
       </div>
+          <div v-if="isRecording" class="text-negative text-caption q-my-sm">
+      Идёт запись... нажмите на микрофон ещё раз, чтобы остановить.
+    </div>
 
       <div class="row q-col-gutter-md items-center">
         <div class="col-6">
@@ -234,7 +254,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import DigestCard from '../components/DigestCard.vue'
@@ -251,6 +271,13 @@ const $q = useQuasar()
 const router = useRouter()
 
 const searchBody = ref('')
+const isRecording = ref(false)
+const isUploading = ref(false)
+
+let mediaRecorder = null
+let audioChunks = []
+let mediaStream = null
+let recordingTimeout = null
 const dateFrom = ref('')
 const dateTo = ref('')
 const selectedTags = ref([])
@@ -295,7 +322,130 @@ const formatToISO = (str) => {
   const utcDateMs = Date.UTC(+year, +month - 1, +day)
   return new Date(utcDateMs).toISOString().split('T')[0]
 }
+async function toggleRecording() {
+  if (isUploading.value) return
 
+  if (isRecording.value) {
+    stopRecording()
+  } else {
+    await startRecording()
+  }
+}
+
+async function startRecording() {
+  try {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      console.error('Браузер не поддерживает запись аудио')
+      return
+    }
+
+    mediaStream = await navigator.mediaDevices.getUserMedia({
+      audio: true
+    })
+
+    audioChunks = []
+
+    const mimeType = getSupportedMimeType()
+
+    mediaRecorder = new MediaRecorder(
+      mediaStream,
+      mimeType ? { mimeType } : undefined
+    )
+
+    mediaRecorder.ondataavailable = event => {
+      if (event.data && event.data.size > 0) {
+        audioChunks.push(event.data)
+      }
+    }
+
+    mediaRecorder.onstop = async () => {
+      clearTimeout(recordingTimeout)
+      isRecording.value = false
+
+      await uploadAudio()
+      stopMicrophone()
+    }
+
+    mediaRecorder.start()
+    isRecording.value = true
+
+    recordingTimeout = setTimeout(() => {
+      stopRecording()
+    }, 15000)
+  } catch (error) {
+    console.error('Ошибка доступа к микрофону:', error)
+    isRecording.value = false
+    stopMicrophone()
+  }
+}
+
+function stopRecording() {
+  if (!mediaRecorder) return
+
+  if (mediaRecorder.state !== 'inactive') {
+    mediaRecorder.stop()
+  }
+}
+
+function stopMicrophone() {
+  if (mediaStream) {
+    mediaStream.getTracks().forEach(track => track.stop())
+    mediaStream = null
+  }
+}
+
+async function uploadAudio() {
+  if (!audioChunks.length) return
+
+  try {
+    isUploading.value = true
+
+    const mimeType = mediaRecorder?.mimeType || 'audio/webm'
+    const audioBlob = new Blob(audioChunks, { type: mimeType })
+
+    const formData = new FormData()
+    formData.append('file', audioBlob, getAudioFileName(mimeType))
+
+    const res = await fetch(`${backendURL}transcribe`, {
+      method: 'POST',
+      body: formData,
+      credentials: 'include'
+    })
+
+    if (!res.ok) {
+      throw new Error(`Ошибка backend: ${res.status}`)
+    }
+
+    const data = await res.json()
+    const text = data?.text
+
+    if (text) {
+      searchBody.value = text
+    }
+  } catch (error) {
+    console.error('Ошибка отправки аудио:', error)
+  } finally {
+    isUploading.value = false
+    audioChunks = []
+  }
+}
+
+function getSupportedMimeType() {
+  const types = [
+    'audio/webm;codecs=opus',
+    'audio/webm',
+    'audio/mp4',
+    'audio/mpeg'
+  ]
+
+  return types.find(type => MediaRecorder.isTypeSupported(type))
+}
+
+function getAudioFileName(mimeType) {
+  if (mimeType.includes('mp4')) return 'voice.mp4'
+  if (mimeType.includes('mpeg')) return 'voice.mp3'
+  return 'voice.webm'
+}
 const getDigestPic = (digest) => {
   if (!digest.tags || !digest.tags.length) {
     return defaultImage // ← лежит в public/images/
@@ -402,6 +552,15 @@ onMounted(async () => {
   } finally {
     isLoading.value = false
   }
+})
+onBeforeUnmount(() => {
+  clearTimeout(recordingTimeout)
+
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    mediaRecorder.stop()
+  }
+
+  stopMicrophone()
 })
 </script>
 

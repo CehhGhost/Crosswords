@@ -66,6 +66,8 @@ import lightLogo from '../assets/crosswords_mono.png'
 import darkLogo from '../assets/crosswords_mono_white.png'
 import { backendURL } from 'src/data/lookups'
 import { emitter } from 'src/boot/emitter'
+import { onMounted } from 'vue'
+import { sendAnalyticsEvent } from 'src/utils/analytics.js'
 
 const $q = useQuasar()
 const router = useRouter()
@@ -76,6 +78,14 @@ const email = ref('')
 const password = ref('')
 
 const logoSrc = computed(() => $q.dark.isActive ? darkLogo : lightLogo)
+
+
+
+onMounted(() => {
+  sendAnalyticsEvent('registration_page_view', {
+    source: document.referrer || null
+  })
+})
 
 async function register() {
   const payload = {

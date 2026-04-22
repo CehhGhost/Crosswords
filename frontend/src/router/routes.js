@@ -92,6 +92,18 @@ const routes = [
       }
     ]
   },
+    {
+    path: '/landing',
+    component: () => import('../layouts/LandingLayout.vue'),
+    children: [
+      {
+        path: '',
+        name: 'landing',
+        component: () => import('../pages/LandingPage.vue'),
+        meta: { requiresAuth: false }
+      }
+    ]
+  },
   {
     path: '/data',
     component: () => import('../layouts/SidebarLayout.vue'),
