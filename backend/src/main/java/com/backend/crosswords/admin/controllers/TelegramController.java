@@ -37,20 +37,6 @@ public class TelegramController {
         return backendSecretKey.equals(token);
     }
 
-    @Operation(summary = "Generate token for Telegram linking")
-    @PostMapping("/generate-token")
-    public ResponseEntity<?> generateLinkToken(
-            @RequestHeader("Authorization") String authHeader) {
-
-        if (!isAuthorized(authHeader)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid secret key");
-        }
-
-        // В реальном приложении userId нужно получать из контекста безопасности
-        // Для примера - из тела запроса
-        return ResponseEntity.ok().build();
-    }
-
     @Operation(summary = "Link Telegram account to user")
     @PostMapping("/link")
     public ResponseEntity<?> linkTelegram(
