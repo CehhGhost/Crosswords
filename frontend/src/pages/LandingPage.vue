@@ -262,6 +262,7 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import SplitSection from "src/components/landing/SplitSection.vue"
+import { sendAnalyticsEvent } from 'src/utils/analytics.js'
 
 const videoSrc = ref('fullhd.mp4')
 const posterSrc = ref('business.jpg')
@@ -271,6 +272,34 @@ const infoRef = ref(null)
 const HEADER_SELECTOR = '.q-header'
 let rafId
 let ro
+let scrollTracked = false
+
+function handleLandingScroll() {
+  if (scrollTracked) return
+
+  const scrollTop = window.scrollY || document.documentElement.scrollTop
+  const viewportHeight = window.innerHeight
+  const documentHeight = document.documentElement.scrollHeight
+
+  const scrollBottom = scrollTop + viewportHeight
+  const threshold = 120
+
+  if (scrollBottom >= documentHeight - threshold) {
+    scrollTracked = true
+
+    sendAnalyticsEvent(
+      'landing_scrolled_to_end',
+      {
+        scroll_depth: 'end'
+      },
+      {
+        once: true
+      }
+    )
+
+    window.removeEventListener('scroll', handleLandingScroll)
+  }
+}
 
 function setHeaderVar () {
   const el = document.querySelector(HEADER_SELECTOR)
@@ -290,7 +319,18 @@ onMounted(async () => {
   await nextTick()
   const header = document.querySelector(HEADER_SELECTOR)
 
+sendAnalyticsEvent(
+    'landing_view',
+    {
+      source: document.referrer || null
+    },
+    {
+      once: true
+    }
+  )
 
+  window.addEventListener('scroll', handleLandingScroll, { passive: true })
+  handleLandingScroll()
   scheduleMeasure()
 
   if (document?.fonts?.ready) {
@@ -306,11 +346,13 @@ onMounted(async () => {
   window.addEventListener('load', scheduleMeasure, { passive: true })
   window.addEventListener('resize', scheduleMeasure, { passive: true })
   window.addEventListener('orientationchange', scheduleMeasure, { passive: true })
+
 })
 
 onBeforeUnmount(() => {
   cancelAnimationFrame(rafId)
   if (ro) ro.disconnect()
+  window.removeEventListener('scroll', handleLandingScroll)
   window.removeEventListener('load', scheduleMeasure)
   window.removeEventListener('resize', scheduleMeasure)
   window.removeEventListener('orientationchange', scheduleMeasure)
