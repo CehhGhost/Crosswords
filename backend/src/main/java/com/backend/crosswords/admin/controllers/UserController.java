@@ -427,8 +427,8 @@ public class UserController {
 
         return ResponseEntity.ok(Map.of(
                 "token", token,
-                "botUsername", "YourBotUsername", // Имя вашего бота
-                "link", "https://t.me/YourBotUsername?start=bind_" + user.getId() + "_" + token
+                "botUsername", "crosswords_app_bot", // Имя вашего бота
+                "link", "https://t.me/crosswords_app_bot?start=bind_" + user.getId() + "_" + token
         ));
     }
     //
