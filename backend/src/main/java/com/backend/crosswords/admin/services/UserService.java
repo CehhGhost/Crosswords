@@ -4,7 +4,9 @@ import com.backend.crosswords.admin.dto.*;
 import com.backend.crosswords.admin.enums.RoleEnum;
 import com.backend.crosswords.admin.models.CrosswordUserDetails;
 import com.backend.crosswords.admin.models.RefreshToken;
+import com.backend.crosswords.admin.models.TelegramLinkToken;
 import com.backend.crosswords.admin.models.User;
+import com.backend.crosswords.admin.repositories.TelegramLinkTokenRepository;
 import com.backend.crosswords.admin.repositories.UserRepository;
 import com.backend.crosswords.config.JWTUtil;
 import com.backend.crosswords.corpus.models.Package;
@@ -13,6 +15,7 @@ import com.backend.crosswords.corpus.services.PackageService;
 import org.apache.http.ConnectionClosedException;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -21,15 +24,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Objects;
+import java.time.LocalDateTime;
+import java.util.*;
 
 @Service
 public class UserService {
     private final ModelMapper modelMapper;
     private final UserRepository userRepository;
+    private final TelegramLinkTokenRepository telegramLinkTokenRepository;
     private final AuthenticationManager authenticationManager;
     private final JWTUtil jwtUtil;
     private final RefreshTokenService refreshTokenService;
@@ -40,9 +42,10 @@ public class UserService {
     @Value("${default-admins-password}")
     private String defaultAdminsPassword;
 
-    public UserService(ModelMapper modelMapper, UserRepository userRepository, AuthenticationManager authenticationManager, JWTUtil jwtUtil, RefreshTokenService refreshTokenService, PasswordEncoder passwordEncoder, PackageService packageService, VerifyCodeService verifyCodeService, FcmTokenService fcmTokenService) {
+    public UserService(ModelMapper modelMapper, UserRepository userRepository, TelegramLinkTokenRepository telegramLinkTokenRepository, AuthenticationManager authenticationManager, JWTUtil jwtUtil, RefreshTokenService refreshTokenService, PasswordEncoder passwordEncoder, PackageService packageService, VerifyCodeService verifyCodeService, FcmTokenService fcmTokenService) {
         this.modelMapper = modelMapper;
         this.userRepository = userRepository;
+        this.telegramLinkTokenRepository = telegramLinkTokenRepository;
         this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
         this.refreshTokenService = refreshTokenService;
@@ -217,7 +220,7 @@ public class UserService {
         userRepository.save(user);
     }
     public GetPersonalInfoDTO getUsersPersonalInfoAndTransformIntoDTO(User user) {
-        return new GetPersonalInfoDTO(user.getName(), user.getSurname(), user.getUsername(), user.getEmail(), user.getSendToMail(), user.getMobileNotifications(), user.getPersonalSendToMail(), user.getPersonalMobileNotifications(), user.getSubscribable());
+        return new GetPersonalInfoDTO(user.getName(), user.getSurname(), user.getUsername(), user.getEmail(), user.getSendToMail(), user.getMobileNotifications(), user.getPersonalSendToMail(), user.getPersonalMobileNotifications(), user.getSubscribable(), user.getTelegramId() != null);
     }
 
     public CheckUsersVerificationDTO checkUsersEmailVerification(User user) {
@@ -245,5 +248,86 @@ public class UserService {
 
     public void deleteFcmTokenForUser(User user, String fcmToken) throws NoSuchElementException {
         fcmTokenService.deleteFcmTokenFormUser(user, fcmToken);
+    }
+
+    @Transactional
+    public String generateTelegramLinkToken(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NoSuchElementException("User not found"));
+
+        // Удаляем старые неиспользованные токены пользователя
+        telegramLinkTokenRepository.deleteAllByUserId(userId);
+
+        // Генерируем новый токен
+        String token = UUID.randomUUID().toString();
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime expiresAt = now.plusMinutes(10); // Токен действителен 10 минут
+
+        TelegramLinkToken linkToken = new TelegramLinkToken(userId, token, now, expiresAt);
+        telegramLinkTokenRepository.save(linkToken);
+
+        return token;
+    }
+
+    public boolean validateTelegramLinkToken(Long userId, String token) {
+        return telegramLinkTokenRepository
+                .findByUserIdAndTokenAndUsedFalseAndExpiresAtAfter(userId, token, LocalDateTime.now())
+                .isPresent();
+    }
+
+    @Transactional
+    public User linkTelegramToUser(Long userId, Long telegramId) {
+        // Проверяем, не привязан ли уже этот Telegram ID к другому пользователю
+        userRepository.findByTelegramId(telegramId).ifPresent(u -> {
+            throw new IllegalArgumentException("This Telegram account is already linked to another user");
+        });
+
+        // Находим пользователя
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NoSuchElementException("User not found"));
+
+        // Проверяем, не привязан ли уже Telegram к этому пользователю
+        if (user.getTelegramId() != null) {
+            throw new IllegalArgumentException("User already has a linked Telegram account");
+        }
+
+        // Привязываем Telegram ID
+        userRepository.updateTelegramId(userId, telegramId);
+
+        // Возвращаем обновленного пользователя
+        return userRepository.findById(userId).get();
+    }
+
+    public User findByTelegramId(Long telegramId) {
+        return userRepository.findByTelegramId(telegramId)
+                .orElseThrow(() -> new NoSuchElementException("User with Telegram ID " + telegramId + " not found"));
+    }
+
+    @Transactional
+    public void unlinkTelegram(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NoSuchElementException("User not found"));
+
+        if (user.getTelegramId() == null) {
+            throw new IllegalArgumentException("User doesn't have linked Telegram account");
+        }
+
+        userRepository.unlinkTelegramId(user.getTelegramId());
+    }
+
+    public boolean hasLinkedTelegram(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NoSuchElementException("User not found"));
+        return user.getTelegramId() != null;
+    }
+
+    @Scheduled(cron = "0 0 * * * *")
+    @Transactional
+    public void cleanupExpiredTokens() {
+        telegramLinkTokenRepository.deleteExpiredTokens(LocalDateTime.now());
+    }
+
+    public void saveUser(User user) {
+        userRepository.save(user);
     }
 }

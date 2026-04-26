@@ -25,8 +25,6 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 
 @Configuration
 @EnableElasticsearchRepositories(basePackages = "com.backend.crosswords.corpus.repositories.elasticsearch")
-@EnableJpaRepositories(basePackages = {"com.backend.crosswords.corpus.repositories.jpa",
-        "com.backend.crosswords.admin.repositories"})
 @ComponentScan(basePackageClasses = ElasticSearchConfig.class)
 public class ElasticSearchConfig {
 

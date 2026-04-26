@@ -9,6 +9,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.data.elasticsearch.ElasticsearchDataAutoConfiguration;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -20,6 +21,7 @@ import reactor.netty.http.client.HttpClient;
 import java.time.Duration;
 
 @EnableScheduling
+@EnableJpaRepositories(basePackages = {"com.backend.crosswords.corpus.repositories.jpa", "com.backend.crosswords.admin.repositories"})
 @SpringBootApplication(exclude = {ElasticsearchDataAutoConfiguration.class})
 public class CrosswordsApplication {
 	private final MailmanProperties mailmanProperties;

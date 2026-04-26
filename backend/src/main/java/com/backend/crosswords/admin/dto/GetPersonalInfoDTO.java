@@ -35,10 +35,13 @@ public class GetPersonalInfoDTO {
     )
     private Boolean subscribable;
 
+    @JsonProperty("telegram")
+    private Boolean isTelegram;
+
     public GetPersonalInfoDTO() {
     }
 
-    public GetPersonalInfoDTO(String firstName, String secondName, String username, String email, Boolean sendToMail, Boolean mobileNotifications, Boolean personalSendToMail, Boolean personalMobileNotifications, Boolean subscribable) {
+    public GetPersonalInfoDTO(String firstName, String secondName, String username, String email, Boolean sendToMail, Boolean mobileNotifications, Boolean personalSendToMail, Boolean personalMobileNotifications, Boolean subscribable, Boolean isTelegram) {
         this.firstName = firstName;
         this.secondName = secondName;
         this.username = username;
@@ -48,6 +51,7 @@ public class GetPersonalInfoDTO {
         this.personalSendToMail = personalSendToMail;
         this.personalMobileNotifications = personalMobileNotifications;
         this.subscribable = subscribable;
+        this.isTelegram = isTelegram;
     }
 
     public String getFirstName() {
@@ -122,9 +126,17 @@ public class GetPersonalInfoDTO {
         this.subscribable = subscribable;
     }
 
+    public Boolean getTelegram() {
+        return isTelegram;
+    }
+
+    public void setTelegram(Boolean telegram) {
+        isTelegram = telegram;
+    }
+
     @Override
     public String toString() {
-        return "GetPersonalInfo{" +
+        return "GetPersonalInfoDTO{" +
                 "firstName='" + firstName + '\'' +
                 ", secondName='" + secondName + '\'' +
                 ", username='" + username + '\'' +
@@ -134,6 +146,7 @@ public class GetPersonalInfoDTO {
                 ", personalSendToMail=" + personalSendToMail +
                 ", personalMobileNotifications=" + personalMobileNotifications +
                 ", subscribable=" + subscribable +
+                ", isTelegram=" + isTelegram +
                 '}';
     }
 }

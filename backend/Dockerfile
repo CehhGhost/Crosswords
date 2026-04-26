@@ -1,11 +1,11 @@
 # Используем базовый образ с Java 17
-FROM openjdk:17-jdk-alpine
+FROM eclipse-temurin:17-jdk-alpine
 
 # Устанавливаем рабочую директорию
 WORKDIR /app
 
 # Копируем собранный JAR-файл в контейнер
-COPY target/crosswords-0.3.0.jar app.jar
+COPY target/crosswords-0.4.0-DEVELOPMENT.jar app.jar
 
 # Открываем порт, на котором работает приложение
 EXPOSE 8081
