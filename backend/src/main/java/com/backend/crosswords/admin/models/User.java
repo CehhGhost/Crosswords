@@ -55,6 +55,9 @@ public class User {
     @Column(name = "telegram_id")
     private Long telegramId;
 
+    @Column(name = "telegram_notifications")
+    private Boolean telegramNotifications = false;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DocRating> ratings;
 
@@ -66,6 +69,13 @@ public class User {
         this.email = email;
         this.password = password;
         this.ratings = ratings;
+
+        this.sendToMail = false;
+        this.mobileNotifications = false;
+        this.personalSendToMail = false;
+        this.personalMobileNotifications = false;
+        this.subscribable = true;
+        this.telegramNotifications = false;
     }
 
     public User(Long id, String name, String surname, String username, String password, String email) {
@@ -76,6 +86,13 @@ public class User {
         this.password = password;
         this.email = email;
         this.ratings = new ArrayList<>();
+
+        this.sendToMail = false;
+        this.mobileNotifications = false;
+        this.personalSendToMail = false;
+        this.personalMobileNotifications = false;
+        this.subscribable = true;
+        this.telegramNotifications = false;
     }
 
     public User() {
@@ -94,6 +111,7 @@ public class User {
         this.personalSendToMail = false;
         this.personalMobileNotifications = false;
         this.subscribable = true;
+        this.telegramNotifications = false;
     }
 
     public List<DocRating> getRatings() {
@@ -213,5 +231,13 @@ public class User {
 
     public void setTelegramId(Long telegramId) {
         this.telegramId = telegramId;
+    }
+
+    public Boolean getTelegramNotifications() {
+        return telegramNotifications;
+    }
+
+    public void setTelegramNotifications(Boolean telegramNotifications) {
+        this.telegramNotifications = telegramNotifications;
     }
 }

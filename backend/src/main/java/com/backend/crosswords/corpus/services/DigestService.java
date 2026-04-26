@@ -136,7 +136,7 @@ public class DigestService {
                         if (subscriptionSettings.getMobileNotifications()) {
                             subscribersWithMobileNotifications.add(user);
                         }
-                        if (user.getTelegramId() != null && subscriptionSettings.getMobileNotifications()) {
+                        if (user.getTelegramId() != null && user.getTelegramNotifications() && subscriptionSettings.getMobileNotifications()) {
                             telegramNotificationService.sendDigestNotification(
                                     user.getTelegramId(),
                                     digestESId,

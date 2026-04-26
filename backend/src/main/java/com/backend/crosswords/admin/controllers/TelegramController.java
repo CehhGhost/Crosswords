@@ -98,6 +98,7 @@ public class TelegramController {
             response.put("name", user.getName());
             response.put("surname", user.getSurname());
             response.put("verified", user.getVerified());
+            response.put("telegramNotifications", user.getTelegramNotifications());
 
             return ResponseEntity.ok(response);
 
@@ -182,13 +183,16 @@ public class TelegramController {
 
         try {
             Long telegramId = ((Number) settings.get("telegramId")).longValue();
-            Boolean mobileNotifications = (Boolean) settings.get("mobileNotifications");
+            Boolean telegramNotifications = (Boolean) settings.get("telegramNotifications");
 
             User user = userService.findByTelegramId(telegramId);
-            user.setMobileNotifications(mobileNotifications);
+            user.setTelegramNotifications(telegramNotifications);
             userService.saveUser(user);
 
-            return ResponseEntity.ok(Map.of("success", true));
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "telegramNotifications", telegramNotifications
+            ));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("success", false, "error", e.getMessage()));
