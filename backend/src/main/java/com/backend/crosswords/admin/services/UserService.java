@@ -220,7 +220,7 @@ public class UserService {
         userRepository.save(user);
     }
     public GetPersonalInfoDTO getUsersPersonalInfoAndTransformIntoDTO(User user) {
-        return new GetPersonalInfoDTO(user.getName(), user.getSurname(), user.getUsername(), user.getEmail(), user.getSendToMail(), user.getMobileNotifications(), user.getPersonalSendToMail(), user.getPersonalMobileNotifications(), user.getSubscribable());
+        return new GetPersonalInfoDTO(user.getName(), user.getSurname(), user.getUsername(), user.getEmail(), user.getSendToMail(), user.getMobileNotifications(), user.getPersonalSendToMail(), user.getPersonalMobileNotifications(), user.getSubscribable(), user.getTelegramId() != null);
     }
 
     public CheckUsersVerificationDTO checkUsersEmailVerification(User user) {
