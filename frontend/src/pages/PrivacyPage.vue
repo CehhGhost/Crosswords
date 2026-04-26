@@ -26,6 +26,26 @@
           >
         </div>
         <div><strong>email:</strong> {{ static_email }}</div>
+        <div class="row items-center q-gutter-sm">
+          <strong>Telegram:</strong>
+
+          <template v-if="telegram">
+            <span>Привязан</span>
+            <q-icon name="check_circle" color="positive" size="20px" />
+          </template>
+
+          <q-btn
+            v-else
+            label="Привязать"
+            color="primary"
+            no-caps
+            text-color="secondary"
+            size="sm"
+            unelevated
+            :loading="telegramLoading"
+            @click="bindTelegram"
+          />
+        </div>
       </q-card-section>
     </q-card>
 
@@ -150,6 +170,8 @@ const personal_send_to_mail = ref(false)
 const allowForeignSubs = ref(false)
 const send_to_mail = ref(false)
 const mobile_notifications = ref(false)
+const telegram = ref(false)
+const telegramLoading = ref(false)
 
 onMounted(async () => {
   try {
@@ -165,9 +187,14 @@ onMounted(async () => {
     personal_send_to_mail.value = data.personal_send_to_mail
     mobile_notifications.value = data.mobile_notifications
     send_to_mail.value = data.send_to_mail
+    telegram.value = data.telegram
   } catch (err) {
     console.error('Error fetching user details:', err)
-    $q.notify({ type: 'negative', message: 'Не удалось загрузить данные пользователя', position: 'top' })
+    $q.notify({
+      type: 'negative',
+      message: 'Не удалось загрузить данные пользователя',
+      position: 'top',
+    })
   }
 })
 
@@ -178,13 +205,13 @@ async function updateSubscriptions() {
       send_to_mail: send_to_mail.value,
       mobile_notifications: mobile_notifications.value,
       personal_send_to_mail: personal_send_to_mail.value,
-      personal_mobile_notifications: personal_mobile_notifications.value
+      personal_mobile_notifications: personal_mobile_notifications.value,
     }
     const response = await fetch(`${backendURL}users/subscription_settings/set`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
     })
     if (!response.ok) throw new Error(`Status ${response.status}`)
     $q.notify({
@@ -192,11 +219,15 @@ async function updateSubscriptions() {
       message: 'Настройки уведомлений сохранены',
       position: 'top',
       badgeColor: 'yellow',
-      badgeTextColor: 'dark'
+      badgeTextColor: 'dark',
     })
   } catch (err) {
     console.error('Ошибка при сохранении уведомлений', err)
-    $q.notify({ type: 'negative', message: 'Не удалось сохранить настройки уведомлений', position: 'top' })
+    $q.notify({
+      type: 'negative',
+      message: 'Не удалось сохранить настройки уведомлений',
+      position: 'top',
+    })
   }
 }
 
@@ -206,7 +237,7 @@ async function updateEmail() {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ new_email: email.value })
+      body: JSON.stringify({ new_email: email.value }),
     })
     if (response.ok) {
       $q.notify({ type: 'positive', message: 'Email успешно обновлён', position: 'top' })
@@ -217,7 +248,11 @@ async function updateEmail() {
     } else if (response.status === 401) {
       router.replace('/login')
     } else if (response.status === 400) {
-      $q.notify({ type: 'negative', message: 'Новый email не может быть таким же, как старый или пустым', position: 'top' })
+      $q.notify({
+        type: 'negative',
+        message: 'Новый email не может быть таким же, как старый или пустым',
+        position: 'top',
+      })
     } else {
       $q.notify({ type: 'negative', message: 'Ошибка при обновлении email', position: 'top' })
     }
@@ -227,13 +262,53 @@ async function updateEmail() {
   }
 }
 
+async function bindTelegram() {
+  telegramLoading.value = true
+
+  try {
+    const response = await fetch(`${backendURL}users/telegram/generate-token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include'
+    })
+
+    if (response.ok) {
+      const data = await response.json()
+
+      if (!data.link) {
+        throw new Error('Telegram link is missing')
+      }
+
+      window.location.href = data.link
+    } else if (response.status === 401) {
+      router.replace('/login')
+    } else {
+      $q.notify({
+        type: 'negative',
+        message: 'Не удалось создать ссылку для привязки Telegram',
+        position: 'top'
+      })
+    }
+  } catch (err) {
+    console.error('Error binding Telegram:', err)
+
+    $q.notify({
+      type: 'negative',
+      message: 'Ошибка при привязке Telegram',
+      position: 'top'
+    })
+  } finally {
+    telegramLoading.value = false
+  }
+}
+
 async function updatePassword() {
   try {
     const response = await fetch(`${backendURL}users/change/password`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ old_password: oldPassword.value, new_password: newPassword.value })
+      body: JSON.stringify({ old_password: oldPassword.value, new_password: newPassword.value }),
     })
     oldPassword.value = ''
     newPassword.value = ''
@@ -244,7 +319,11 @@ async function updatePassword() {
     } else if (response.status === 403) {
       $q.notify({ type: 'negative', message: 'Неверный старый пароль', position: 'top' })
     } else if (response.status === 400) {
-      $q.notify({ type: 'negative', message: 'Новый пароль не может быть таким же, как старый или пустым', position: 'top' })
+      $q.notify({
+        type: 'negative',
+        message: 'Новый пароль не может быть таким же, как старый или пустым',
+        position: 'top',
+      })
     } else {
       $q.notify({ type: 'negative', message: 'Ошибка при обновлении пароля', position: 'top' })
     }
@@ -255,7 +334,11 @@ async function updatePassword() {
 }
 
 async function logout() {
-  const response = await fetch(`${backendURL}users/logout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include' })
+  const response = await fetch(`${backendURL}users/logout`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+  })
   if (!response.ok) {
     if (response.status === 401) router.replace('/login')
     else $q.notify({ type: 'negative', message: 'Ошибка при выходе из аккаунта', position: 'top' })
@@ -267,7 +350,11 @@ async function logout() {
 }
 
 async function globalLogout() {
-  const response = await fetch(`${backendURL}users/logout/full`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include' })
+  const response = await fetch(`${backendURL}users/logout/full`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+  })
   if (!response.ok) {
     if (response.status === 401) router.replace('/login')
     else $q.notify({ type: 'negative', message: 'Ошибка при выходе из аккаунта', position: 'top' })
