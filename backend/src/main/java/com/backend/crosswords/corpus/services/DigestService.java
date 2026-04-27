@@ -96,7 +96,7 @@ public class DigestService {
                     .doOnSuccess(digestText -> this.saveDigestCoreWithText(finalCore, digestText))
                     .block();
         } catch (Exception e) {
-            System.out.println("Что-то пошло не так при создании дайджеста");
+            System.out.println("Что-то пошло не так при создании дайджеста: " + e.getMessage());
             return null;
         }
         return finalCore;
