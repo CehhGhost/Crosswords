@@ -88,7 +88,7 @@ const routes = [
         path: '',
         name: 'privacy',
         component: () => import('../pages/PrivacyPage.vue'),
-        meta: { requiresAuth: true }
+        meta: { requiresAuth: false }
       }
     ]
   },
